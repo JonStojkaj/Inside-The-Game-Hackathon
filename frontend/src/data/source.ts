@@ -31,7 +31,7 @@ export function resolveSource(search = window.location.search): SourceConfig {
   if (q.has('api')) return { kind: 'api', base: q.get('api') || env.VITE_API_BASE || '', matchId }
   if (q.has('src')) return { kind: 'static', base: q.get('src')!, matchId }
   if (env.VITE_DATA_SOURCE === 'api') return { kind: 'api', base: env.VITE_API_BASE ?? '', matchId }
-  return { kind: 'static', base: env.VITE_DATA_BASE ?? '/mock/demo', matchId }
+  return { kind: 'static', base: env.VITE_DATA_BASE ?? '/mock/full-34', matchId }
 }
 
 function fileUrl(cfg: SourceConfig, file: string): string {

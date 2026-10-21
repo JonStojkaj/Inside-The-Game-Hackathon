@@ -161,11 +161,11 @@ export function Pitch(props: PitchProps) {
       if (p.ghosts) {
         const el = now - p.ghosts.since
         drawGhosts(ctx, p.ghosts.insight.ghost_paths, REAL, 0.2, easeOut(el / GHOST_MS), X, Y, s)
-        drawGhosts(ctx, p.ghosts.insight.alt_ghost_paths, ALT, 0.32, easeOut((el - GHOST_MS * 0.55) / GHOST_MS), X, Y, s)
+        drawGhosts(ctx, p.ghosts.insight.alt_ghost_paths, ALT, 0.6, easeOut((el - GHOST_MS * 0.55) / GHOST_MS), X, Y, s)
       }
 
       // players
-      ctx.globalAlpha = frozen ? 0.8 : 1
+      ctx.globalAlpha = frozen ? 0.7 : 1
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
       fv.players.forEach((q, i) => {
@@ -240,6 +240,7 @@ export function Pitch(props: PitchProps) {
       ctx.strokeStyle = 'rgba(0,0,0,0.5)'
       ctx.lineWidth = 1
       ctx.stroke()
+      if (p.ghosts) drawDecision(ctx, X(bx), Y(by) - bz * s * 0.3, br * 2.2, now)
 
       raf = requestAnimationFrame(draw)
     }
@@ -331,30 +332,75 @@ function drawGhosts(
   ctx.lineJoin = 'round'
   ctx.strokeStyle = color
   ctx.fillStyle = color
-  for (const path of paths) {
+  ctx.shadowColor = color
+  for (const full of paths) {
+    const path = untilRestart(full)
     if (path.length < 2) continue
+    // the visible part of the path, then drawn smoothed through segment midpoints
     const upto = progress * (path.length - 1)
     const n = Math.floor(upto)
-    ctx.globalAlpha = alpha
-    ctx.lineWidth = Math.max(1.2, Math.min(s * 0.22, 2.2))
-    ctx.beginPath()
-    ctx.moveTo(X(path[0][0]), Y(path[0][1]))
-    for (let k = 1; k <= n; k++) ctx.lineTo(X(path[k][0]), Y(path[k][1]))
-    const frac = upto - n
-    let hx = path[n][0]
-    let hy = path[n][1]
+    const pts: [number, number][] = path.slice(0, n + 1).map((q) => [X(q[0]), Y(q[1])])
     if (n + 1 < path.length) {
-      hx += (path[n + 1][0] - hx) * frac
-      hy += (path[n + 1][1] - hy) * frac
-      ctx.lineTo(X(hx), Y(hy))
+      const f = upto - n
+      pts.push([X(path[n][0] + (path[n + 1][0] - path[n][0]) * f), Y(path[n][1] + (path[n + 1][1] - path[n][1]) * f)])
     }
-    ctx.stroke()
-    ctx.globalAlpha = Math.min(1, alpha * 2.6)
+    ctx.globalAlpha = alpha
+    ctx.shadowBlur = 0
+    ctx.lineWidth = Math.max(1.3, Math.min(s * 0.24, 2.4))
     ctx.beginPath()
-    ctx.arc(X(hx), Y(hy), Math.max(1.6, Math.min(s * 0.32, 3.2)), 0, Math.PI * 2)
+    ctx.moveTo(pts[0][0], pts[0][1])
+    for (let k = 1; k < pts.length - 1; k++) {
+      const mx = (pts[k][0] + pts[k + 1][0]) / 2
+      const my = (pts[k][1] + pts[k + 1][1]) / 2
+      ctx.quadraticCurveTo(pts[k][0], pts[k][1], mx, my)
+    }
+    const last = pts[pts.length - 1]
+    ctx.lineTo(last[0], last[1])
+    ctx.stroke()
+    ctx.globalAlpha = Math.min(1, alpha * 3)
+    ctx.shadowBlur = 6
+    ctx.beginPath()
+    ctx.arc(last[0], last[1], Math.max(1.8, Math.min(s * 0.34, 3.4)), 0, Math.PI * 2)
     ctx.fill()
   }
+  ctx.shadowBlur = 0
   ctx.globalAlpha = 1
+}
+
+const restartCache = new WeakMap<XY[], XY[]>()
+/**
+ * A rollout keeps running after a goal or the ball going out, and the restart teleports the ball
+ * (e.g. 25 m -> goal line -> centre spot). Draw each future only up to that teleport.
+ */
+function untilRestart(path: XY[]): XY[] {
+  const hit = restartCache.get(path)
+  if (hit) return hit
+  let n = path.length
+  for (let k = 1; k < path.length; k++) {
+    const d = Math.hypot(path[k][0] - path[k - 1][0], path[k][1] - path[k - 1][1])
+    // > 22 m in one sample: a restart (the first step may be the shot or pass itself)
+    if (d > 22 && k > 1) {
+      n = k
+      break
+    }
+  }
+  const out = path.slice(0, n)
+  restartCache.set(path, out)
+  return out
+}
+
+/** Pulsing ring where the decision was taken (the frozen ball). */
+function drawDecision(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, now: number) {
+  const k = (now % 1600) / 1600
+  ctx.strokeStyle = `rgba(255,200,61,${0.9 * (1 - k)})`
+  ctx.lineWidth = 2
+  ctx.beginPath()
+  ctx.arc(x, y, r * (1 + k * 2.4), 0, Math.PI * 2)
+  ctx.stroke()
+  ctx.strokeStyle = '#ffc83d'
+  ctx.beginPath()
+  ctx.arc(x, y, r, 0, Math.PI * 2)
+  ctx.stroke()
 }
 
 function drawTag(ctx: CanvasRenderingContext2D, label: string, x: number, y: number, r: number, color: string, alpha: number) {

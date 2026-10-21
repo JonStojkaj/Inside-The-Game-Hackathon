@@ -11,7 +11,7 @@ export function Scorebug({ lang, overlay }: { lang: Lang; overlay?: Overlay }) {
   const { home, away } = m.bundle.match
   const score = m.bundle.frames.score[Math.min(frame, m.bundle.frames.score.length - 1)] ?? [0, 0]
   const { shown, leaving } = usePresence(overlay)
-  const share = Number(shown?.payload.home_share ?? 0.5)
+  const share = momentumShare(shown)
 
   return (
     <div className="scorebug">
@@ -53,4 +53,15 @@ function Side({ club, right }: { club: { short: string; color: string }; right?:
       <span>{club.short}</span>
     </div>
   )
+}
+
+/** Home share for the momentum strip: payload.home_share, else possession, else control share. */
+function momentumShare(o: Overlay | undefined): number {
+  if (!o) return 0.5
+  const p = o.payload
+  if (typeof p.home_share === 'number') return p.home_share
+  const pos = p.possession as { home?: number; away?: number } | undefined
+  if (pos && (pos.home ?? 0) + (pos.away ?? 0) > 0) return (pos.home ?? 0) / ((pos.home ?? 0) + (pos.away ?? 0))
+  if (typeof p.control_share === 'number' && p.control_team) return p.control_team === 'home' ? p.control_share : 1 - p.control_share
+  return 0.5
 }

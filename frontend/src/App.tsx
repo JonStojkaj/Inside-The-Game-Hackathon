@@ -7,7 +7,7 @@ import { loadMatch, resolveSource } from './data/source'
 import { MatchContext, type MatchCtx } from './lib/context'
 import { indexMatch, timelineFrames } from './lib/match'
 import { createPlayback } from './lib/playback'
-import { PRESETS } from './lib/profile'
+import { presets } from './lib/profile'
 import type { MatchBundle, ViewerProfile } from './types'
 
 type View = 'broadcast' | 'split' | 'control'
@@ -40,8 +40,9 @@ function Player({ bundle }: { bundle: MatchBundle }) {
   const [forcedInsight, setForcedInsight] = useState<string | null>(null)
   const [view, setView] = useState<View>((q.get('view') as View) || 'broadcast')
   const [tv, setTv] = useState(q.has('tv'))
-  const [profile, setProfile] = useState<ViewerProfile>(PRESETS[0])
-  const [split, setSplit] = useState<ViewerProfile[]>(PRESETS)
+  const initial = useMemo(() => presets(bundle.overlays, bundle.match.players), [bundle])
+  const [profile, setProfile] = useState<ViewerProfile>(initial[0])
+  const [split, setSplit] = useState<ViewerProfile[]>(initial)
   const ctx = useMemo<MatchCtx>(() => ({ m, pb, forcedInsight, setForcedInsight }), [m, pb, forcedInsight])
   const hasVideo = Boolean(bundle.match.video)
 
@@ -57,7 +58,7 @@ function Player({ bundle }: { bundle: MatchBundle }) {
 
   return (
     <MatchContext.Provider value={ctx}>
-      <div className={`app view-${view}`}>
+      <div className={`app view-${view} ${q.has('shot') ? 'shot' : ''}`}>
         <header className="topbar">
           <div className="brand">
             <span className="brand-mark">

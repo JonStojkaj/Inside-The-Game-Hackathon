@@ -109,6 +109,8 @@ export interface Hypothesis {
   seed_spread: number | null
   verdict: 'accepted' | 'rejected' | 'pending'
   critic_note: string
+  /** What the Analyst predicted (backend may add it; otherwise read from `text`). */
+  expected_direction?: 'up' | 'down'
 }
 
 export interface Insight {

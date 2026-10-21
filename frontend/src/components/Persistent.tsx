@@ -63,7 +63,15 @@ export function Persistent({ profile }: { profile: ViewerProfile }) {
         <div className="ps-facts">
           <span>{t(lang, 'possession')}</span>
           <span>
-            {t(lang, 'xg')} <b>{(s.teams[team].xg ?? 0).toFixed(2)}</b>
+            {s.teams[team].xg != null ? (
+              <>
+                {t(lang, 'xg')} <b>{s.teams[team].xg!.toFixed(2)}</b>
+              </>
+            ) : (
+              <>
+                {t(lang, 'shots')} <b>{s.teams[team].shots_on_target}/{s.teams[team].shots}</b>
+              </>
+            )}
           </span>
         </div>
       </div>
@@ -86,7 +94,7 @@ export function Persistent({ profile }: { profile: ViewerProfile }) {
               <b>{Math.round(ps.speed_kmh)}</b> km/h
             </span>
             <span>
-              {t(lang, 'top_speed')} <b>{Math.round(ps.top_speed_kmh)}</b>
+              {t(lang, 'top_speed')} <b>{ps.top_speed_kmh.toFixed(1)}</b>
             </span>
             <span>
               {t(lang, 'passes')} <b>{ps.passes_completed}/{ps.passes}</b>
