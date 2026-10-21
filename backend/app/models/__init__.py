@@ -133,6 +133,7 @@ class Hypothesis(BaseModel):
 
     text: str
     intervention: Intervention | None = None
+    metric: str = "p_goal"  # what the two probabilities below measure: p_goal (score) or p_keep (keep the ball)
     baseline_p_goal: float | None = None
     counterfactual_p_goal: float | None = None
     seed_spread: float | None = None
@@ -150,6 +151,7 @@ class Insight(BaseModel):
     numbers: dict[str, float]
     verified: bool
     confidence: Literal["clear", "slight"]
+    metric: str = "p_goal"  # p_goal = chance to score, p_keep = chance to keep the ball (turnovers)
     hypotheses: list[Hypothesis] = Field(default_factory=list)
     decision_frame: int | None = None  # frame the counterfactuals start from
     ghost_paths: list[list[tuple[float, float]]] = Field(default_factory=list)  # futures of what really happened

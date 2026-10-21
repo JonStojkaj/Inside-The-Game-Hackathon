@@ -49,29 +49,62 @@ class CriticReview(BaseModel):
 
 
 ANALYST_SYSTEM = """You are the Analyst in a football broadcast's explanation team.
-A key moment happened. You get the game context, what really happened (with its simulated outcome)
-and a MENU of counterfactual experiments our simulator can run. Pick the 1-3 experiments most likely to
-explain why this moment mattered, and state each as a short, testable hypothesis.
+A key moment happened. You get the game context, what really happened (with its simulated outcome),
+the QUESTION this kind of moment raises and a MENU of counterfactual experiments our simulator can run.
+Pick the 1-3 experiments that best answer the question, each as a short, testable hypothesis.
 Only use experiment ids from the menu. Never invent numbers."""
 
 CRITIC_SYSTEM = """You are the Critic in a football broadcast's explanation team.
-You get what really happened and the simulated results of each hypothesis (500 futures x 3 seeds each).
-Accept a hypothesis only if its effect on the goal probability is meaningful and stable across seeds
-(the input marks which effects pass the stability rule). Then write the claim viewers will see:
-1-2 neutral sentences, only about accepted findings, using only percentages that appear in the input.
-If nothing was accepted, say what really happened was the reasonable choice."""
+You get what really happened, the question, and the simulated results of each hypothesis (500 futures x 3 seeds).
+Accept a hypothesis only if the input marks it as passing the rules (meaningful, stable across seeds and
+football-plausible). Then write the claim viewers will see: 1-2 neutral sentences answering the question,
+only about accepted findings, using only the percentages and point changes given in the input (never compute
+new numbers). Use player names, never ids. If nothing was accepted, say the real decision was a reasonable one."""
+
+QUESTIONS = {
+    "goal": "A goal was scored. What made it possible? If what_really_happened is the assist (the pass to the scorer), "
+            "show how much better that pass was than the passer's alternatives. Otherwise show what the defending side "
+            "could have done to prevent it. Never suggest the scorer should not have shot.",
+    "big_chance": "A big chance did not go in. Was taking the shot the right decision, or was there a better option?",
+    "decisive_pass": "A pass sharply raised the scoring chance. How much better was it than the alternatives?",
+    "dangerous_turnover": "The ball was lost close to the team's own goal. What would have kept it safe?",
+}
 
 
 # --- rules ----------------------------------------------------------------------------------
 
-def passes_rule(base: ExperimentResult, alt: ExperimentResult) -> bool:
-    delta = alt.p_goal - base.p_goal
-    noise = 2 * max(alt.seed_spread, base.seed_spread) + 0.005
+# which outcome a moment is judged on: scoring for attacking moments, keeping the ball for turnovers
+METRIC = {"goal": "p_goal", "big_chance": "p_goal", "decisive_pass": "p_goal", "dangerous_turnover": "p_keep"}
+METRIC_LABEL = {"p_goal": "chance to score", "p_keep": "chance to keep the ball"}
+
+
+def value(r: ExperimentResult, key: str = "p_goal") -> float:
+    return float(getattr(r, key))
+
+
+def spread(r: ExperimentResult, key: str = "p_goal") -> float:
+    return r.seed_spread if key == "p_goal" else r.keep_spread
+
+
+def passes_rule(base: ExperimentResult, alt: ExperimentResult, key: str = "p_goal") -> bool:
+    delta = value(alt, key) - value(base, key)
+    noise = 2 * max(spread(alt, key), spread(base, key)) + 0.005
     return abs(delta) >= MIN_EFFECT and abs(delta) > noise
 
 
-def confidence(base: ExperimentResult, alt: ExperimentResult) -> Literal["clear", "slight"]:
-    lo, hi = sorted([base.p_goal, alt.p_goal])
+def plausible(alt: ExperimentResult, base: ExperimentResult, expected_sign: int | None, key: str = "p_goal") -> bool:
+    """Football prior: e.g. tighter marking must not help the team on the ball. Violations are simulator artifacts."""
+    if expected_sign is None:
+        return True
+    return (value(alt, key) - value(base, key)) * expected_sign > 0
+
+
+def points(base: ExperimentResult, alt: ExperimentResult, key: str = "p_goal") -> str:
+    return f"{abs(value(alt, key) - value(base, key)) * 100:.1f}"
+
+
+def confidence(base: ExperimentResult, alt: ExperimentResult, key: str = "p_goal") -> Literal["clear", "slight"]:
+    lo, hi = sorted([value(base, key), value(alt, key)])
     delta = hi - lo
     return "clear" if delta >= CLEAR_EFFECT or (lo > 0 and hi / lo >= 2) else "slight"
 
@@ -80,18 +113,32 @@ def pct(p: float) -> str:
     return f"{p * 100:.1f}%"
 
 
-def numbers_are_ours(claim: str, allowed: set[str]) -> bool:
-    """Every percentage in the claim must be one we computed (LLMs must not invent numbers)."""
-    found = re.findall(r"\d+(?:\.\d+)?\s*%", claim)
-    return all(f.replace(" ", "") in allowed for f in found)
+def numbers_are_ours(claim: str, allowed_pct: set[str], allowed_points: set[str] = frozenset()) -> bool:
+    """Every number in the claim must be one we computed (LLMs must not invent or compute numbers).
+
+    Percentages must be one of our probabilities, "N points" / "N percentage points" one of our deltas,
+    and any other decimal number is rejected outright.
+    """
+    for value, unit in re.findall(r"[+-]?(\d+(?:\.\d+)?)\s*(%|-?\s*(?:percentage[- ])?points?)?", claim):
+        if not unit:
+            if "." in value:
+                return False
+            continue  # plain integers: minutes, shirt numbers, "5 m"
+        if unit.strip() == "%":
+            if f"{value}%" not in allowed_pct:
+                return False
+        elif value not in allowed_points:
+            return False
+    return True
 
 
-def template_claim(ctx: DecisionContext, base: ExperimentResult, accepted: list[ExperimentResult]) -> str:
+def template_claim(ctx: DecisionContext, base: ExperimentResult, accepted: list[ExperimentResult], key: str = "p_goal") -> str:
+    label = METRIC_LABEL[key]
     if not accepted:
-        return f"{ctx.actual_label.capitalize()} was a reasonable choice: no tested alternative did clearly better ({pct(base.p_goal)} chance to score)."
-    best = max(accepted, key=lambda r: abs(r.p_goal - base.p_goal))
-    direction = "would have raised" if best.p_goal > base.p_goal else "would have lowered"
-    return f"{best.description} {direction} the chance to score from {pct(base.p_goal)} to {pct(best.p_goal)}."
+        return f"{ctx.actual_label} — a reasonable decision: no tested alternative did clearly better ({pct(value(base, key))} {label})."
+    best = max(accepted, key=lambda r: abs(value(r, key) - value(base, key)))
+    direction = "risen" if value(best, key) > value(base, key) else "fallen"
+    return f"If {best.description}, the {label} would have {direction} from {pct(value(base, key))} to {pct(value(best, key))}."
 
 
 # --- the team -------------------------------------------------------------------------------
@@ -104,6 +151,7 @@ class ExplainTeam:
 
     def explain(self, match: GrfMatch, moment: Moment, events: list[MatchEvent]) -> Insight:
         ctx = decision_context(match, moment, events)
+        key = METRIC[moment.kind]
         menu = {e.id: e for e in experiment_menu(ctx)}
         base, base_rollout = self.runner.baseline(ctx)
         results: dict[str, ExperimentResult] = {}
@@ -117,28 +165,31 @@ class ExplainTeam:
             available = {k: v for k, v in menu.items() if k not in tried}
             if not available:
                 break
-            plan = self.llm.complete(ANALYST_SYSTEM, self._analyst_prompt(ctx, base, available, hypotheses), AnalystPlan, "analyst")
-            chosen = [h for h in plan.hypotheses if h.experiment_id in available][:3]
+            plan = self.llm.complete(ANALYST_SYSTEM, self._analyst_prompt(ctx, base, available, hypotheses, key), AnalystPlan, "analyst")
+            chosen = list({h.experiment_id: h for h in plan.hypotheses if h.experiment_id in available}.values())[:3]
             for h in chosen:
                 exp = available[h.experiment_id]
                 tried.add(exp.id)
                 results[exp.id], rollouts[exp.id] = self.runner.run(ctx, exp.id, exp.description, exp.intervention)
-                hypotheses.append(Hypothesis(text=h.text, intervention=exp.intervention, baseline_p_goal=base.p_goal,
-                                             counterfactual_p_goal=results[exp.id].p_goal,
-                                             seed_spread=results[exp.id].seed_spread))
+                hypotheses.append(Hypothesis(text=h.text, intervention=exp.intervention, metric=key,
+                                             baseline_p_goal=value(base, key),
+                                             counterfactual_p_goal=value(results[exp.id], key),
+                                             seed_spread=spread(results[exp.id], key)))
             pending = [h for h in hypotheses if h.verdict == "pending"]
             if not pending:
                 break
-            review = self.llm.complete(CRITIC_SYSTEM, self._critic_prompt(ctx, base, results, chosen), CriticReview, "critic")
+            review = self.llm.complete(CRITIC_SYSTEM, self._critic_prompt(ctx, base, results, chosen, menu, key), CriticReview, "critic")
             verdicts = {v.experiment_id: v for v in review.verdicts}
             for h, exp_id in zip(pending, [c.experiment_id for c in chosen if c.experiment_id in results]):
                 r = results[exp_id]
                 v = verdicts.get(exp_id)
-                rule_ok = passes_rule(base, r)
-                if v and v.verdict == "accepted" and rule_ok:
+                stable = passes_rule(base, r, key)
+                sane = plausible(r, base, menu[exp_id].expected_sign, key)
+                if v and v.verdict == "accepted" and stable and sane:
                     h.verdict, h.critic_note = "accepted", v.note
                 elif v and v.verdict == "accepted":
-                    h.verdict, h.critic_note = "rejected", f"overruled by rule: effect not stable across seeds. ({v.note})"
+                    why = "effect not stable across seeds" if not stable else "football-implausible direction (simulator artifact)"
+                    h.verdict, h.critic_note = "rejected", f"overruled by rule: {why}. ({v.note})"
                 else:
                     h.verdict, h.critic_note = "rejected", v.note if v else "no verdict"
                 if h.verdict == "accepted":
@@ -147,14 +198,15 @@ class ExplainTeam:
             if accepted:
                 break
 
-        allowed = {pct(base.p_goal)} | {pct(r.p_goal) for r in results.values()}
-        if not claim or not numbers_are_ours(claim, allowed) or (not accepted and "%" in claim and pct(base.p_goal) not in claim):
-            claim = template_claim(ctx, base, accepted)
+        allowed = {pct(value(base, key))} | {pct(value(r, key)) for r in results.values()}
+        allowed_points = {points(base, r, key) for r in results.values()}
+        if not claim or not numbers_are_ours(claim, allowed, allowed_points) or re.search(r"\b[HA]\d{1,2}\b", claim):
+            claim = template_claim(ctx, base, accepted, key)
 
-        best = max(accepted, key=lambda r: abs(r.p_goal - base.p_goal)) if accepted else None
-        numbers = {"actual_p_goal": base.p_goal, "actual_p_turnover": base.p_turnover}
+        best = max(accepted, key=lambda r: abs(value(r, key) - value(base, key))) if accepted else None
+        numbers = {"actual_p_goal": base.p_goal, "actual_p_keep": base.p_keep, f"actual_{key}": value(base, key)}
         if best:
-            numbers |= {"best_alt_p_goal": best.p_goal, "delta_p_goal": round(best.p_goal - base.p_goal, 4)}
+            numbers |= {f"best_alt_{key}": value(best, key), f"delta_{key}": round(value(best, key) - value(base, key), 4)}
         return Insight(
             id=f"{moment.id}-insight",
             moment_id=moment.id,
@@ -162,7 +214,8 @@ class ExplainTeam:
             evidence=[*moment.event_ids, *base.rollout_ids, *(rid for r in accepted for rid in r.rollout_ids)],
             numbers=numbers,
             verified=True,
-            confidence=confidence(base, best) if best else "clear",
+            confidence=confidence(base, best, key) if best else "clear",
+            metric=key,
             hypotheses=hypotheses,
             decision_frame=ctx.frame,
             ghost_paths=base_rollout.sample_paths,
@@ -171,24 +224,36 @@ class ExplainTeam:
         )
 
     # --- prompts (JSON so both the model and the fake can read them) -------------------------
-    def _analyst_prompt(self, ctx: DecisionContext, base: ExperimentResult, menu: dict, previous: list[Hypothesis]) -> str:
+    def _analyst_prompt(self, ctx: DecisionContext, base: ExperimentResult, menu: dict, previous: list[Hypothesis], key: str) -> str:
         return json.dumps({
             "moment": {"kind": ctx.moment.kind, "minute": int(ctx.moment.clock_s // 60), "team": ctx.moment.team,
                        "reason": ctx.moment.reason},
-            "what_really_happened": {"decision": ctx.actual_label, "p_goal": pct(base.p_goal), "p_turnover": pct(base.p_turnover)},
+            "QUESTION": QUESTIONS[ctx.moment.kind],
+            "judged_on": METRIC_LABEL[key],
+            "what_really_happened": {"decision": ctx.actual_label, METRIC_LABEL[key]: pct(value(base, key))},
             "already_rejected": [h.text for h in previous if h.verdict == "rejected"],
-            "MENU": [{"id": e.id, "experiment": e.description} for e in menu.values()],
+            "MENU": [{"id": e.id, "experiment": "if " + e.description} for e in menu.values()],
         }, indent=1)
 
-    def _critic_prompt(self, ctx: DecisionContext, base: ExperimentResult, results: dict, chosen: list[AnalystHypothesis]) -> str:
+    def _critic_prompt(self, ctx: DecisionContext, base: ExperimentResult, results: dict, chosen: list[AnalystHypothesis],
+                       menu: dict, key: str) -> str:
+        label = METRIC_LABEL[key]
+
+        def rules(exp_id: str) -> bool:
+            r = results[exp_id]
+            return passes_rule(base, r, key) and plausible(r, base, menu[exp_id].expected_sign, key)
+
         return json.dumps({
-            "what_really_happened": {"decision": ctx.actual_label, "p_goal": pct(base.p_goal)},
+            "QUESTION": QUESTIONS[ctx.moment.kind],
+            "judged_on": label,
+            "what_really_happened": {"decision": ctx.actual_label, label: pct(value(base, key))},
             "hypotheses": [{
                 "experiment_id": h.experiment_id, "hypothesis": h.text,
-                "experiment": results[h.experiment_id].description,
-                "p_goal": pct(results[h.experiment_id].p_goal),
-                "change_vs_actual": f"{(results[h.experiment_id].p_goal - base.p_goal) * 100:+.1f} points",
-                "stable_across_seeds": passes_rule(base, results[h.experiment_id]),
+                "experiment": "if " + results[h.experiment_id].description,
+                label: pct(value(results[h.experiment_id], key)),
+                "change_vs_actual": f"{'+' if value(results[h.experiment_id], key) >= value(base, key) else '-'}"
+                                    f"{points(base, results[h.experiment_id], key)} points",
+                "passes_rules": rules(h.experiment_id),
             } for h in chosen if h.experiment_id in results],
         }, indent=1)
 
@@ -204,8 +269,8 @@ def fake_explain_llm() -> FakeLLM:
     def critic(prompt: str) -> CriticReview:
         data = json.loads(prompt)
         verdicts = [CriticVerdict(experiment_id=h["experiment_id"],
-                                  verdict="accepted" if h["stable_across_seeds"] else "rejected",
-                                  note="stable effect" if h["stable_across_seeds"] else "within noise")
+                                  verdict="accepted" if h["passes_rules"] else "rejected",
+                                  note="stable, plausible effect" if h["passes_rules"] else "within noise or implausible")
                     for h in data["hypotheses"]]
         return CriticReview(verdicts=verdicts, claim="")  # empty claim -> template from code
 

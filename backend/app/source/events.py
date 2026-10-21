@@ -202,9 +202,10 @@ def _pass_meta(m: GrfMatch, passer: int, release: int, receive: int, start: tupl
     own = slice(0, 11) if passer < 11 else slice(11, 22)
     opp = slice(11, 22) if passer < 11 else slice(0, 11)
     opponents = m.pos[release, opp]
-    if receiver is None:  # intended receiver of a failed pass: team-mate closest to where it ended
-        mates = m.pos[receive, own]
-        receiver = int(np.argmin(np.linalg.norm(mates - np.asarray(end), axis=1))) + own.start
+    if receiver is None:  # intended receiver of a failed pass: team-mate (not the passer) closest to where it ended
+        dist_to_end = np.linalg.norm(m.pos[receive, own] - np.asarray(end), axis=1)
+        dist_to_end[passer - own.start] = np.inf
+        receiver = int(np.argmin(dist_to_end)) + own.start
     receiver_open = float(np.linalg.norm(opponents - m.pos[release, receiver], axis=1).min())
     passer_free = float(np.linalg.norm(opponents - m.pos[release, passer], axis=1).min())
     attacks_right = passer < 11
