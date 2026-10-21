@@ -1,24 +1,19 @@
 import { useMemo } from 'react'
 import { useMatch } from '../lib/context'
+import { newsworthy } from '../lib/derive'
 import { minuteLabel } from '../lib/match'
 import { useFrame } from '../lib/playback'
-import { eventLabel } from '../lib/profile'
+import { eventLabel, t } from '../lib/profile'
 import { usePresence } from '../lib/usePresence'
 import type { Lang, MatchEvent, Overlay } from '../types'
 
 const SHOWN = 4
 
-function newsworthy(e: MatchEvent): boolean {
-  if (e.type === 'pressure' || e.type === 'carry' || e.type === 'out_of_play') return false
-  if (e.type === 'pass') return e.outcome === 'incomplete' || Number(e.meta.difficulty ?? 0) >= 55
-  return true
-}
-
 /** Bottom ticker: latest notable events; a ticker-slot overlay (alert) takes over the strip. */
-export function Ticker({ lang, overlay }: { lang: Lang; overlay?: Overlay }) {
+export function Ticker({ lang, overlay, filter }: { lang: Lang; overlay?: Overlay; filter?: (e: MatchEvent) => boolean }) {
   const { m, pb } = useMatch()
   const frame = useFrame(pb)
-  const feed = useMemo(() => m.bundle.events.filter(newsworthy), [m])
+  const feed = useMemo(() => m.bundle.events.filter(filter ?? newsworthy), [m, filter])
   const { shown, leaving } = usePresence(overlay)
 
   let hi = 0
@@ -42,7 +37,7 @@ export function Ticker({ lang, overlay }: { lang: Lang; overlay?: Overlay }) {
               <span className="tk-name">
                 {name}
                 {e.type === 'pass' && target ? ` → ${target.name.split(' ').slice(-1)[0]}` : ''}
-                {e.type === 'shot' && e.outcome ? ` · ${e.outcome.replace('_', ' ')}` : ''}
+                {e.type === 'shot' && e.outcome ? ` · ${e.outcome === 'goal' ? eventLabel(lang, 'goal') : t(lang, e.outcome)}` : ''}
               </span>
             </div>
           )
