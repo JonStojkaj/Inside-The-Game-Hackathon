@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# root .gitignore ignores Python lib/ dirs; our TS lib must be tracked
+!src/lib/
