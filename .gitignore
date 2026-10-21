@@ -232,3 +232,6 @@ data/matches/
 # generated pipeline output (large); insights + LLM cache are committed for replay
 data/export/
 data/production/
+
+# azd environment (local values, never commit)
+.azure/
