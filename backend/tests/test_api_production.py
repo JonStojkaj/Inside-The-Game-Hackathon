@@ -33,7 +33,9 @@ def test_importing_the_api_loads_no_llm_or_simulation_code(tmp_path):
 
 
 def test_env_configured_app_serves_baked_exports_and_frontend(tmp_path, monkeypatch):
-    export_match(make_match(), tmp_path / "export" / "demo-107")
+    match = make_match()
+    match.match_id = "demo-107"
+    export_match(match, tmp_path / "export" / "demo-107")
     dist = tmp_path / "dist"
     dist.mkdir()
     (dist / "index.html").write_text("<!doctype html><title>player</title>")
