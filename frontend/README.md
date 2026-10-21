@@ -6,10 +6,18 @@ TypeScript, no UI framework; the pitch is a canvas, everything else is DOM + CSS
 
 ```bash
 npm install
-npm run dev            # http://localhost:5173 (bundled mock match)
-npm run build && npm run lint
-node scripts/make-mock.mjs   # regenerate public/mock/demo/
+npm run dev            # http://localhost:5173 (real demo match full-34, public/mock/full-34)
+npm run build && npm run lint && npx tsc -b
+node scripts/make-mock.mjs   # regenerate the small hand-scripted mock in public/mock/demo/ (?src=/mock/demo)
+node scripts/sync-export.mjs --export ../data/export/full-34 [--insights f] [--overlays f] \
+  [--production-log f] [--video f] [--out public/mock/full-34]   # refresh the bundled real match
+node scripts/shots.mjs http://localhost:5173 shots   # 1920x1080 PNGs of the demo shots (headless Chrome)
 ```
+
+`public/mock/full-34/` is the real GRF export with the Azure explain-team insights
+(`data/insights/full-34.json`). Its overlays come from a `LLM_PROVIDER=fake` production pass over those
+insights (plus a `club_fan-away-en` segment for the 3-up shot), so every number on screen matches the
+insights; replace them with the Azure production run once it is re-done on the current insights.
 
 ## Data sources
 
@@ -19,7 +27,8 @@ The player reads the export format in `data/export/<match_id>/` (`match`, `frame
 
 | How | Example |
 |---|---|
-| Bundled mock (default) | `http://localhost:5173/` |
+| Bundled real match (default) | `http://localhost:5173/` |
+| Bundled hand-made mock | `/?src=/mock/demo` |
 | Static export folder (dev server serves `../data/export` at `/export`, override with `EXPORT_DIR=...`) | `/?src=/export/full-34` |
 | Backend API (`GET {api}/api/matches/{id}/{file}`) | `/?api=http://localhost:8000&match=full-34` |
 | Env vars instead of query | `VITE_DATA_SOURCE=static\|api`, `VITE_DATA_BASE`, `VITE_API_BASE`, `VITE_MATCH_ID` |
@@ -35,12 +44,20 @@ Types in `src/types.ts` mirror `backend/app/models/__init__.py`.
 - **Control room**: the selected insight's hypotheses replayed as an agent log (detector → analyst →
   experimenter → critic → explain team → production per segment), counters for accepted / rejected /
   unverified claims shown.
-- **TV**: enabled when `match.video` is set; the video is slaved to the frame clock and our scorebug
-  and a bottom mask cover GRF's own HUD. The data stays the master clock.
+- **TV**: enabled when `match.video` is set; the video is slaved to the frame clock (paused: video
+  frame N for data frame N; playing: drift absorbed with the playback rate, hard seek beyond 0.25 s).
+  Our scorebug lands on GRF's scoreboard and our radar (drawn from the tracking data) on GRF's minimap.
+  During Sliding Doors the picture cross-fades to the pitch. Without video, or if the browser cannot
+  decode it (needs H.264, yuv420p), the pitch is shown. Test bundle: `public/dev/` (gitignored), built
+  with `sync-export.mjs` from a GRF render; `?syncdebug` prints data frame vs video frame.
 - Transport: space play/pause, ←/→ ±5 s, `1`/`5`/`0` speed 1×/5×/10×, Esc closes a manual Sliding Doors.
   Diamonds on the timeline are moments (click = jump 4 s before); `SD1..n` opens an insight's
   Sliding Doors on every screen.
-- Demo takes: `?view=split&f=480&speed=1&play` starts at a frame. `?tv` starts in TV mode.
+- Demo takes: `?view=split&f=1695&speed=1&play` starts at a frame. `?tv` starts in TV mode,
+  `?cr=<insight id>` picks the control-room log, `?shot` skips enter animations (screenshots).
+  §16 shots on full-34: 3-up live `f=1580`, 3-up Sliding Doors (all three screens) `f=1695`,
+  broadcast Sliding Doors `f=2129`, control room `view=control&f=2131&cr=full-34-m01663-decisive_pass-insight`,
+  full-time recap `f=3090`.
 
 ## Overlay rendering
 
@@ -59,21 +76,40 @@ the lower third; a Sliding Doors moment hides lower third, side panel and persis
 
 `evidence` is printed small on lower thirds and side panels.
 
+## Claim audit (what "verified" means on screen)
+
+`src/lib/verify.ts` does not trust `Insight.verified`. For every on-screen text that cites an insight
+(Sliding Doors card, insight side panels, narrator output in the control room) it checks that each
+probability (`12.5%`, `12,5 %`) and point delta (`8.3 points`, `−8,3 Punkte`) is a number the rollout
+engine produced for that moment (insight numbers, hypothesis baseline/counterfactual, or a difference
+of two, up to display rounding), and that every evidence id resolves (event id, rollout id of the same
+moment, `stats:`/`frame:` reference). The control room's "unverified claims shown" counter is the
+number of on-screen texts failing that check. Accepted hypotheses whose measured effect goes against
+the Analyst's prediction (`expected_direction`, or read from the hypothesis text) are shown as
+**refuted**, not as confirmed.
+
 ## Sliding Doors
 
 Shown when a `sliding_doors` overlay is active (or opened by hand): the pitch freezes on
 `insight.decision_frame`, the camera zooms onto the futures, `ghost_paths` (white) and then
 `alt_ghost_paths` (gold, `alt_label`) are drawn growing out of the decision point, and a card shows
 the overlay's headline/body (localised) or `insight.claim`, plus the two probabilities from
-`insight.numbers`: `actual_p_goal` vs `best_alt_p_goal`, or `actual_p_turnover` vs
-`best_alt_p_turnover` when both goal values are 0.
+`numbers` for `insight.metric`: `actual_<metric>` vs `best_alt_<metric>`, labelled "chance to score"
+(`p_goal`) or "chance to keep the ball" (`p_keep`), with the delta in points. No `best_alt_*` means
+"no better alternative found". `pitch`/`insight` overlays (club fan, casual) get the one-line version
+of the same replay. Ghost paths are cut at the first restart teleport.
 
 ## What the player needs from the backend
 
-- `overlays.json` keyed by segment id (`analyst-de`, `club_fan-home-en`, `player_focus-H10-es`, `*`),
-  using the payload keys above; Sliding Doors overlays during dead-ball windows, ~12–16 s.
-- `insights.json` with `decision_frame`, ~30 `ghost_paths` + ~30 `alt_ghost_paths` of 10–15 points
-  each (metres), `alt_label`, numbers as above, and `hypotheses` with baseline/counterfactual/spread.
-- Optional `numbers.best_alt_p_turnover` for defensive (turnover) insights.
-- `stats.json`: `teams.*.xg` would be nice for the club-fan widget (falls back to 0.00).
-- `match.video` + `video.mp4` for the TV view.
+- Re-run the Azure production team on the current `data/insights/full-34.json` (the committed Azure
+  overlays predate `metric` and use `actual_p_turnover`), and add a `club_fan-away-en` segment to
+  `DEMO_PROFILES` for the 3-up shot (analyst-de, club_fan-away-en, player_focus-A20-es).
+- `match.video`: H.264 / yuv420p mp4 with `+faststart`, exactly one frame per data frame (10 fps);
+  GRF renders MPEG-4 Part 2, which Chrome cannot play. Disable GRF's player-name labels in the render
+  (they cannot be covered, they move); scoreboard and minimap are covered by us.
+- `alt_label` localised per segment (it is English in every language today).
+- `expected_direction` on `AnalystHypothesis` (the player falls back to reading the text).
+- Scheduler: the 50' insight airs at 63:50 for analyst-de (13 match minutes late).
+- player_focus-A20-es gets `player_tag` overlays for H20 (Marchetti) instead of A20 (Nakamura).
+- Ghost paths continue through restarts (shot, then ball teleported to the centre spot).
+- `stats.json`: `teams.*.xg` for the club-fan widget (falls back to shots on target).
