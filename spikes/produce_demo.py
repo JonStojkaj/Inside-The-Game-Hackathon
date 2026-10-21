@@ -69,11 +69,13 @@ def main() -> None:
           f"LLM {llm.name}")
 
     if args.insights:
-        insights = [Insight.model_validate(i) for i in json.loads(args.insights.read_text())]
+        raw = args.insights.read_text()  # copied verbatim: keeps fields this branch's Insight model may not know yet
+        insights = [Insight.model_validate(i) for i in json.loads(raw)]
+        (out / "insights.json").write_text(raw)
     else:
         team = ExplainTeam(llm_from_env(fake_explain_llm()) if args.fake_explain else llm)
         insights = [team.explain(match, m, events) for m in moments]
-    (out / "insights.json").write_text(json.dumps([i.model_dump(mode="json") for i in insights], ensure_ascii=False))
+        (out / "insights.json").write_text(json.dumps([i.model_dump(mode="json") for i in insights], ensure_ascii=False))
     print(f"explain: {len(insights)} insights in {time.time() - t0:.1f}s")
 
     t1 = time.time()

@@ -161,7 +161,7 @@ def test_narrator_prompt_is_localised_and_template_is_in_target_language():
 
     m = moment("big_chance", "home", ["H9"])
     out = Narrator(FakeLLM({"narrator": capture})).write(AWAY_FAN_DE, m, insight(m), ctx())
-    assert seen["target_language"] == "de" and seen["FACTS"]["actual_chance_to_score"] == "14,8 %"
+    assert seen["target_language"] == "de" and seen["FACTS"]["actual"] == "14,8 %" and seen["FACTS"]["measure"] == "Torchance"
     assert "Torchance" in out.body and "Calloway" in out.body  # alternative rendered by code, in German
     assert out.source == "llm"
 
@@ -172,6 +172,20 @@ def test_fake_production_llm_end_to_end_texts_are_valid(segment):
     m = moment("decisive_pass", "away", ["A20", "A4"])
     out = Narrator(llm).write(segment, m, insight(m), ctx(), angle="test")
     assert out.source == "llm" and out.headline and out.body
+
+
+def test_turnover_insights_are_labelled_as_chance_to_keep_the_ball():
+    m = moment("dangerous_turnover", "away", ["H7", "A20"])
+    h = Hypothesis(text="alt", intervention=Intervention(kind="swap_action", params={"action": "pass", "target_id": "H9"}),
+                   baseline_p_goal=0.193, counterfactual_p_goal=0.097, seed_spread=0.008, verdict="accepted")
+    keep = Insight(id="k", moment_id=m.id, claim="Passing to Brann would have cut the chance to keep the ball from 19.3% to 9.7%.",
+                   evidence=["e1"], numbers={"actual_p_goal": 0.024, "actual_p_keep": 0.193, "best_alt_p_keep": 0.097,
+                                             "delta_p_keep": -0.096}, verified=True, confidence="clear", hypotheses=[h])
+    llm = fake_production_llm()
+    en = Narrator(llm).write(ANALYST, m, keep, ctx())
+    de = Narrator(llm).write(AWAY_FAN_DE, m, keep, ctx())
+    assert "chance to keep the ball from 19.3% to 9.7%" in en.body and "A pass to Brann" in en.body
+    assert "Chance, den Ball zu behalten" in de.body and "2,4" not in de.body
 
 
 # --- recap --------------------------------------------------------------------------------------

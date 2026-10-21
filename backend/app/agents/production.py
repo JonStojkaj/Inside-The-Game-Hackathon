@@ -109,21 +109,37 @@ Write a headline and a short body in the TARGET LANGUAGE, in the segment's tone 
 from the verified claim and the plain template. Rules:
 - Only use numbers that appear in FACTS, written exactly as given there (localised). No other numbers,
   no ratios or sums you computed yourself, no spelled-out numbers.
-- Only state what the verified claim says; you may rephrase, shorten and add emotion, not new facts.
-- Perspective 'partisan': first person plural for the viewer's club. 'player': from the followed
-  player's side. 'neutral': no side.
-- Respect the length limits."""
+- The percentages come from our simulator: they are the MEASURE named in FACTS (e.g. "chance to score"
+  or "chance to keep the ball" over the next seconds). Always name that measure; never call it xG or
+  expected goals, never leave it as just "the chance".
+- Only state what the verified claim says. You may rephrase, shorten and set the tone, but add no new
+  facts: no invented reactions, consequences or emotions of players.
+- Write in the third person; never speak as a player ("I", "my pass").
+- Perspective 'partisan': first person plural ("we", "our") ONLY for the viewer's club, whose players
+  are marked in the moment's player list. 'player': judge the moment from the followed player's side.
+  'neutral': no side.
+- Grammatical, natural, broadcast-ready text in the target language. Respect the length limits."""
 
 RECAP_SYSTEM = """You are the full-time Recap writer of a personalised football broadcast.
 Write a headline, a 3-5 sentence body and 2-4 bullets in the TARGET LANGUAGE for one viewer segment,
 in its tone and perspective, using only the facts and verified insights given. Only use numbers that
-appear in FACTS, written exactly as given. No other numbers, no spelled-out numbers, nothing invented."""
+appear in FACTS, written exactly as given. No other numbers, no spelled-out numbers, nothing invented.
+Simulator percentages must be named with their measure (chance to score / chance to keep the ball),
+never as xG. Third person, natural broadcast language; 'we' only for the viewer's club."""
 
 
 # --- facts + templates for one insight ----------------------------------------------------------
 
-def best_hypothesis(insight: Insight) -> Hypothesis | None:
-    best = insight.numbers.get("best_alt_p_goal")
+def insight_metric(insight: Insight, moment: Moment) -> str:
+    """What the insight's percentages measure: "p_goal" (chance to score) or "p_keep" (chance to keep the
+    ball, used for turnovers). Newer insights carry it as a field; older ones follow the moment kind."""
+    metric = getattr(insight, "metric", None) or ("p_keep" if moment.kind == "dangerous_turnover" else "p_goal")
+    return metric if f"actual_{metric}" in insight.numbers else "p_goal"
+
+
+def best_hypothesis(insight: Insight, metric: str = "p_goal") -> Hypothesis | None:
+    """The accepted hypothesis behind best_alt_<metric> (its value sits in counterfactual_p_goal)."""
+    best = insight.numbers.get(f"best_alt_{metric}")
     accepted = [h for h in insight.hypotheses if h.verdict == "accepted" and h.counterfactual_p_goal is not None]
     if best is None or not accepted:
         return None
@@ -148,20 +164,23 @@ def alternative_phrase(h: Hypothesis | None, ctx: MatchContext, lang: str) -> tu
 def insight_facts(segment: Segment, moment: Moment, insight: Insight, ctx: MatchContext) -> dict[str, str]:
     lang = segment.language
     n = insight.numbers
-    facts = {"minute": str(minute(moment.clock_s)), "actual_chance_to_score": pct(n["actual_p_goal"], lang)}
-    if "best_alt_p_goal" in n:
-        lo, hi = sorted([n["actual_p_goal"], n["best_alt_p_goal"]])
-        facts["best_alternative_chance_to_score"] = pct(n["best_alt_p_goal"], lang)
-        facts["difference_in_points"] = num(abs(n["best_alt_p_goal"] - n["actual_p_goal"]) * 100, lang)
-        if lo > 0:
-            facts["times_better"] = num(hi / lo, lang)
-    facts.update(alternative_phrase(best_hypothesis(insight), ctx, lang)[1])
+    metric = insight_metric(insight, moment)
+    actual, best = n[f"actual_{metric}"], n.get(f"best_alt_{metric}")
+    facts = {"minute": str(minute(moment.clock_s)), "measure": t(f"measure.{metric}", lang), "actual": pct(actual, lang)}
+    if best is not None:
+        lo, hi = sorted([actual, best])
+        facts["best_alternative"] = pct(best, lang)
+        facts["difference_in_points"] = num(abs(best - actual) * 100, lang)
+        if lo >= 0.02:  # ratios of tiny probabilities are noise ("27x lower")
+            facts["better_option_is_this_many_times_higher"] = num(hi / lo, lang)
+    facts.update(alternative_phrase(best_hypothesis(insight, metric), ctx, lang)[1])
     return facts
 
 
 def insight_template(segment: Segment, moment: Moment, insight: Insight, ctx: MatchContext) -> tuple[str, str]:
     lang = segment.language
     facts = insight_facts(segment, moment, insight, ctx)
+    metric = insight_metric(insight, moment)
     m = facts["minute"]
     s = side(segment, moment.team)
     if segment.perspective == "player" and segment.player:
@@ -170,17 +189,17 @@ def insight_template(segment: Segment, moment: Moment, insight: Insight, ctx: Ma
         headline = t(f"sd.h.{s}", lang, minute=m)
     else:
         headline = t("sd.h.neutral", lang, minute=m)
-    alt, _ = alternative_phrase(best_hypothesis(insight), ctx, lang)
-    if alt and "best_alternative_chance_to_score" in facts:
-        if insight.numbers["best_alt_p_goal"] > insight.numbers["actual_p_goal"]:
+    alt, _ = alternative_phrase(best_hypothesis(insight, metric), ctx, lang)
+    if alt and "best_alternative" in facts:
+        if insight.numbers[f"best_alt_{metric}"] > insight.numbers[f"actual_{metric}"]:
             key = "sd.better"
         else:  # what really happened was the better option ("right call", unless the ball was lost anyway)
             key = "sd.worse.plain" if moment.kind == "dangerous_turnover" else "sd.worse"
-        body = t(key, lang, alt=alt, actual=facts["actual_chance_to_score"], best=facts["best_alternative_chance_to_score"])
+        body = t(key, lang, alt=alt, measure=facts["measure"], actual=facts["actual"], best=facts["best_alternative"])
         if lang == "en" and key in ("sd.better", "sd.worse.plain"):
             body = body[0].upper() + body[1:]
     else:
-        body = t("sd.none", lang, actual=facts["actual_chance_to_score"])
+        body = t("sd.none", lang, measure=facts["measure"], actual=facts["actual"])
     return headline, body
 
 
@@ -196,7 +215,10 @@ def _segment_brief(segment: Segment, ctx: MatchContext) -> dict[str, Any]:
 def _moment_brief(segment: Segment, moment: Moment, ctx: MatchContext) -> dict[str, Any]:
     return {
         "kind": moment.kind, "minute": minute(moment.clock_s), "team": ctx.clubs.get(moment.team),
-        "for_or_against_viewer": side(segment, moment.team), "players": [ctx.name(p) for p in moment.player_ids],
+        "for_or_against_viewer": side(segment, moment.team),
+        "players": [{"name": ctx.name(p), "club": ctx.clubs.get(ctx.players[p].team) if p in ctx.players else None,
+                     "viewers_club": (segment.club or segment.player_team) == ctx.players[p].team if p in ctx.players else False}
+                    for p in moment.player_ids],
         "trigger": moment.reason,
     }
 
@@ -219,7 +241,8 @@ class Producer:
         prompt = json.dumps({
             "segment": _segment_brief(segment, ctx),
             "moment": _moment_brief(segment, moment, ctx),
-            "insight": {"claim": insight.claim, "confidence": insight.confidence},
+            "insight": {"claim": insight.claim, "confidence": insight.confidence,
+                        "measure": t(f"measure.{insight_metric(insight, moment)}", "en")},
             "rules": {"relevance": relevance, "base_priority": base, "allowed_priority_range": [lo, hi]},
         }, indent=1, ensure_ascii=False)
         d = self.llm.complete(PRODUCER_SYSTEM, prompt, ProducerDecision, "producer")

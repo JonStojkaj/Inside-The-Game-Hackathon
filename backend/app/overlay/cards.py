@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.agents.production import Narrated, Recap
+from app.agents.production import Narrated, Recap, insight_metric
 from app.models import Insight, Moment
 from app.overlay.cues import Cue, MatchContext
 from app.overlay.scheduler import Candidate
@@ -189,11 +189,13 @@ def insight_candidate(segment: Segment, moment: Moment, insight: Insight, text: 
     """Analyst / player focus: the full Sliding Doors view (ghost futures on the pitch). Others: a one-line
     caption over the pitch. Either way the pitch slot, so it never fights the event card in the lower third."""
     full = segment.sliding_doors_view == "full"
+    metric = insight_metric(insight, moment)
     payload: dict[str, Any] = {
         "moment_id": moment.id, "moment_kind": moment.kind, "minute": minute(moment.clock_s), "team": moment.team,
         "player_ids": moment.player_ids, "confidence": insight.confidence, "narration": text.source, "angle": angle,
         "view": "full" if full else "one_line",
-        "numbers": {k: insight.numbers[k] for k in ("actual_p_goal", "best_alt_p_goal") if k in insight.numbers},
+        "metric": metric,
+        "numbers": {k: insight.numbers[k] for k in (f"actual_{metric}", f"best_alt_{metric}") if k in insight.numbers},
     }
     if full:
         payload |= {"decision_frame": insight.decision_frame, "ghost_paths": insight.ghost_paths,
