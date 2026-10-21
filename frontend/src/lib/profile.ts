@@ -1,4 +1,5 @@
-import type { EventType, Lang, OverlaysBySegment, PlayerInfo, Team, ViewerProfile } from '../types'
+import type { EventType, Lang, OverlaysBySegment, PlayerInfo, ProfileMode, Team, ViewerProfile } from '../types'
+import { EXTRA } from './strings'
 
 /** Same rule as ViewerProfile.segment_id in the backend. */
 export function segmentId(p: ViewerProfile): string {
@@ -38,9 +39,9 @@ export function presets(overlays: OverlaysBySegment, players: PlayerInfo[]): Vie
 }
 
 type Dict = Record<string, string>
-const T: Record<Lang, Dict> = {
+const BASE: Record<Lang, Dict> = {
   en: {
-    analyst: 'Analyst', club_fan: 'Club fan', player_focus: 'Player focus', casual: 'Casual',
+    analyst: 'Analyst', club_fan: 'Club fan', player_focus: 'Player focus', casual: 'Big moments',
     live: 'Live', replay: 'Sliding Doors', what_happened: 'What happened', alternative: 'Best alternative',
     goal_chance: 'goal chance', p_goal: 'chance to score', p_keep: 'chance to keep the ball', no_better: 'No better alternative found', turnover_risk: 'turnover risk', goal_against: 'goal-against chance',
     verified: 'Verified', tested: 'hypotheses tested', rejected: 'rejected', clear: 'Clearly', slight: 'Slightly',
@@ -51,7 +52,7 @@ const T: Record<Lang, Dict> = {
     pts: 'pts',
   },
   de: {
-    analyst: 'Analyst', club_fan: 'Fan', player_focus: 'Spielerfokus', casual: 'Gelegenheit',
+    analyst: 'Analyst', club_fan: 'Fan', player_focus: 'Spielerfokus', casual: 'Highlights',
     live: 'Live', replay: 'Sliding Doors', what_happened: 'Was passiert ist', alternative: 'Beste Alternative',
     goal_chance: 'Torchance', p_goal: 'Torchance', p_keep: 'Chance auf Ballbesitz', no_better: 'Keine bessere Alternative', turnover_risk: 'Ballverlustrisiko', goal_against: 'Gegentorrisiko',
     verified: 'Verifiziert', tested: 'Hypothesen getestet', rejected: 'verworfen', clear: 'Deutlich', slight: 'Leicht',
@@ -62,7 +63,7 @@ const T: Record<Lang, Dict> = {
     pts: 'Pkt.',
   },
   es: {
-    analyst: 'Analista', club_fan: 'Aficionado', player_focus: 'Jugador', casual: 'Casual',
+    analyst: 'Analista', club_fan: 'Aficionado', player_focus: 'Jugador', casual: 'Grandes momentos',
     live: 'En directo', replay: 'Sliding Doors', what_happened: 'Lo que pasó', alternative: 'Mejor alternativa',
     goal_chance: 'prob. de gol', p_goal: 'prob. de marcar', p_keep: 'prob. de conservar el balón', no_better: 'Ninguna alternativa mejor', turnover_risk: 'riesgo de pérdida', goal_against: 'prob. de gol en contra',
     verified: 'Verificado', tested: 'hipótesis probadas', rejected: 'descartadas', clear: 'Claramente', slight: 'Ligeramente',
@@ -72,6 +73,12 @@ const T: Record<Lang, Dict> = {
     right_call: 'Decisión correcta', better_existed: 'Había una opción mejor', numbers_traced: 'cifras trazadas a simulaciones', evidence: 'pruebas',
     pts: 'pts',
   },
+}
+
+const T: Record<Lang, Dict> = {
+  en: { ...BASE.en, ...EXTRA.en },
+  de: { ...BASE.de, ...EXTRA.de },
+  es: { ...BASE.es, ...EXTRA.es },
 }
 
 const EVENTS: Record<Lang, Partial<Record<EventType, string>>> = {
@@ -95,3 +102,68 @@ export function fmtPts(lang: Lang, d: number): string {
 export const t = (lang: Lang, key: string): string => T[lang]?.[key] ?? T.en[key] ?? key
 export const eventLabel = (lang: Lang, type: EventType): string => EVENTS[lang]?.[type] ?? type
 export const LANGS: Lang[] = ['en', 'de', 'es']
+
+/** t() with `{key}` placeholders filled. */
+export function tf(lang: Lang, key: string, vars: Record<string, string | number>): string {
+  return t(lang, key).replace(/\{(\w+)\}/g, (_, k: string) => String(vars[k] ?? ''))
+}
+
+/** Plain number in the viewer's locale: 0.57 / 0,57. */
+export function fmtNum(lang: Lang, v: number, digits = 1): string {
+  const s = v.toFixed(digits)
+  return lang === 'en' ? s : s.replace('.', ',')
+}
+
+/** Last name for tight spaces ("Kai Nakamura" -> "Nakamura"). */
+export const surname = (name: string): string => name.split(' ').slice(-1)[0]
+
+export const MODES: ProfileMode[] = ['analyst', 'club_fan', 'player_focus', 'casual']
+
+// ---------------------------------------------------------------- persistence + demo URLs
+
+const KEY = 'sliding-doors.profile.v1'
+
+function valid(p: Partial<ViewerProfile> | null, players: PlayerInfo[]): ViewerProfile | null {
+  if (!p || !MODES.includes(p.mode as ProfileMode) || !LANGS.includes(p.language as Lang)) return null
+  const club = p.favourite_club === 'home' || p.favourite_club === 'away' ? p.favourite_club : null
+  const fav = (p.favourite_players ?? []).filter((id) => players.some((x) => x.id === id))
+  if (p.mode === 'club_fan' && !club) return null
+  if (p.mode === 'player_focus' && !fav.length) return null
+  return {
+    mode: p.mode as ProfileMode,
+    language: p.language as Lang,
+    favourite_club: p.mode === 'club_fan' ? club : null,
+    favourite_players: p.mode === 'player_focus' ? fav.slice(0, 1) : [],
+  }
+}
+
+/** Saved profile; localStorage may be unavailable (private window, blocked storage). */
+export function loadProfile(players: PlayerInfo[]): ViewerProfile | null {
+  try {
+    const raw = window.localStorage.getItem(KEY)
+    return raw ? valid(JSON.parse(raw) as Partial<ViewerProfile>, players) : null
+  } catch {
+    return null
+  }
+}
+
+export function saveProfile(p: ViewerProfile | null): void {
+  try {
+    if (p) window.localStorage.setItem(KEY, JSON.stringify(p))
+    else window.localStorage.removeItem(KEY)
+  } catch {
+    /* storage blocked: the profile lives for this page view only */
+  }
+}
+
+/**
+ * Demo recordings skip onboarding with a profile in the URL:
+ *   ?profile=analyst|club_fan|player_focus|casual&club=home|away&player=A20&lang=en|de|es
+ */
+export function profileFromQuery(players: PlayerInfo[], search = window.location.search): ViewerProfile | null {
+  const q = new URLSearchParams(search)
+  const mode = q.get('profile') as ProfileMode | null
+  if (!mode) return null
+  const player = q.get('player') ?? players.find((p) => p.position === 'CF')?.id ?? players[0]?.id
+  return valid({ mode, language: (q.get('lang') ?? 'en') as Lang, favourite_club: (q.get('club') ?? 'home') as Team, favourite_players: player ? [player] : [] }, players)
+}
