@@ -4,10 +4,13 @@
 #
 # Build context is the REPO ROOT (needs frontend/ and data/export/; see .dockerignore):
 #   docker build --platform linux/amd64 -f backend/Dockerfile --build-arg VITE_MATCH_ID=demo-<n> .
-# `azd up` builds it remotely in Azure Container Registry (azure.yaml, infra/README.md), never on the dev Mac.
+# Free-trial subscriptions do not allow ACR Tasks (remote builds), so `azd deploy` builds it locally with
+# Docker (OrbStack) and pushes to the registry; the node stage runs natively, see below.
 
 # ---- stage 1: web player -------------------------------------------------------------------
-FROM node:22-slim AS frontend
+# built on the BUILD machine's native platform (static files are platform-independent), so a local
+# amd64 build on Apple Silicon only emulates the light Python stage below
+FROM --platform=$BUILDPLATFORM node:22-slim AS frontend
 WORKDIR /src/frontend
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci --no-audit --no-fund

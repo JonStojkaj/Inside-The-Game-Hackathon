@@ -17,7 +17,9 @@ services:
       path: ./Dockerfile
       context: ..
       platform: linux/amd64
-      remoteBuild: true # build in Azure Container Registry, never with Docker on the dev Mac
+      # Free-trial subscriptions reject ACR Tasks (TasksOperationsNotAllowed) -> build locally with Docker
+      # (the node stage runs natively, only the light Python stage is emulated); set true on paid subscriptions
+      remoteBuild: false
       buildArgs:
         - VITE_MATCH_ID=${DEMO_MATCH_ID}
 hooks:
