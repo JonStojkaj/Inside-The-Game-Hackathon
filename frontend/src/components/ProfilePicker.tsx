@@ -1,5 +1,5 @@
 import { useMatch } from '../lib/context'
-import { LANGS, resolveSegment, segmentId, t } from '../lib/profile'
+import { LANGS, presets, resolveSegment, segmentId, t } from '../lib/profile'
 import type { ProfileMode, ViewerProfile } from '../types'
 
 const MODES: ProfileMode[] = ['analyst', 'club_fan', 'player_focus']
@@ -29,7 +29,7 @@ export function ProfilePicker({ profile, onChange, compact }: Props) {
               set({
                 mode,
                 favourite_club: mode === 'club_fan' ? (profile.favourite_club ?? 'home') : null,
-                favourite_players: mode === 'player_focus' ? (profile.favourite_players.length ? profile.favourite_players : ['H10']) : [],
+                favourite_players: mode === 'player_focus' ? (profile.favourite_players.length ? profile.favourite_players : presets(m.bundle.overlays, players)[2].favourite_players) : [],
               })
             }
           >

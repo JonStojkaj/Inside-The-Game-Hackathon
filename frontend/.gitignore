@@ -25,3 +25,6 @@ dist-ssr
 
 # root .gitignore ignores Python lib/ dirs; our TS lib must be tracked
 !src/lib/
+
+# local test bundles (videos etc.), see scripts/sync-export.mjs
+public/dev/
