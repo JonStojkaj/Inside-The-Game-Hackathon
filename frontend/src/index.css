@@ -1508,3 +1508,10 @@ code {
 .split .tk-items .tk-item:nth-child(n + 3) {
   display: none;
 }
+.cr-empty {
+  color: var(--muted);
+  padding: 24px 0;
+}
+.seg-none {
+  color: var(--gold);
+}

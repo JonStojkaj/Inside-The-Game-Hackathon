@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 
-const EXPORT_DIR = resolve(fileURLToPath(new URL('.', import.meta.url)), '../data/export')
+const EXPORT_DIR = resolve(process.env.EXPORT_DIR ?? resolve(fileURLToPath(new URL('.', import.meta.url)), '../data/export'))
 const TYPES: Record<string, string> = { '.json': 'application/json', '.mp4': 'video/mp4' }
 
 /** Dev only: serve the backend's export folder (data/export/<id>/) at /export/<id>/. */

@@ -77,12 +77,7 @@ export function ProfilePicker({ profile, onChange, compact }: Props) {
       {!compact && (
         <div className={`seg-id ${seg.exact ? 'ok' : 'fallback'}`} title="overlay segment (production runs once per segment)">
           segment <code>{segmentId(profile)}</code>
-          {!seg.exact && (
-            <>
-              {' '}
-              → <code>{seg.id}</code>
-            </>
-          )}
+          {!seg.exact && (seg.id !== segmentId(profile) ? <> → <code>{seg.id}</code></> : <span className="seg-none"> · no overlays yet</span>)}
         </div>
       )}
     </div>

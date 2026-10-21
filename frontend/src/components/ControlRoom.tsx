@@ -127,6 +127,7 @@ export function ControlRoom() {
         </div>
       </div>
       <div className="cr-log" ref={logRef}>
+        {!insights.length && <div className="cr-empty">Waiting for the explain team · no insights in this export yet</div>}
         {lines.slice(0, shown).map((l, k) => (
           <div key={`${current?.id}-${k}`} className={`cr-line a-${l.agent} ${l.tone ?? ''}`}>
             <span className="cr-agent">{AGENT_LABEL[l.agent]}</span>
