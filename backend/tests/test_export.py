@@ -3,7 +3,14 @@ import json
 import pytest
 from conftest import make_match, own
 
-from app.export.exporter import FILES, PLAYER_STAT_FIELDS, STATS_EVERY, export_match, load_overlays
+from app.export.exporter import (
+    FILES,
+    PLAYER_STAT_FIELDS,
+    STATS_EVERY,
+    export_from_dir,
+    export_match,
+    load_overlays,
+)
 from app.models import Insight, Overlay
 
 
@@ -105,3 +112,27 @@ def test_demo_size_budget():
     with tempfile.TemporaryDirectory() as d:
         sizes = export_match(match, Path(d))
     assert sizes["frames.json"] < 5 * 1024 * 1024
+
+
+def test_export_from_dir_keeps_unknown_insight_fields_and_picks_up_video(tmp_path):
+    rec = tmp_path / "demo-7"
+    rec.mkdir()
+    row = {"left_team": [[-0.5, 0.0]] * 11, "right_team": [[0.5, 0.0]] * 11,
+           "left_team_direction": [[0.0, 0.0]] * 11, "right_team_direction": [[0.0, 0.0]] * 11,
+           "ball": [0.0, 0.0, 0.1], "ball_owned_team": -1, "ball_owned_player": -1, "game_mode": 0,
+           "score": [0, 0], "left_team_roles": list(range(10)) + [9], "right_team_roles": list(range(10)) + [9]}
+    (rec / "raw.jsonl").write_text("\n".join(json.dumps(row) for _ in range(5)))
+    (rec / "video.mp4").write_bytes(b"\x00" * 8)
+    insight = Insight(id="i1", moment_id="m1", claim="c", evidence=[], numbers={}, verified=True,
+                      confidence="slight").model_dump(mode="json") | {"metric": "p_keep"}
+    (tmp_path / "insights.json").write_text(json.dumps([insight]))
+    bad = tmp_path / "bad.json"
+    bad.write_text(json.dumps([{"id": "x"}]))
+
+    out, sizes = export_from_dir(rec, tmp_path / "export", insights_path=tmp_path / "insights.json")
+    assert out == tmp_path / "export" / "demo-7"
+    assert load(out, "insights.json")[0]["metric"] == "p_keep"
+    assert load(out, "match.json")["video"] == {"file": "video.mp4", "fps": 10}
+    assert sizes["video.mp4"] == 8
+    with pytest.raises(ValueError):
+        export_from_dir(rec, tmp_path / "export", insights_path=bad)

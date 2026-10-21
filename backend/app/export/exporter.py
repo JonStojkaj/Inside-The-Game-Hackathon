@@ -15,11 +15,12 @@ from __future__ import annotations
 import json
 import shutil
 from collections import defaultdict
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
 import numpy as np
-from pydantic import TypeAdapter
+from pydantic import BaseModel, TypeAdapter
 
 from app.models import Insight, MatchEvent, Moment, Overlay
 from app.source.events import derive_events
@@ -104,14 +105,27 @@ def stats_snapshots(match: GrfMatch, events: list[MatchEvent], every: int = STAT
     return out
 
 
-def load_overlays(data: Any) -> dict[str, list[Overlay]]:
-    """Accept {segment_id: [Overlay]} or a flat [Overlay] list (grouped by segment_id)."""
+def load_insights(data: Any) -> list[dict[str, Any]]:
+    """Validate a list[Insight] JSON value and return it unchanged, so fields added by newer
+    versions of the model (e.g. `metric`) survive the copy."""
+    _insights.validate_python(data)
+    return list(data)
+
+
+def load_overlays(data: Any) -> dict[str, list[dict[str, Any]]]:
+    """Accept {segment_id: [Overlay]} or a flat [Overlay] list (grouped by segment_id); validated, kept as is."""
     if isinstance(data, list):
-        grouped: dict[str, list[Overlay]] = defaultdict(list)
-        for o in _overlay_list.validate_python(data):
-            grouped[o.segment_id].append(o)
+        _overlay_list.validate_python(data)
+        grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+        for o in data:
+            grouped[o["segment_id"]].append(o)
         return dict(grouped)
-    return _overlays.validate_python(data)
+    _overlays.validate_python(data)
+    return dict(data)
+
+
+def _dump(item: BaseModel | dict[str, Any]) -> dict[str, Any]:
+    return item.model_dump(mode="json") if isinstance(item, BaseModel) else item
 
 
 def _write(path: Path, data: Any) -> int:
@@ -125,8 +139,8 @@ def export_match(
     out_dir: str | Path,
     *,
     events: list[MatchEvent] | None = None,
-    insights: list[Insight] | None = None,
-    overlays: dict[str, list[Overlay]] | None = None,
+    insights: Sequence[Insight | dict[str, Any]] | None = None,
+    overlays: Mapping[str, Sequence[Overlay | dict[str, Any]]] | None = None,
     video: str | Path | None = None,
 ) -> dict[str, int]:
     """Write all export files to `out_dir`; returns {file name: size in bytes}."""
@@ -143,11 +157,11 @@ def export_match(
     sizes["frames.json"] = _write(out / "frames.json", frames_payload(match))
     sizes["events.json"] = _write(out / "events.json", [e.model_dump(mode="json") for e in events])
     sizes["moments.json"] = _write(out / "moments.json", [m.model_dump(mode="json") for m in moments])
-    sizes["insights.json"] = _write(out / "insights.json", [i.model_dump(mode="json") for i in insights or []])
+    sizes["insights.json"] = _write(out / "insights.json", [_dump(i) for i in insights or []])
     sizes["stats.json"] = _write(out / "stats.json", stats_snapshots(match, events))
     sizes["overlays.json"] = _write(
         out / "overlays.json",
-        {seg: [o.model_dump(mode="json") for o in items] for seg, items in (overlays or {}).items()},
+        {seg: [_dump(o) for o in items] for seg, items in (overlays or {}).items()},
     )
     return sizes
 
@@ -164,7 +178,7 @@ def export_from_dir(
     """Export a recording folder (raw.jsonl [+ video.mp4]) to `out_root/<match_id>/`."""
     match_dir = Path(match_dir)
     match = load_grf_match(match_dir, match_id=match_id)
-    insights = _insights.validate_json(Path(insights_path).read_bytes()) if insights_path else None
+    insights = load_insights(json.loads(Path(insights_path).read_text())) if insights_path else None
     overlays = load_overlays(json.loads(Path(overlays_path).read_text())) if overlays_path else None
     if video_path is None and (match_dir / VIDEO_FILE).exists():
         video_path = match_dir / VIDEO_FILE
