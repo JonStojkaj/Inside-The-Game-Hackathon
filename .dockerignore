@@ -1,0 +1,18 @@
+# build context = repo root (backend/Dockerfile); keep it small and secret-free
+.git
+.claude
+.env
+.env.*
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/node_modules
+frontend/dist
+spikes
+docs
+infra
+backend/tests
+data/*
+!data/export
