@@ -21,6 +21,7 @@ be replaced by a model calibrated on real data without touching the agents.
 from __future__ import annotations
 
 import time
+from dataclasses import dataclass
 
 import numpy as np
 
@@ -72,9 +73,28 @@ def _nearest_opponent(opp_matrix: np.ndarray, pair: np.ndarray, sims: np.ndarray
     return np.where(opp_matrix[of], pair[sims, of], np.inf).argmin(1)
 
 
+@dataclass(frozen=True)
+class EngineParams:
+    """Behaviour knobs, tuned by app/rollout/calibration.py against recorded GRF matches.
+
+    Calibrated 2026-10-22 on 150 real GRF states (6 matches, 15 s horizon):
+      turnover  engine 0.89 vs GRF 0.77 (final third 0.90 vs 0.82)
+      goal      engine 0.071 vs GRF 0.060
+    The engine still over-predicts turnovers, so Sliding Doors only makes comparative claims.
+    """
+
+    shoot_base: float = 0.6  # per-step shot probability near goal
+    pass_base: float = 0.03  # per-step pass probability when free
+    pass_pressure: float = 0.1  # extra pass probability when pressed
+    pass_distance_scale: float = 600.0  # m; pass success decays with exp(-d / scale)
+    lane_block: float = 0.15  # max success reduction from an opponent in the lane
+    tackle_base: float = 0.02  # per-step tackle probability with a defender on top of the carrier
+
+
 class RolloutEngine:
-    def __init__(self, dt: float = 0.4) -> None:
+    def __init__(self, dt: float = 0.4, params: EngineParams | None = None) -> None:
         self.dt = dt
+        self.params = params or EngineParams()
 
     def run(
         self,
@@ -87,6 +107,7 @@ class RolloutEngine:
     ) -> RolloutResult:
         started = time.perf_counter()
         rng = np.random.default_rng(seed)
+        prm = self.params
         dt = self.dt
 
         ids = [p.id for p in state.players]
@@ -156,8 +177,8 @@ class RolloutEngine:
             d_goal = np.hypot(goal_x - hpos[:, 0], GOAL_Y - hpos[:, 1])
 
             # --- choose action -------------------------------------------------
-            p_shoot = np.where(d_goal < 35.0, 0.6 * np.exp(-np.maximum(d_goal - 8.0, 0.0) / 7.0), 0.0)
-            p_pass = 0.08 + 0.3 * pressure
+            p_shoot = np.where(d_goal < 35.0, prm.shoot_base * np.exp(-np.maximum(d_goal - 8.0, 0.0) / 7.0), 0.0)
+            p_pass = prm.pass_base + prm.pass_pressure * pressure
             u = rng.random(n)
             action = np.where(
                 u < p_shoot, ACTION_SHOOT, np.where(u < p_shoot + p_pass, ACTION_PASS, ACTION_CARRY)
@@ -205,9 +226,9 @@ class RolloutEngine:
                 lane = _lane_clearance(hpos[rp], pos[rp, target], pos[rp], opp_matrix[owner[rp]])
                 p_success = (
                     0.99
-                    * np.exp(-t_dist / 150.0)
+                    * np.exp(-t_dist / prm.pass_distance_scale)
                     * (1 - 0.4 * np.exp(-t_open / 2.0))
-                    * (1 - 0.4 * np.exp(-lane / 1.5))
+                    * (1 - prm.lane_block * np.exp(-lane / 1.5))
                     * (1 - 0.15 * pressure[rp])
                 )
                 p_success = np.where(is_gk[owner[rp]], 0.85, p_success)
@@ -226,7 +247,7 @@ class RolloutEngine:
                 heading = 0.6 * to_goal + 0.4 * np.stack([direction[rc], np.zeros(rc.size)], axis=1)
                 heading /= np.linalg.norm(heading, axis=1, keepdims=True) + 1e-9
                 pos[rc, owner[rc]] += heading * CARRY_SPEED * dt + rng.normal(0, 0.4, (rc.size, 2))
-                p_tackle = 0.12 * np.exp(-d_press[rc] / 1.0)
+                p_tackle = prm.tackle_base * np.exp(-d_press[rc] / 1.0)
                 tackled = rc[rng.random(rc.size) < p_tackle]
                 if tackled.size:
                     owner[tackled] = _nearest_opponent(opp_matrix, pair, tackled, owner[tackled])
