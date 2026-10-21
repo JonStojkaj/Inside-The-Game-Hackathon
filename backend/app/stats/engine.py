@@ -18,7 +18,9 @@ from app.stats.metrics import control_chaos, pressure_index, rhythm
 
 MAX_STEP_M = 1.5  # displacement per frame above this is a reset jump, not running
 ON_TARGET = {"goal", "saved"}
-WINDOW_S = 300.0  # rolling window for control/chaos, rhythm and pressing (5 minutes of play)
+# rolling window for control/chaos, rhythm and pressing, in PHYSICAL match time: GRF plays a 90' clock
+# in 5 minutes (x18), so 40 s of play is about 12 broadcast minutes. (300 s was the whole GRF match.)
+WINDOW_S = 40.0
 
 
 class PlayerStats(BaseModel):
@@ -90,7 +92,7 @@ class StatsEngine:
         self._clock_s = 0.0
         self._ball_speed = 0.0
         self._pressure_on_ball = 0.0
-        self._events: deque[MatchEvent] = deque()
+        self._events: list[MatchEvent] = []  # whole match: rhythm compares the window with the match so far
         self._press: dict[str, deque[tuple[int, float]]] = {"home": deque(), "away": deque()}
 
     # --- frames ---------------------------------------------------------------
@@ -126,8 +128,6 @@ class StatsEngine:
     # --- events ---------------------------------------------------------------
     def on_event(self, event: MatchEvent) -> None:
         self._events.append(event)
-        while self._events and self._events[0].t_ms < event.t_ms - 2 * WINDOW_S * 1000:
-            self._events.popleft()
         team = self.teams[event.team].stats if event.team else None
         player = self.players.get(event.player_id) if event.player_id else None
         if event.type == "pass" and team and player:
@@ -170,9 +170,11 @@ class StatsEngine:
         last = self._last
         now = last.t_ms if last else 0
         window_ms = WINDOW_S * 1000
-        current = [e for e in self._events if e.t_ms > now - window_ms]
-        previous = [e for e in self._events if now - 2 * window_ms < e.t_ms <= now - window_ms]
+        current = [e for e in self._events if now - window_ms < e.t_ms <= now]
         elapsed_s = min(WINDOW_S, now / 1000) or WINDOW_S
+        # trend baseline: the match before this window, once there is at least one window of it
+        before_s = now / 1000 - WINDOW_S
+        previous = [e for e in self._events if e.t_ms <= now - window_ms] if before_s >= WINDOW_S else []
         return StatsSnapshot(
             match_id=self.match_id,
             t_ms=now,
@@ -184,5 +186,5 @@ class StatsEngine:
             pressure_on_ball=round(self._pressure_on_ball, 2),
             pressing={t: round(float(np.mean([v for _, v in s])), 3) if s else 0.0 for t, s in self._press.items()},
             control=control_chaos(current, elapsed_s),
-            rhythm=rhythm(current, previous, elapsed_s),
+            rhythm=rhythm(current, previous, elapsed_s, max(before_s, WINDOW_S)),
         )

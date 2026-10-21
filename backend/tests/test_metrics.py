@@ -35,7 +35,7 @@ def test_pressure_index():
 def test_control_vs_chaos():
     calm = [ev(i, "pass", outcome="complete") for i in range(30)]
     wild = [ev(i, "interception" if i % 2 else "tackle", team="away") for i in range(30)]
-    c, w = control_chaos(calm, 300), control_chaos(wild, 300)
+    c, w = control_chaos(calm, 120), control_chaos(wild, 120)  # 30 turnovers in 2 minutes of play = 15/min
     assert c["chaos"] < 0.2 < 0.6 < w["chaos"]
     assert c["control_team"] == "home" and c["control_share"] == 1.0
 
