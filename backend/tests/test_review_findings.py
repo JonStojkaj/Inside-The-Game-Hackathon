@@ -1,7 +1,6 @@
-"""Devil's-advocate review (docs/review/devils-advocate.md): failing tests that pin real bugs.
+"""Devil's-advocate review (docs/review/devils-advocate.md): tests that pinned real bugs (R1-R7).
 
-Each test is xfail(strict=True): it documents the correct behaviour, keeps the suite green today,
-and turns into an XPASS failure once the bug is fixed, so the marker gets removed with the fix.
+They started as xfail(strict=True) and became regular regression tests when each bug was fixed.
 """
 
 import numpy as np
@@ -42,8 +41,7 @@ def test_failed_pass_is_never_intended_for_the_passer(match):
     assert failed and failed[0].meta["intended_receiver"] != failed[0].player_id
 
 
-@pytest.mark.xfail(strict=True, reason="R4: one-touch finishes have no ownership frame in GRF, so the goal is credited to "
-                                       "the last owner (full-34 11': CB Felix Ondo 'scores from 20 m at 5 km/h', real finisher A20)")
+# R4 fixed: the finisher is found from the last sharp ball acceleration before the goal
 def test_one_touch_finish_is_credited_to_the_finisher(match):
     own(match, 9, 0, 5)  # H10 rolls the ball slowly to H11 ...
     start, touch = match.ball[5, :2].copy(), match.pos[10, 10].copy()
@@ -54,20 +52,27 @@ def test_one_touch_finish_is_credited_to_the_finisher(match):
     match.ball_vel[1:, :2] = np.diff(match.ball[:, :2], axis=0) / 0.1
     match.score[15:] = [1, 0]
     own(match, 16, 20, 25)  # away kick-off
-    goal = next(e for e in derive_events(match) if e.type == "goal")
+    events = derive_events(match)
+    goal = next(e for e in events if e.type == "goal")
     assert goal.player_id == "H11"
+    shot = next(e for e in events if e.type == "shot")
+    assert shot.player_id == "H11" and shot.frame == 10 and shot.meta["shot_speed_kmh"] > 100
+    assist = next(e for e in events if e.type == "pass")  # the roll to the finisher becomes the assist
+    assert (assist.player_id, assist.target_id, assist.outcome) == ("H10", "H11", "complete")
 
 
 # --- stats ----------------------------------------------------------------------------------
 
-@pytest.mark.xfail(strict=True, reason="R6: an intercepted pass emits 'pass incomplete' + 'interception'; control_chaos counts both")
+# R6 fixed: an interception that answers a failed pass is one possession change
 def test_one_interception_is_one_possession_change():
     events = [ev(1, "pass", outcome="incomplete"), ev(2, "interception", team="away")]
     assert control_chaos(events, 60.0)["possession_changes_per_min"] == 1.0
+    # a failed pass nobody intercepted (e.g. into touch, picked up later) still counts once
+    lone = [ev(1, "pass", outcome="incomplete", t_ms=0), ev(2, "interception", team="away", t_ms=30_000)]
+    assert control_chaos(lone, 60.0)["possession_changes_per_min"] == 2.0
 
 
-@pytest.mark.xfail(strict=True, reason="R3: WINDOW_S = 300 s equals the whole 5-minute GRF match, so the 'previous' window "
-                                       "is always empty and rhythm.trend is 'steady' for the entire demo")
+# R3 fixed: the window is 40 s of physical play and the trend compares it with the match so far
 def test_rhythm_trend_can_change_within_a_grf_match():
     from conftest import make_match
 
@@ -84,8 +89,7 @@ def test_rhythm_trend_can_change_within_a_grf_match():
 
 # --- rollout engine + experiments -----------------------------------------------------------
 
-@pytest.mark.xfail(strict=True, reason="R1: carries are nearly tackle-free, so dribbling beats shooting even from the "
-                                       "penalty spot; Sliding Doors tells every goal-scorer in full-34 to 'carry instead'")
+# R1 fixed: density/goal-dependent dispossession + keeper off his line, calibrated with a ranking gate
 def test_shooting_from_the_penalty_spot_beats_dribbling():
     state = final_third_attack("H9", (94.0, 34.0))
     engine = RolloutEngine()
@@ -101,8 +105,7 @@ def _shot_context(owner_xy=(80.0, 34.0)) -> DecisionContext:
     return DecisionContext(moment, 0, state, "H9", Intervention(kind="swap_action", params={"action": "shoot"}), "shoot")
 
 
-@pytest.mark.xfail(strict=True, reason="R2: 'defender stands closer' experiments drop the actual decision (shoot), so they "
-                                       "compare 'defender moved + free choice' with 'forced shot'; a 0 m move already changes p_goal")
+# R2 fixed: move experiments replay the actual decision via params["then_action"]
 def test_a_zero_metre_defender_move_reproduces_the_actual_decision():
     from app.agents.experiments import ExperimentRunner
 
@@ -112,14 +115,17 @@ def test_a_zero_metre_defender_move_reproduces_the_actual_decision():
     runner = ExperimentRunner(n=500, seeds=(1,))
     base, _ = runner.baseline(ctx)
     moved, _ = runner.run(ctx, "null", "nobody moves", null)
-    assert moved.p_goal == pytest.approx(base.p_goal, abs=0.01)
+    assert moved.p_goal == base.p_goal  # same seeds, same state, same decision -> identical futures
+    assert tight.intervention.params["then_action"] == ctx.actual.params
 
 
 # --- explain team: claim validation ---------------------------------------------------------
 
-@pytest.mark.xfail(strict=True, reason="R7: since 0ae244d decimals and points are checked, but plain integers ('3 times', '6 m') still pass by design")
+# R7 fixed: plain integers and number words must come from code too
 def test_claim_with_invented_non_percentage_numbers_is_rejected():
     assert not numbers_are_ours("Shooting made a goal 3 times more likely; the full back was 6 m too high.", {"4.0%"})
+    assert not numbers_are_ours("Shooting would have doubled his chance.", {"4.0%"})
+    assert numbers_are_ours("If defender Kim had stood 5 m closer, 4.0%.", {"4.0%"}, allowed_plain={"5"})
 
 
 def _result(eid: str, p_goal: float, spread: float = 0.001) -> ExperimentResult:
@@ -127,8 +133,7 @@ def _result(eid: str, p_goal: float, spread: float = 0.001) -> ExperimentResult:
                             p_conceded=0.0, seed_spread=spread, rollout_ids=[f"rollout:{eid}"])
 
 
-@pytest.mark.xfail(strict=True, reason="R7: the allowed-number set includes REJECTED experiments, so the Critic can state a "
-                                       "rejected finding as fact and the claim still passes validation")
+# R7 fixed: only the baseline and accepted findings may be stated as fact
 def test_claim_cannot_state_a_rejected_finding_as_fact(monkeypatch):
     ctx = _shot_context()
     monkeypatch.setattr(explain, "decision_context", lambda *a: ctx)
@@ -151,3 +156,34 @@ def test_claim_cannot_state_a_rejected_finding_as_fact(monkeypatch):
     insight = ExplainTeam(llm, runner=Runner(), max_rounds=1).explain(None, ctx.moment, [])  # type: ignore[arg-type]
     assert all(h.verdict == "rejected" for h in insight.hypotheses)
     assert "7.0%" not in insight.claim
+
+
+def test_hypothesis_texts_and_critic_notes_cannot_carry_invented_numbers(monkeypatch):
+    ctx = _shot_context()
+    monkeypatch.setattr(explain, "decision_context", lambda *a: ctx)
+    rollout = type("Rollout", (), {"sample_paths": []})()
+
+    class Runner:
+        def baseline(self, ctx):
+            return _result("actual", 0.040), rollout
+
+        def run(self, ctx, eid, description, iv):
+            return _result(eid, 0.120), rollout
+
+    exp = experiment_menu(ctx)[0]
+    llm = FakeLLM({
+        "analyst": lambda p: AnalystPlan(hypotheses=[AnalystHypothesis(experiment_id=exp.id, text="This triples the chance to 25%.")]),
+        "critic": lambda p: CriticReview(verdicts=[CriticVerdict(experiment_id=exp.id, verdict="accepted", note="3 times better")],
+                                         claim=""),
+    })
+    h = ExplainTeam(llm, runner=Runner(), max_rounds=1).explain(None, ctx.moment, []).hypotheses[0]  # type: ignore[arg-type]
+    assert h.text == f"If {exp.description}."
+    assert "3 times" not in h.critic_note
+
+
+def test_shoot_is_only_offered_within_30_m_of_goal():
+    carry = Intervention(kind="swap_action", params={"action": "carry"})
+    near, far = _shot_context((80.0, 34.0)), _shot_context((50.0, 34.0))
+    near.actual = far.actual = carry
+    assert "shoot" in {e.id for e in experiment_menu(near)}
+    assert "shoot" not in {e.id for e in experiment_menu(far)}

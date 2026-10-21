@@ -14,7 +14,8 @@ def test_numbers_must_come_from_our_results():
     allowed = {"10.8%", "14.5%"}
     deltas = {points(BASE, res(0.145))}  # "3.7"
     assert numbers_are_ours("The chance rose from 10.8% to 14.5%.", allowed, deltas)
-    assert numbers_are_ours("A rise of 3.7 points in minute 42 by number 9.", allowed, deltas)
+    assert numbers_are_ours("A rise of 3.7 points in minute 42 by number 9.", allowed, deltas, {"42", "9"})
+    assert not numbers_are_ours("A rise of 3.7 points in minute 42.", allowed, deltas)  # integer not from code
     assert not numbers_are_ours("The chance rose to 15%.", allowed, deltas)  # invented percentage
     assert not numbers_are_ours("a 3.8-point increase", allowed, deltas)  # LLM did its own arithmetic
     assert not numbers_are_ours("an xG of 0.31", allowed, deltas)  # unexplained decimal
