@@ -1452,3 +1452,59 @@ code {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ---------------------------------------------------------------- 3-up: tall "second screen" stages */
+
+.split .stage {
+  width: min(100cqw, calc(100cqh * 3 / 4));
+  aspect-ratio: 3 / 4;
+  --u: 1.55cqw;
+}
+.split .persistent {
+  top: auto;
+  bottom: calc(var(--u) * 34);
+  left: calc(var(--u) * 2.4);
+  right: calc(var(--u) * 2.4);
+}
+.split .side-panel {
+  top: auto;
+  bottom: calc(var(--u) * 6.4);
+  left: calc(var(--u) * 2.4);
+  right: calc(var(--u) * 2.4);
+  width: auto;
+}
+.split .lower-third {
+  left: calc(var(--u) * 2.4);
+  right: calc(var(--u) * 2.4);
+  max-width: none;
+  bottom: calc(var(--u) * 6.4);
+}
+.split .sd-card {
+  grid-template-columns: 1fr;
+  bottom: calc(var(--u) * 6);
+  left: calc(var(--u) * 2.4);
+  right: calc(var(--u) * 2.4);
+}
+.split .sd-claim,
+.split .sd-meta {
+  display: initial;
+}
+.split .sd-meta {
+  display: flex;
+}
+.split .sd-pct {
+  font-size: calc(var(--u) * 3.4);
+}
+.split .sd-legend {
+  top: auto;
+  bottom: calc(var(--u) * 40);
+}
+.split .sd-badge {
+  top: calc(var(--u) * 7);
+}
+.split .fs-headline {
+  font-size: calc(var(--u) * 14);
+}
+.split .tk-items .tk-item:nth-child(n + 3) {
+  display: none;
+}

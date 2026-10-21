@@ -24,6 +24,29 @@ const ALT = '#ffc83d'
 const REAL = '#ffffff'
 const GHOST_MS = 2600
 
+interface View {
+  cx: number
+  cy: number
+  span: number // metres of pitch length visible
+}
+const FULL_VIEW: View = { cx: PITCH_L / 2, cy: PITCH_W / 2, span: PITCH_L }
+const views = new WeakMap<Insight, View>()
+
+/** Frame the ghost futures (plus margin), keeping the lower part of the screen free for the card. */
+function ghostView(ins: Insight): View {
+  const pts = [...ins.ghost_paths, ...ins.alt_ghost_paths].flat()
+  if (!pts.length) return FULL_VIEW
+  // 5-95 % of the points: a few stray futures must not zoom the camera out
+  const q = (v: number[], p: number) => v.sort((a, b) => a - b)[Math.floor(p * (v.length - 1))]
+  const xs = pts.map((pt) => pt[0])
+  const ys = pts.map((pt) => pt[1])
+  const [x0, x1, y0, y1] = [q(xs, 0.05), q(xs, 0.95), q(ys, 0.05), q(ys, 0.95)]
+  const span = Math.min(PITCH_L, Math.max(45, (x1 - x0) * 1.6, (y1 - y0) * 1.6 * (PITCH_L / PITCH_W)))
+  const half = span / 2
+  const cx = Math.min(Math.max((x0 + x1) / 2, half - 3), PITCH_L - half + 3)
+  return { cx, cy: (y0 + y1) / 2 - span * 0.1, span }
+}
+
 const easeOut = (t: number) => 1 - Math.pow(1 - Math.min(Math.max(t, 0), 1), 3)
 
 function shade(hex: string, k: number): string {
@@ -51,6 +74,8 @@ export function Pitch(props: PitchProps) {
     let w = 0
     let h = 0
     let dpr = 1
+    let cam: View | null = null
+    let lastNow = performance.now()
 
     const resize = () => {
       dpr = Math.min(window.devicePixelRatio || 1, 2)
@@ -68,10 +93,19 @@ export function Pitch(props: PitchProps) {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       ctx.clearRect(0, 0, w, h)
 
-      // geometry: pitch centred, leaving room for scorebug (top) and ticker (bottom)
-      const s = Math.min((w * 0.88) / PITCH_L, (h * 0.78) / PITCH_W)
-      const ox = (w - PITCH_L * s) / 2
-      const oy = h * 0.49 - (PITCH_W * s) / 2
+      // camera: whole pitch, or zoomed onto the ghost futures during Sliding Doors
+      const target = p.ghosts ? (views.get(p.ghosts.insight) ?? views.set(p.ghosts.insight, ghostView(p.ghosts.insight)).get(p.ghosts.insight)!) : FULL_VIEW
+      if (!cam) cam = { ...target }
+      const k = 1 - Math.exp(-Math.min(now - lastNow, 100) / 380)
+      lastNow = now
+      cam.cx += (target.cx - cam.cx) * k
+      cam.cy += (target.cy - cam.cy) * k
+      cam.span += (target.span - cam.span) * k
+      // leave room for scorebug (top) and ticker (bottom); tall stages keep the lower half for graphics
+      const tall = h > w * 0.8
+      const s = Math.min((w * (tall ? 0.94 : 0.88)) / cam.span, (h * (tall ? 0.5 : 0.78)) / ((cam.span * PITCH_W) / PITCH_L))
+      const ox = w / 2 - cam.cx * s
+      const oy = h * (tall ? 0.36 : 0.49) - (PITCH_W - cam.cy) * s
       const X = (x: number) => ox + x * s
       const Y = (y: number) => oy + (PITCH_W - y) * s
 
@@ -96,7 +130,7 @@ export function Pitch(props: PitchProps) {
         }
       }
 
-      const r = Math.max(6, s * 1.25)
+      const r = Math.max(6, Math.min(s * 1.25, h * 0.021))
       const owner = fv.owner
 
       // pressure halo around the ball carrier (analyst)
@@ -300,7 +334,7 @@ function drawGhosts(
     const upto = progress * (path.length - 1)
     const n = Math.floor(upto)
     ctx.globalAlpha = alpha
-    ctx.lineWidth = Math.max(1.2, s * 0.22)
+    ctx.lineWidth = Math.max(1.2, Math.min(s * 0.22, 2.2))
     ctx.beginPath()
     ctx.moveTo(X(path[0][0]), Y(path[0][1]))
     for (let k = 1; k <= n; k++) ctx.lineTo(X(path[k][0]), Y(path[k][1]))
@@ -315,7 +349,7 @@ function drawGhosts(
     ctx.stroke()
     ctx.globalAlpha = Math.min(1, alpha * 2.6)
     ctx.beginPath()
-    ctx.arc(X(hx), Y(hy), Math.max(1.6, s * 0.32), 0, Math.PI * 2)
+    ctx.arc(X(hx), Y(hy), Math.max(1.6, Math.min(s * 0.32, 3.2)), 0, Math.PI * 2)
     ctx.fill()
   }
   ctx.globalAlpha = 1

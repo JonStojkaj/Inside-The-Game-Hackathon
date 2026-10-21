@@ -480,8 +480,8 @@ const overlays = {
   [fan_home]: [
     O(fan_home, 90, 6, 'scorebug', 'momentum', 35, 'en', 'We are on top', 'Northbridge control the ball', { home_share: 0.64 }),
     O(fan_home, kAway.frame + 2, 6, 'lower_third', 'alert', 70, 'en', 'Huge save, Vell!', 'Moreau from 22 m, kept out by our keeper', { event: 'shot', team: 'away', player_id: 'H1' }, [kAway.event]),
-    O(fan_home, goalF, 8, 'fullscreen', 'event_card', 100, 'en', 'GOAL!', 'Sami Okoro · Northbridge 1–0', { event: 'goal', team: 'home', player_id: 'H9', big: true }, [kGoal.goalEvent]),
-    O(fan_home, goalF + 14, 14, 'pitch', 'sliding_doors', 95, 'en', 'The pass that made it', "Marchetti's square ball made our goal 3x more likely", { insight_id: 'i2', simple: true }, ['i2']),
+    O(fan_home, goalF, 5, 'fullscreen', 'event_card', 100, 'en', 'GOAL!', 'Sami Okoro · Northbridge 1–0', { event: 'goal', team: 'home', player_id: 'H9', big: true }, [kGoal.goalEvent]),
+    O(fan_home, goalF + 50, 12, 'pitch', 'sliding_doors', 95, 'en', 'The pass that made it', "Marchetti's square ball made our goal 3x more likely", { insight_id: 'i2', simple: true }, ['i2']),
     O(fan_home, restartF + 20, 6, 'scorebug', 'momentum', 35, 'en', 'Riding the wave', '62 % possession since the goal', { home_share: 0.62 }),
     O(fan_home, kTurn.frame + 2, 5, 'lower_third', 'alert', 75, 'en', 'Careful at the back!', 'Ball lost 24 m from our goal', { event: 'interception', team: 'away' }, [kTurn.event]),
     O(fan_home, kMiss.frame + 4, 5, 'lower_third', 'alert', 70, 'en', 'Phew. Wide.', 'Nakamura drags it past the post', { event: 'shot', team: 'away' }, [kMiss.event]),
