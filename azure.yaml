@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+# `azd up` = package (image built remotely in ACR) + provision (infra/main.bicep) + deploy. See infra/README.md.
+name: sliding-doors
+metadata:
+  template: sliding-doors@0.1.0
+infra:
+  provider: bicep
+  path: infra
+  module: main
+services:
+  web:
+    # one container: FastAPI + built web player + baked data/export/ (backend/Dockerfile)
+    project: ./backend
+    language: python
+    host: containerapp
+    docker:
+      path: ./Dockerfile
+      context: ..
+      platform: linux/amd64
+      remoteBuild: true # build in Azure Container Registry, never with Docker on the dev Mac
+      buildArgs:
+        - VITE_MATCH_ID=${DEMO_MATCH_ID}
+hooks:
+  prepackage:
+    posix:
+      shell: sh
+      run: ./infra/scripts/check-export.sh
+      continueOnError: false

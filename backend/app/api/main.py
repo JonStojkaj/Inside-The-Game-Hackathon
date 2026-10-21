@@ -1,11 +1,18 @@
 """REST + WebSocket API over the exported matches (data/export/<match_id>/).
 
-  GET /api/health
+  GET /api/health                           {"status": "ok", "matches": <number of exported matches>}
   GET /api/matches                          summaries of every exported match
   GET /api/matches/{id}/{file}              match.json, frames.json, ..., video.mp4 (range requests)
   WS  /api/matches/{id}/live?speed=10&step=2&start_frame=0&segment=analyst-en
   GET /export/{id}/{file}                   the export folder as static files (frontend's static mode)
   GET /                                     the built web player (frontend/dist), if present
+
+Production contract: this API only SERVES pre-computed exports. It never calls an LLM, the
+rollout engine or the stats engine at request time, and it needs no Azure OpenAI credentials.
+Insights and overlays are produced offline (spikes/explain_demo.py, spikes/produce_demo.py, LLM
+answers cached in data/cache/llm/), written into data/export/<match_id>/ by spikes/export_demo.py,
+and that folder is baked into the container image (backend/Dockerfile, infra/README.md).
+tests/test_api_production.py guards that importing this module loads no agent/LLM code.
 
 Run from backend/:  .venv/bin/uvicorn app.api.main:app --reload
 EXPORT_DIR overrides the export root (default: <repo>/data/export), FRONTEND_DIR the built
@@ -68,8 +75,9 @@ def create_app(export_dir: str | Path | None = None, frontend_dir: str | Path | 
         return hit[1]
 
     @app.get("/api/health")
-    def health() -> dict[str, str]:
-        return {"status": "ok"}
+    def health() -> dict[str, Any]:
+        # liveness/readiness probe of the container; "matches" shows the exports were baked in
+        return {"status": "ok", "matches": len(list(root.glob("*/match.json")))}
 
     @app.get("/api/matches")
     def matches() -> list[dict[str, Any]]:
