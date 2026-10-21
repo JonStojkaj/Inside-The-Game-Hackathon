@@ -121,6 +121,7 @@ export interface Doors {
   claim: string
   tested: number // alternatives tested (hypotheses)
   rejected: number
+  insight?: Insight // the explain team's result behind it (for the claim audit)
 }
 
 const doorsCache = new WeakMap<object, Doors>()
@@ -147,6 +148,7 @@ export function doorsFromInsight(ins: Insight | undefined): Doors | undefined {
     claim: ins.claim,
     tested: ins.hypotheses.length,
     rejected: ins.hypotheses.filter((h) => h.verdict === 'rejected').length,
+    insight: ins,
   }))
 }
 
@@ -172,9 +174,13 @@ export function doorsFromOverlay(m: MatchIndex, o: Overlay): Doors | undefined {
       claim: o.body || ins?.claim || '',
       tested: hyps.length,
       rejected: hyps.filter((h) => h.verdict === 'rejected').length,
+      insight: ins,
     }
   })
 }
+
+/** Overlays drawn on the pitch as a Sliding Doors replay (full view or the fan's one-liner). */
+export const isDoorsOverlay = (o: Overlay | undefined): o is Overlay => o?.type === 'sliding_doors' || o?.type === 'insight'
 
 /** payload.player_id or the first of payload.player_ids. */
 export function payloadPlayer(o: Overlay | undefined): string | undefined {
