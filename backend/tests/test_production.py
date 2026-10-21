@@ -188,6 +188,42 @@ def test_turnover_insights_are_labelled_as_chance_to_keep_the_ball():
     assert "Chance, den Ball zu behalten" in de.body and "2,4" not in de.body
 
 
+def test_explicit_insight_metric_wins_over_moment_kind():
+    # a turnover judged on chance to score (explicit metric): labels must say so, not "keep the ball"
+    m = moment("dangerous_turnover", "away", ["H7", "A20"])
+    goal = insight(m).model_copy(update={"metric": "p_goal"})
+    goal = Insight.model_validate(goal.model_dump())  # metric now explicitly set, as when loaded from JSON
+    out = Narrator(fake_production_llm()).write(ANALYST, m, goal, ctx())
+    assert "chance to score from 14.8% to 5.5%" in out.body and "keep the ball" not in out.body
+    # a chance judged on keeping the ball (explicit metric) even though the moment kind says p_goal
+    c = moment("big_chance", "home", ["H9"])
+    keep = Insight(id="k2", moment_id=c.id, claim="c", evidence=["e1"], metric="p_keep",
+                   numbers={"actual_p_goal": 0.3, "actual_p_keep": 0.5, "best_alt_p_keep": 0.7, "delta_p_keep": 0.2},
+                   verified=True, confidence="clear",
+                   hypotheses=[Hypothesis(text="alt", intervention=Intervention(kind="swap_action", params={"action": "carry"}),
+                                          metric="p_keep", baseline_p_goal=0.5, counterfactual_p_goal=0.7, verdict="accepted")])
+    es = Narrator(fake_production_llm()).write(PLAYER_ES, c, keep, ctx())
+    assert "conservar el balón" in es.body and "50,0 %" in es.body and "70,0 %" in es.body and "30,0" not in es.body
+
+
+def test_turnover_without_accepted_alternative_names_keep_the_ball():
+    m = moment("dangerous_turnover", "away", ["H7", "A20"])
+    keep = Insight(id="k3", moment_id=m.id, claim="c", evidence=["e1"], metric="p_keep",
+                   numbers={"actual_p_goal": 0.024, "actual_p_keep": 0.193}, verified=True, confidence="clear")
+    out = Narrator(fake_production_llm()).write(ANALYST, m, keep, ctx())
+    assert "chance to keep the ball: 19.3%" in out.body and "2.4" not in out.body
+
+
+def test_german_keep_the_ball_sentence_is_grammatical():
+    m = moment("dangerous_turnover", "away", ["H7", "A20"])
+    h = Hypothesis(text="alt", intervention=Intervention(kind="swap_action", params={"action": "pass", "target_id": "H9"}),
+                   metric="p_keep", baseline_p_goal=0.193, counterfactual_p_goal=0.097, verdict="accepted")
+    keep = Insight(id="k4", moment_id=m.id, claim="c", evidence=["e1"], metric="p_keep", verified=True, confidence="clear",
+                   numbers={"actual_p_goal": 0.024, "actual_p_keep": 0.193, "best_alt_p_keep": 0.097}, hypotheses=[h])
+    de = Narrator(fake_production_llm()).write(AWAY_FAN_DE, m, keep, ctx())
+    assert "Chance, den Ball zu behalten, von 19,3 % auf 9,7 %" in de.body
+
+
 # --- recap --------------------------------------------------------------------------------------
 
 GOALS = [(12, "A4", "away"), (19, "H9", "home"), (43, "A20", "away")]

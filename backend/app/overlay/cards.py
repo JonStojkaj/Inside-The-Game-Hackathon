@@ -202,8 +202,10 @@ def insight_candidate(segment: Segment, moment: Moment, insight: Insight, text: 
                     "alt_ghost_paths": insight.alt_ghost_paths, "alt_label": insight.alt_label}
     if segment.depth == "deep":
         payload["numbers"] = dict(insight.numbers)
-        payload["hypotheses"] = [{"text": h.text, "verdict": h.verdict, "p_goal": h.counterfactual_p_goal,
-                                  "seed_spread": h.seed_spread, "note": h.critic_note} for h in insight.hypotheses]
+        # counterfactual_p_goal holds the value of the insight's metric (p_keep for turnovers); "p_goal" kept for old readers
+        payload["hypotheses"] = [{"text": h.text, "verdict": h.verdict, "metric": metric, "value": h.counterfactual_p_goal,
+                                  "p_goal": h.counterfactual_p_goal, "seed_spread": h.seed_spread, "note": h.critic_note}
+                                 for h in insight.hypotheses]
     stale = GOAL_INSIGHT_STALE_MS if moment.kind == "goal" else INSIGHT_STALE_MS
     return Candidate(
         id=insight.id, type="sliding_doors" if full else "insight", slot="pitch",

@@ -130,11 +130,26 @@ never as xG. Third person, natural broadcast language; 'we' only for the viewer'
 
 # --- facts + templates for one insight ----------------------------------------------------------
 
+METRICS_JUDGED = ("p_goal", "p_keep")
+
+
 def insight_metric(insight: Insight, moment: Moment) -> str:
     """What the insight's percentages measure: "p_goal" (chance to score) or "p_keep" (chance to keep the
-    ball, used for turnovers). Newer insights carry it as a field; older ones follow the moment kind."""
-    metric = getattr(insight, "metric", None) or ("p_keep" if moment.kind == "dangerous_turnover" else "p_goal")
-    return metric if f"actual_{metric}" in insight.numbers else "p_goal"
+    ball, used for turnovers).
+
+    Insight.metric wins when the explain team set it. Insight.metric has a default ("p_goal"), so an
+    insight built without it (older JSON, hand-made fixtures) is inferred instead: from which
+    best_alt_<metric> / delta_<metric> key it carries, else from the moment kind. A metric whose
+    actual_<metric> number is missing can never be rendered, so it falls back to the one that is there."""
+    n = insight.numbers
+    if "metric" in insight.model_fields_set and insight.metric in METRICS_JUDGED:
+        metric = insight.metric
+    else:
+        judged = [m for m in METRICS_JUDGED if f"best_alt_{m}" in n or f"delta_{m}" in n]
+        metric = judged[0] if len(judged) == 1 else ("p_keep" if moment.kind == "dangerous_turnover" else "p_goal")
+    if f"actual_{metric}" in n:
+        return metric
+    return next((m for m in METRICS_JUDGED if f"actual_{m}" in n), "p_goal")
 
 
 def best_hypothesis(insight: Insight, metric: str = "p_goal") -> Hypothesis | None:
@@ -195,7 +210,8 @@ def insight_template(segment: Segment, moment: Moment, insight: Insight, ctx: Ma
             key = "sd.better"
         else:  # what really happened was the better option ("right call", unless the ball was lost anyway)
             key = "sd.worse.plain" if moment.kind == "dangerous_turnover" else "sd.worse"
-        body = t(key, lang, alt=alt, measure=facts["measure"], actual=facts["actual"], best=facts["best_alternative"])
+        body = t(key, lang, alt=alt, measure=t(f"measure.{metric}.mid", lang), actual=facts["actual"],
+                 best=facts["best_alternative"])
         if lang == "en" and key in ("sd.better", "sd.worse.plain"):
             body = body[0].upper() + body[1:]
     else:
