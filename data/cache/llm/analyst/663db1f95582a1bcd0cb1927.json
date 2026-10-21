@@ -1,0 +1,16 @@
+{
+  "hypotheses": [
+    {
+      "experiment_id": "shoot",
+      "text": "If Emil Strand had shot instead, the chance to score would have been lower than the 6.5% produced after the pass."
+    },
+    {
+      "experiment_id": "carry",
+      "text": "If Emil Strand had carried the ball forward instead of passing, the resulting chance to score would have been lower than the 6.5% after the pass."
+    },
+    {
+      "experiment_id": "pass_H16",
+      "text": "If Emil Strand had passed to Sami Okoro (CM) instead, the chance to score would have been lower than the 6.5% produced by the pass to Leo Marchetti."
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "tight_H5",
+      "verdict": "rejected",
+      "note": "Did not pass the input rules for acceptance."
+    },
+    {
+      "experiment_id": "tight_H3",
+      "verdict": "rejected",
+      "note": "Did not pass the input rules for acceptance."
+    },
+    {
+      "experiment_id": "tight_H4",
+      "verdict": "rejected",
+      "note": "Did not pass the input rules for acceptance."
+    }
+  ],
+  "claim": "The real decision to shoot by Kai Nakamura was a reasonable one given the information provided."
+}

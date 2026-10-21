@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "pass_H11",
+      "verdict": "accepted",
+      "note": "Accepted because it was marked as passing the rules in the input."
+    },
+    {
+      "experiment_id": "tight_A2",
+      "verdict": "rejected",
+      "note": "Rejected because it was not marked as passing the rules in the input."
+    }
+  ],
+  "claim": "A pass to Jonah Pike would have given a 17.2% chance to keep the ball — 9.3 points lower than Noah Fairley’s dribble (26.5%) — so it would have reduced the chance of retaining possession."
+}

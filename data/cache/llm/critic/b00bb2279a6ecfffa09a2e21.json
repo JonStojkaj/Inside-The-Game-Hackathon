@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "tight_H3",
+      "verdict": "rejected",
+      "note": "Marked as failing the rules (experiment increased chance to score, so not a plausible preventing action)."
+    },
+    {
+      "experiment_id": "tight_H5",
+      "verdict": "rejected",
+      "note": "Marked as failing the rules (experiment increased chance to score, so not a plausible preventing action)."
+    }
+  ],
+  "claim": "No accepted experiments found a defender action that would have lowered Theo Varga’s chance to score, so the real decision for Theo Varga to shoot was a reasonable one."
+}

@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "tight_H9",
+      "verdict": "rejected",
+      "note": "Marked as failing the rules, so its results are not accepted."
+    },
+    {
+      "experiment_id": "tight_H8",
+      "verdict": "rejected",
+      "note": "Marked as failing the rules, so its results are not accepted."
+    }
+  ],
+  "claim": "The real decision — Kai Nakamura shooting and scoring — was a reasonable one given the accepted evidence."
+}

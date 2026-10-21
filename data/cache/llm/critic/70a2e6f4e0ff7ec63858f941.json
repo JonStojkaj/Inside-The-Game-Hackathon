@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "pass_A7",
+      "verdict": "rejected",
+      "note": "Did not pass the rules (hypothesis marked invalid)."
+    },
+    {
+      "experiment_id": "pass_A11",
+      "verdict": "rejected",
+      "note": "Did not pass the rules (hypothesis marked invalid)."
+    }
+  ],
+  "claim": "Given the available analyses were not accepted, the real decision to pass to Felix Ondo — which resulted in a 6.8% chance to keep the ball — was a reasonable one."
+}

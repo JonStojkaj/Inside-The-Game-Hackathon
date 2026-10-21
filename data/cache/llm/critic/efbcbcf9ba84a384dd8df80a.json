@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "tight_H9",
+      "verdict": "rejected",
+      "note": "Model mark shows an increased chance, so it fails the test and isn't a valid preventive action."
+    },
+    {
+      "experiment_id": "tight_H8",
+      "verdict": "rejected",
+      "note": "Simulation increases the scoring probability, so it does not demonstrate a defensive way to stop the goal."
+    }
+  ],
+  "claim": "Kai Nakamura's shot, assessed at a 10.8% chance to score, was a reasonable decision given that neither proposed defensive adjustment produced validated evidence they would have reduced the scoring probability."
+}

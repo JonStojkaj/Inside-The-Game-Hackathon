@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "shoot",
+      "verdict": "accepted",
+      "note": "Data show shooting lowered the scoring chance by 6.0 points compared with the actual pass."
+    },
+    {
+      "experiment_id": "carry",
+      "verdict": "rejected",
+      "note": "Marked as not passing the rules, so it cannot be accepted."
+    }
+  ],
+  "claim": "Bastian Holt’s pass to Callum Reyes produced a 7.3% chance to score, while a shot would have produced only a 1.3% chance, meaning the pass was better by 6.0 points."
+}

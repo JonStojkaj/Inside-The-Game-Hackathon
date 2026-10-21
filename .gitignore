@@ -228,3 +228,7 @@ __marimo__/
 
 # Recorded matches (large); small samples can be force-added
 data/matches/
+
+# generated pipeline output (large); insights + LLM cache are committed for replay
+data/export/
+data/production/

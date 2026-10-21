@@ -1,0 +1,10 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "pass_H5",
+      "verdict": "rejected",
+      "note": "Marked as not passing the rules, so it isn't an accepted, stable hypothesis."
+    }
+  ],
+  "claim": "Leo Marchetti's assist to Emil Strand produced a 6.7% chance to score; since no alternative hypothesis here was accepted for comparison, the real decision to feed Strand was a reasonable one."
+}

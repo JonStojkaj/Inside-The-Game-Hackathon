@@ -1,0 +1,12 @@
+{
+  "hypotheses": [
+    {
+      "experiment_id": "shoot",
+      "text": "Shooting would have produced a lower chance to score than the actual 7.3%, so the pass was better than attempting a shot."
+    },
+    {
+      "experiment_id": "carry",
+      "text": "Carrying the ball forward would have produced a lower chance to score than the actual 7.3%, so the pass was better than holding on and driving forward."
+    }
+  ]
+}

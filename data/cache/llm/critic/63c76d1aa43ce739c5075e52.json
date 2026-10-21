@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "pass_H20",
+      "verdict": "accepted",
+      "note": "Model flagged this hypothesis as valid and it is football-plausible."
+    },
+    {
+      "experiment_id": "pass_H2",
+      "verdict": "accepted",
+      "note": "Model flagged this hypothesis as valid and it is football-plausible."
+    }
+  ],
+  "claim": "Neither alternative would have improved safety: a pass to Leo Marchetti would have reduced the chance to keep the ball to 6.9% (−4.7 points), and a pass to Noah Fairley would have reduced it to 8.3% (−3.2 points)."
+}

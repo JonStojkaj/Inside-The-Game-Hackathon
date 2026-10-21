@@ -1,0 +1,16 @@
+{
+  "hypotheses": [
+    {
+      "experiment_id": "pass_A20",
+      "text": "A pass to Kai Nakamura (CM) would have been safer and increased the chance to keep possession compared with the intercepted pass to Felix Ondo."
+    },
+    {
+      "experiment_id": "carry",
+      "text": "If Oscar Lindqvist had carried the ball forward instead of passing, he would have reduced the interception risk and improved the chance to keep the ball."
+    },
+    {
+      "experiment_id": "tight_H16",
+      "text": "If defender Sami Okoro (CM) had been 5 m closer to Lindqvist, his presence would have deterred or blocked the interception and improved the chance to retain possession."
+    }
+  ]
+}

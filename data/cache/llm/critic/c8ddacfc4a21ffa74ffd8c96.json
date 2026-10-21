@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "pass_A20",
+      "verdict": "accepted",
+      "note": "Model shows a meaningful, stable, and football-plausible decrease in retention chance."
+    },
+    {
+      "experiment_id": "pass_A11",
+      "verdict": "accepted",
+      "note": "Model shows a meaningful, stable, and football-plausible decrease in retention chance."
+    }
+  ],
+  "claim": "Passing to Kai Nakamura would have reduced the chance to keep the ball to 6.6%, a drop of 9.5 points versus Oscar Lindqvist dribbling. Passing to Bastian Holt would have reduced the chance to 7.4%, a drop of 8.7 points versus the dribble."
+}

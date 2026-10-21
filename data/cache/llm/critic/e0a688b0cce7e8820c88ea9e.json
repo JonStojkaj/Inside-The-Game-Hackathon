@@ -1,0 +1,20 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "carry",
+      "verdict": "accepted",
+      "note": "Effect is meaningful (+2.2 points) and stable across seeds."
+    },
+    {
+      "experiment_id": "pass_H20",
+      "verdict": "rejected",
+      "note": "Effect not stable across seeds."
+    },
+    {
+      "experiment_id": "tight_A11",
+      "verdict": "rejected",
+      "note": "Effect not stable across seeds."
+    }
+  ],
+  "claim": "Had Tomas Vell carried the ball forward instead, the model estimates the chance of a goal would have been 7.3% versus the 5.1% after the intercepted pass. This corresponds to an increase of 2.2 points."
+}

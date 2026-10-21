@@ -1,0 +1,16 @@
+{
+  "hypotheses": [
+    {
+      "experiment_id": "carry",
+      "text": "If Kai Nakamura had carried the ball forward, the chance to score would have been higher than the 11.5% from his shot"
+    },
+    {
+      "experiment_id": "pass_A8",
+      "text": "If Kai Nakamura had passed to Theo Varga (CM), the resulting chance to score would have been higher than the 11.5% from his shot"
+    },
+    {
+      "experiment_id": "pass_A11",
+      "text": "If Kai Nakamura had passed to Bastian Holt (LM), the resulting chance to score would have been higher than the 11.5% from his shot"
+    }
+  ]
+}

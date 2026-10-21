@@ -1,0 +1,12 @@
+{
+  "hypotheses": [
+    {
+      "experiment_id": "carry",
+      "text": "If Nakamura had carried the ball forward, he would have created a higher-quality shooting opportunity than the one he took (i.e., carry increases the chance of scoring versus the actual shot)."
+    },
+    {
+      "experiment_id": "pass_A8",
+      "text": "If Nakamura had passed to Theo Varga (CM), that pass would have led to a better chance of a scoring opportunity or lower turnover risk than Nakamura shooting (i.e., the pass would have been a superior option to shooting)."
+    }
+  ]
+}

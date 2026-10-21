@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "pass_A2",
+      "verdict": "rejected",
+      "note": "Marked as not passing the rules so it cannot be accepted."
+    },
+    {
+      "experiment_id": "tight_H2",
+      "verdict": "rejected",
+      "note": "Marked as not passing the rules so it cannot be accepted."
+    }
+  ],
+  "claim": "The real decision to have Kai Nakamura shoot was a reasonable one given the available analysis."
+}

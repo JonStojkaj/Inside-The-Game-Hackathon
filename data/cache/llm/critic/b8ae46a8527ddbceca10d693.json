@@ -1,0 +1,20 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "shoot",
+      "verdict": "accepted",
+      "note": "Passage shows a meaningful, football-plausible drop and is marked as passing rules."
+    },
+    {
+      "experiment_id": "carry",
+      "verdict": "accepted",
+      "note": "Alternative carry reduces chance notably and is marked as passing rules."
+    },
+    {
+      "experiment_id": "pass_A16",
+      "verdict": "rejected",
+      "note": "Marked as not passing rules in the input."
+    }
+  ],
+  "claim": "Theo Varga’s pass to Felix Ondo created an 11.0% chance to score; had Varga shot himself the chance would have been 2.7% (−8.3 points), and had he carried the ball the chance would have been 7.4% (−3.6 points)."
+}

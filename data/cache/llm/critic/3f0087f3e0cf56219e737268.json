@@ -1,0 +1,20 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "tight_H5",
+      "verdict": "rejected",
+      "note": "This experiment was not marked as passing the validation rules."
+    },
+    {
+      "experiment_id": "tight_H3",
+      "verdict": "rejected",
+      "note": "This experiment was not marked as passing the validation rules."
+    },
+    {
+      "experiment_id": "tight_H4",
+      "verdict": "rejected",
+      "note": "This experiment was not marked as passing the validation rules."
+    }
+  ],
+  "claim": "Kai Nakamura scored with a 10.8% chance to score; none of the proposed defender closings were accepted by the validation rules, so the actual decision to shoot was reasonable given the available, validated evidence."
+}

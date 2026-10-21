@@ -1,0 +1,20 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "carry",
+      "verdict": "rejected",
+      "note": "Effect (+1.7 points) was not stable across seeds."
+    },
+    {
+      "experiment_id": "pass_H20",
+      "verdict": "accepted",
+      "note": "Meaningful increase (+1.9 points) and stable across seeds."
+    },
+    {
+      "experiment_id": "tight_A8",
+      "verdict": "rejected",
+      "note": "Effect (+2.1 points) was not stable across seeds."
+    }
+  ],
+  "claim": "A pass to Leo Marchetti would have meaningfully raised the goal probability from 1.9% to 3.8%, a +1.9 point improvement."
+}

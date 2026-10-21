@@ -1,0 +1,12 @@
+{
+  "hypotheses": [
+    {
+      "experiment_id": "shoot",
+      "text": "If Dario Kesh had shot instead of trying to carry, the sequence would have had a higher direct chance of scoring (higher p_goal) and reduced the risk of turnover compared with being tackled."
+    },
+    {
+      "experiment_id": "pass_A20",
+      "text": "If Dario Kesh had passed to Kai Nakamura (CM) instead, the ball would likely have been recycled through midfield and the probability of an immediate turnover would have fallen, increasing the chance of a sustained attack."
+    }
+  ]
+}

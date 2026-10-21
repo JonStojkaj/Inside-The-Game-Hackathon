@@ -1,0 +1,10 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "shoot",
+      "verdict": "accepted",
+      "note": "Experiment is meaningful and shows a clear, stable difference versus the actual assist."
+    }
+  ],
+  "claim": "Bastian Holt's pass to Theo Varga produced an 11.0% chance to score, while Holt shooting himself would have been just 4.6%, a 6.4-point lower chance."
+}

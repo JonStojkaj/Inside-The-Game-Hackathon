@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "carry",
+      "verdict": "accepted",
+      "note": "Meaningful increase, stable and football-plausible."
+    },
+    {
+      "experiment_id": "pass_A16",
+      "verdict": "rejected",
+      "note": "No rules pass — change is negligible and marked as failing checks."
+    }
+  ],
+  "claim": "Had Marcus Quill carried the ball forward instead of shooting, the chance to score would have been 14.1%, which is 4.2 points higher than Quill’s actual 9.9% shot."
+}

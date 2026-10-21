@@ -1,0 +1,16 @@
+{
+  "hypotheses": [
+    {
+      "experiment_id": "carry",
+      "text": "If Leo Marchetti had carried the ball forward, the chance of scoring would have been higher than the 12.5% achieved by shooting (carrying would create a better opportunity)."
+    },
+    {
+      "experiment_id": "pass_H11",
+      "text": "If Leo Marchetti had passed to Jonah Pike (LM), the probability of a goal would have been higher than 12.5% (the pass to the left would have produced a clearer chance)."
+    },
+    {
+      "experiment_id": "pass_H8",
+      "text": "If Leo Marchetti had passed to Emil Strand (CM), the probability of scoring would have exceeded 12.5% (playing to the central midfielder would have led to a better-quality opportunity)."
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "shoot",
+      "verdict": "accepted",
+      "note": "Marked as passing the rules and shows a clear, meaningful gap vs actual."
+    },
+    {
+      "experiment_id": "carry",
+      "verdict": "rejected",
+      "note": "Input flagged as not passing the rules."
+    },
+    {
+      "experiment_id": "pass_A16",
+      "verdict": "rejected",
+      "note": "Input flagged as not passing the rules."
+    }
+  ],
+  "claim": "Kai Nakamura’s pass to Felix Ondo gave an 11.1% scoring probability, while shooting himself would have been only 4.3%, a difference of -6.7 points, so the pass materially raised the scoring chance compared with taking the shot."
+}

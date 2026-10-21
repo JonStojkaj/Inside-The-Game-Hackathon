@@ -1,0 +1,20 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "shoot",
+      "verdict": "accepted",
+      "note": "Effect is large (−3.5 points) and stable across seeds."
+    },
+    {
+      "experiment_id": "pass_A11",
+      "verdict": "rejected",
+      "note": "Effect was not stable across seeds."
+    },
+    {
+      "experiment_id": "tight_H9",
+      "verdict": "rejected",
+      "note": "Effect was not stable across seeds."
+    }
+  ],
+  "claim": "A shot would have reduced the scoring probability from 3.6% to 0.1% (a drop of 3.5 percentage points), so carrying was the better option in terms of goal probability."
+}

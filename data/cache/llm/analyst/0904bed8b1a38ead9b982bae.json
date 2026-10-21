@@ -1,0 +1,16 @@
+{
+  "hypotheses": [
+    {
+      "experiment_id": "carry",
+      "text": "If Tomas Vell had carried the ball forward himself, the play would have been safer than the intercepted pass."
+    },
+    {
+      "experiment_id": "pass_H2",
+      "text": "If Tomas Vell had passed to Noah Fairley (RB), that option would have reduced the chance of a turnover and kept the ball safer."
+    },
+    {
+      "experiment_id": "pass_H20",
+      "text": "If Tomas Vell had passed to Leo Marchetti (CM), that alternative would have been a safer distribution than the intercepted pass."
+    }
+  ]
+}

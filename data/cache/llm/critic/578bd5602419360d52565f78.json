@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "pass_A20",
+      "verdict": "accepted",
+      "note": "Raised goal probability from 5.9% to 9.3% and was stable across seeds."
+    },
+    {
+      "experiment_id": "tight_H9",
+      "verdict": "accepted",
+      "note": "Raised goal probability from 5.9% to 9.8% and was stable across seeds."
+    }
+  ],
+  "claim": "Two alternative scenarios would have increased the chance of scoring compared with the low-probability shot: a pass to Kai Nakamura would raise the goal probability to 9.3% (from 5.9%), and Mateo Brann being 5 m closer would raise it to 9.8%."
+}

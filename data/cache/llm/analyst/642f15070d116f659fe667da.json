@@ -1,0 +1,16 @@
+{
+  "hypotheses": [
+    {
+      "experiment_id": "shoot",
+      "text": "If Oscar Lindqvist had taken a shot instead, the turnover probability would have fallen and the immediate chance of scoring from the turnover location would differ (likely increasing or at least avoiding the high interception risk of the attempted pass)."
+    },
+    {
+      "experiment_id": "pass_A7",
+      "text": "If Oscar Lindqvist had passed to Marcus Quill (RM) instead, the sequence would have had a lower turnover risk and a different expected-goal outcome compared with the intercepted pass to A4, explaining whether an alternative pass could have produced a better chance. "
+    },
+    {
+      "experiment_id": "tight_H9",
+      "text": "If Mateo Brann (CF) had been positioned 3 m closer, Lindqvist would have had a nearer, more accessible target — potentially reducing interception risk and increasing the probability of creating a shot compared with the intercepted pass to A4."
+    }
+  ]
+}

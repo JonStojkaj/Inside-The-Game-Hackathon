@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "pass_A16",
+      "verdict": "rejected",
+      "note": "Did not pass the input rules (passes_rules false)."
+    },
+    {
+      "experiment_id": "shoot",
+      "verdict": "accepted",
+      "note": "Passed the input rules and shows a consistent, football-plausible outcome."
+    }
+  ],
+  "claim": "If Dario Kesh had shot instead of dribbling, the model estimates the chance of a goal would have been 0.1%, a drop of 2.9 points compared with the actual dribble that ended in a tackle, so shooting would not have kept the ball safer in this instance."
+}

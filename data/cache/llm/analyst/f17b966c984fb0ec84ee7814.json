@@ -1,0 +1,16 @@
+{
+  "hypotheses": [
+    {
+      "experiment_id": "pass_A16",
+      "text": "Passing to Ilan Moreau (CM) would have increased the scoring chance compared to the shot — Moreau could have had a higher-probability opportunity or drawn defenders to create a better chance."
+    },
+    {
+      "experiment_id": "pass_A2",
+      "text": "Passing to Callum Reyes (RB) would have been a safer option that likely reduced turnover risk and could have led to a more dangerous crossing/shooting situation than Quill's low-probability shot."
+    },
+    {
+      "experiment_id": "carry",
+      "text": "If Marcus Quill had carried the ball forward instead of shooting, he might have improved the situation by creating a closer or clearer chance for himself or a teammate, raising the probability of scoring relative to the immediate shot."
+    }
+  ]
+}

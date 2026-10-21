@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "pass_H20",
+      "verdict": "rejected",
+      "note": "Provided scenario had a lower chance to keep the ball (16.0%) than what actually happened."
+    },
+    {
+      "experiment_id": "pass_H16",
+      "verdict": "rejected",
+      "note": "Provided scenario had a lower chance to keep the ball (16.7%) than what actually happened."
+    }
+  ],
+  "claim": "No alternative improved the chance to keep possession, so Noah Fairley’s dribble — which had a 26.5% chance to keep the ball — was a reasonable choice."
+}

@@ -1,0 +1,10 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "pass_H20",
+      "verdict": "accepted",
+      "note": "Simulation shows a clear, stable decrease in retention probability versus what actually happened."
+    }
+  ],
+  "claim": "Passing to Leo Marchetti would have reduced the chance to keep the ball from 19.3% to 9.7%, a drop of 9.6 percentage points, so that option would have made retaining possession less likely."
+}

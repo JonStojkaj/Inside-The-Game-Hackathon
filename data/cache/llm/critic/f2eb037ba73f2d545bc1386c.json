@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "pass_H11",
+      "verdict": "accepted",
+      "note": "Model shows a clear drop to 4.2%, so passing is worse than the shot."
+    },
+    {
+      "experiment_id": "carry",
+      "verdict": "accepted",
+      "note": "Model shows carrying would have raised the chance to 19.8%, so it appears better than the shot."
+    }
+  ],
+  "claim": "Shooting gave a 12.5% chance to score, but passing to Jonah Pike would have lowered that to 4.2% (−8.3 points). Carrying the ball forward would have raised the chance to 19.8% (+7.3 points), so carrying looked like the better option than the shot."
+}

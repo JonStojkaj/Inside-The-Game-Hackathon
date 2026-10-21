@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "carry",
+      "verdict": "accepted",
+      "note": "Marked as passing and shows a stable, football-plausible 5.3-point improvement."
+    },
+    {
+      "experiment_id": "pass_A8",
+      "verdict": "rejected",
+      "note": "Marked as not passing the rules, so it is rejected."
+    }
+  ],
+  "claim": "If Kai Nakamura had carried the ball forward, the opportunity would have had a 16.1% chance of scoring — an increase of 5.3 points versus the 10.8% chance of the shot he actually took, so carrying forward would have produced a materially better scoring probability."
+}

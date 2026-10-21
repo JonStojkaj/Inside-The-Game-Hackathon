@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "carry",
+      "verdict": "rejected",
+      "note": "Marked as not passing the rules, so cannot be accepted."
+    },
+    {
+      "experiment_id": "pass_H11",
+      "verdict": "rejected",
+      "note": "Marked as not passing the rules, so cannot be accepted."
+    }
+  ],
+  "claim": "Because none of the tested alternatives were accepted for evaluation, the real decision — Leo Marchetti’s pass to Emil Strand that led to a 6.7% chance to score — should be regarded as a reasonable one."
+}

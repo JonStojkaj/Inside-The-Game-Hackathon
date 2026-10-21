@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "pass_A5",
+      "verdict": "rejected",
+      "note": "Marked as failing the rules in the input."
+    },
+    {
+      "experiment_id": "pass_A20",
+      "verdict": "rejected",
+      "note": "Marked as failing the rules in the input."
+    }
+  ],
+  "claim": "Because none of the alternative scenarios met the acceptance rules, the real decision — Dario Kesh dribbling (and subsequently being tackled) — should be considered a reasonable choice in this situation."
+}

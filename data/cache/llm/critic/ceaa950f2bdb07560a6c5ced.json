@@ -1,0 +1,20 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "tight_H4",
+      "verdict": "accepted",
+      "note": "Stable across seeds and produced a meaningful change in goal probability."
+    },
+    {
+      "experiment_id": "tight_H3",
+      "verdict": "rejected",
+      "note": "Effect was not stable across seeds."
+    },
+    {
+      "experiment_id": "pass_A8",
+      "verdict": "rejected",
+      "note": "Effect was not stable across seeds."
+    }
+  ],
+  "claim": "In simulations where Lukas Hagen stood 5 m closer to Kai Nakamura the modeled goal probability was 14.5% compared with the actual 10.8%, and this increase was meaningful and stable across seeds."
+}

@@ -1,0 +1,20 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "carry",
+      "verdict": "accepted",
+      "note": "Carrying the ball forward shows a clearly higher scoring chance and is football-plausible."
+    },
+    {
+      "experiment_id": "pass_H2",
+      "verdict": "accepted",
+      "note": "The pass to Noah Fairley increases scoring probability and is a reasonable alternative."
+    },
+    {
+      "experiment_id": "pass_H16",
+      "verdict": "accepted",
+      "note": "The pass to Sami Okoro also raises the chance to score and is a credible option."
+    }
+  ],
+  "claim": "Taking the shot produced a 4.5% chance to score, but carrying the ball would have given a 12.1% chance (+7.5 points), a pass to Noah Fairley would have been 8.6% (+4.1 points), and a pass to Sami Okoro would have been 9.2% (+4.7 points)."
+}

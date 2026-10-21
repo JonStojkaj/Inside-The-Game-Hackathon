@@ -1,0 +1,20 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "tight_H5",
+      "verdict": "rejected",
+      "note": "Did not pass the rules (not marked meaningful/stable/plausible)."
+    },
+    {
+      "experiment_id": "tight_H4",
+      "verdict": "rejected",
+      "note": "Did not pass the rules (not marked meaningful/stable/plausible)."
+    },
+    {
+      "experiment_id": "tight_H3",
+      "verdict": "rejected",
+      "note": "Did not pass the rules (not marked meaningful/stable/plausible)."
+    }
+  ],
+  "claim": "With no hypothesis meeting the evaluation criteria, the real decision to allow Kai Nakamura to shoot — which resulted in a goal — was a reasonable one."
+}

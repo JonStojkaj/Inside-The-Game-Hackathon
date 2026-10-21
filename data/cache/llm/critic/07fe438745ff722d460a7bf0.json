@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "tight_H5",
+      "verdict": "rejected",
+      "note": "No meaningful effect shown (chance to score unchanged), so hypothesis fails the stability/impact rule."
+    },
+    {
+      "experiment_id": "tight_H2",
+      "verdict": "rejected",
+      "note": "No meaningful effect shown (chance to score unchanged), so hypothesis fails the stability/impact rule."
+    }
+  ],
+  "claim": "Kai Nakamura’s goal came from a situation with a 4.6% chance to score; neither simulated change in Ruben Saldo’s nor Noah Fairley’s positioning materially altered that probability, so the real decision to shoot was a reasonable one."
+}

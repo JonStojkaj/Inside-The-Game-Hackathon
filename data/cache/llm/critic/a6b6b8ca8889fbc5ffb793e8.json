@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "tight_H7",
+      "verdict": "rejected",
+      "note": "Marked as failing the acceptance rules (not accepted as meaningful/stable/plausible)."
+    },
+    {
+      "experiment_id": "pass_A2",
+      "verdict": "rejected",
+      "note": "Marked as failing the acceptance rules (not accepted as meaningful/stable/plausible)."
+    }
+  ],
+  "claim": "No experiment passed the acceptance criteria, so the real decision — Theo Varga shooting and scoring — was a reasonable one."
+}

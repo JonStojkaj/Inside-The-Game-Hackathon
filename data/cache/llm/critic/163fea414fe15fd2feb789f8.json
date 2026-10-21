@@ -1,0 +1,20 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "shoot",
+      "verdict": "accepted",
+      "note": "Lower scoring chance (1.4%) is meaningful and stable."
+    },
+    {
+      "experiment_id": "carry",
+      "verdict": "accepted",
+      "note": "Higher scoring chance (10.1%) is meaningful and stable."
+    },
+    {
+      "experiment_id": "pass_H16",
+      "verdict": "rejected",
+      "note": "Marked as not passing the rules in the input."
+    }
+  ],
+  "claim": "Emil Strand’s pass to Leo Marchetti produced a 6.5% scoring chance; had he shot instead it would have been 1.4% (a drop of 5.1 points), while carrying the ball forward would have yielded 10.1% (an increase of 3.6 points)."
+}

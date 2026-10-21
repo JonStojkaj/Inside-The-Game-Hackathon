@@ -1,0 +1,16 @@
+{
+  "hypotheses": [
+    {
+      "experiment_id": "shoot",
+      "text": "If Kai Nakamura had shot instead, the scoring probability would have been lower than the pass to Felix Ondo (i.e., the pass was the better option than shooting)."
+    },
+    {
+      "experiment_id": "carry",
+      "text": "If Kai Nakamura had carried the ball forward himself, the scoring probability would have been lower than the pass to Felix Ondo (i.e., carrying was an inferior alternative)."
+    },
+    {
+      "experiment_id": "pass_A16",
+      "text": "If Kai Nakamura had passed to Ilan Moreau (CM) instead, the scoring probability would have been lower than the pass to Felix Ondo (i.e., passing to Ondo was the best passing option among these choices)."
+    }
+  ]
+}

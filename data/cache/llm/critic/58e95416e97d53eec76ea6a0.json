@@ -1,0 +1,20 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "shoot",
+      "verdict": "accepted",
+      "note": "Effect is meaningful (-6.7 points) and stable across seeds."
+    },
+    {
+      "experiment_id": "carry",
+      "verdict": "rejected",
+      "note": "Change is small and not stable across seeds."
+    },
+    {
+      "experiment_id": "tight_H3",
+      "verdict": "rejected",
+      "note": "Change is not stable across seeds."
+    }
+  ],
+  "claim": "The pass to A5 produced an 11.1% chance of a goal; the model shows that had Nakamura shot instead the chance would have been 4.3%, so the pass materially raised the scoring probability."
+}

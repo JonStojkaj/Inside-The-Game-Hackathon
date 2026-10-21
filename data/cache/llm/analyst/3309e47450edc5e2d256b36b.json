@@ -1,0 +1,16 @@
+{
+  "hypotheses": [
+    {
+      "experiment_id": "shoot",
+      "text": "If Theo Varga had shot instead of passing, the immediate chance to score would have been lower than the 11.0% created by his pass to Ondo."
+    },
+    {
+      "experiment_id": "carry",
+      "text": "If Theo Varga had carried the ball forward rather than passing, the immediate chance to score on that sequence would have been lower than the 11.0% produced by the assist."
+    },
+    {
+      "experiment_id": "pass_A16",
+      "text": "If Theo Varga had passed to Ilan Moreau (CM) instead of Ondo, the resulting chance to score would have been lower than the 11.0% created by the actual pass."
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "shoot",
+      "verdict": "accepted",
+      "note": "Stable across seeds and produced a meaningful reduction in scoring probability."
+    },
+    {
+      "experiment_id": "pass_A20",
+      "verdict": "rejected",
+      "note": "Effect was not stable across seeds."
+    }
+  ],
+  "claim": "Shooting would have reduced the immediate scoring probability from 3.0% to 0.1%, a drop of 2.9 points. This makes the real choice to carry (which had the 3.0% chance) reasonable compared with taking the shot."
+}

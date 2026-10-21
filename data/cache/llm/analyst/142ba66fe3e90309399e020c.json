@@ -1,0 +1,12 @@
+{
+  "hypotheses": [
+    {
+      "experiment_id": "carry",
+      "text": "If Marcus Quill had carried the ball forward rather than shooting, the chance to score would have been higher than the 9.9% from the shot."
+    },
+    {
+      "experiment_id": "pass_A16",
+      "text": "If Marcus Quill had passed to Ilan Moreau (CM) instead of shooting, the resulting chance to score would have been higher than the 9.9% from the shot."
+    }
+  ]
+}

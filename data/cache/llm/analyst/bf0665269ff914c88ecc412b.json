@@ -1,0 +1,12 @@
+{
+  "hypotheses": [
+    {
+      "experiment_id": "carry",
+      "text": "If Leo Marchetti had carried the ball forward before shooting, the shot probability would have decreased (the finish would be harder or more likely to be disrupted), so the immediate shot was the better choice."
+    },
+    {
+      "experiment_id": "pass_H8",
+      "text": "If Marchetti had passed to Emil Strand (CM), the sequence would have produced a lower chance of scoring or a higher turnover probability, confirming Marchetti's direct shot was the highest-value option for the attacking side."
+    }
+  ]
+}

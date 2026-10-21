@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "tight_H9",
+      "verdict": "rejected",
+      "note": "Rejected — moving Mateo Brann closer increases the chance to score, so it doesn't show how defenders could have prevented the goal."
+    },
+    {
+      "experiment_id": "tight_H5",
+      "verdict": "rejected",
+      "note": "Rejected — moving Ruben Saldo closer also raises the chance to score, so it fails to demonstrate a plausible prevention."
+    }
+  ],
+  "claim": "Given no experiment showed a defensible change that reduced the scoring probability, the real decision to let Felix Ondo shoot — which resulted in a goal — was a reasonable outcome."
+}

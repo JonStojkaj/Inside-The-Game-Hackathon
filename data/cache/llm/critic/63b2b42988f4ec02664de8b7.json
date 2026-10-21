@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "tight_A4",
+      "verdict": "rejected",
+      "note": "Experiment marked as not passing the rules, so its result is not accepted."
+    },
+    {
+      "experiment_id": "tight_A3",
+      "verdict": "rejected",
+      "note": "Experiment marked as not passing the rules, so its result is not accepted."
+    }
+  ],
+  "claim": "The real decision — Leo Marchetti shooting and scoring — was a reasonable one given the evidence provided."
+}

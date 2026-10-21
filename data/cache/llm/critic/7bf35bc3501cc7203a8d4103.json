@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "tight_H7",
+      "verdict": "rejected",
+      "note": "Did not pass the input rules for acceptance."
+    },
+    {
+      "experiment_id": "pass_A20",
+      "verdict": "accepted",
+      "note": "Stable, meaningful and football-plausible change in outcome probability."
+    }
+  ],
+  "claim": "A pass to Kai Nakamura would have raised the goal probability to 9.3% (an increase of +3.5 points) versus the actual 5.9% from Felix Ondo's shot, so finding the teammate was a measurably better attacking option in this situation."
+}

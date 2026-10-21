@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "pass_A20",
+      "verdict": "rejected",
+      "note": "Hypothesis fails the input rules (not marked as passing) so it cannot be accepted."
+    },
+    {
+      "experiment_id": "tight_H20",
+      "verdict": "rejected",
+      "note": "Hypothesis fails the input rules (not marked as passing) so it cannot be accepted."
+    }
+  ],
+  "claim": "Given that none of the proposed alternatives were accepted for analysis, the real decision — Arne Dahl passing to Oscar Lindqvist (which was intercepted) — must be regarded as a reasonable one in the absence of validated safer options."
+}

@@ -1,0 +1,20 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "carry",
+      "verdict": "accepted",
+      "note": "Carrying raised scoring likelihood by 7.3 points to 19.8%, a meaningful and plausible improvement."
+    },
+    {
+      "experiment_id": "pass_H11",
+      "verdict": "accepted",
+      "note": "The pass to Jonah Pike lowered scoring probability to 4.2% (−8.3 points), a clear and stable decrease."
+    },
+    {
+      "experiment_id": "pass_H8",
+      "verdict": "accepted",
+      "note": "The pass to Emil Strand reduced scoring probability to 4.7% (−7.8 points), a notable and plausible drop."
+    }
+  ],
+  "claim": "Carrying the ball would have increased the scoring probability to 19.8% (+7.3 points) compared with Leo Marchetti’s shot at 12.5%, while passing to Jonah Pike (4.2%, −8.3 points) or Emil Strand (4.7%, −7.8 points) would have reduced the chance."
+}

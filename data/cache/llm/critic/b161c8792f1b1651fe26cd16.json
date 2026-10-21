@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "tight_A2",
+      "verdict": "rejected",
+      "note": "Marked as not passing the rules in the input."
+    },
+    {
+      "experiment_id": "tight_A8",
+      "verdict": "rejected",
+      "note": "Marked as not passing the rules in the input."
+    }
+  ],
+  "claim": "No experiment passed the review, so the real decision — Leo Marchetti shooting and scoring (11.5% chance to score) — was a reasonable one given the provided analyses."
+}

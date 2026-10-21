@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "tight_H7",
+      "verdict": "rejected",
+      "note": "Marked as not passing the rules — change was negligible."
+    },
+    {
+      "experiment_id": "tight_H9",
+      "verdict": "rejected",
+      "note": "Marked as not passing the rules — no meaningful change versus actual."
+    }
+  ],
+  "claim": "No tested defensive tweaks produced a meaningful or qualifying reduction in Kai Nakamura’s 4.6% chance to score, so the real decision that led to the goal was a reasonable outcome."
+}

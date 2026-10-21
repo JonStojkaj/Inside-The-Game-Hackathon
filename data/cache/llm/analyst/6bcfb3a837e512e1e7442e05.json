@@ -1,0 +1,16 @@
+{
+  "hypotheses": [
+    {
+      "experiment_id": "pass_A20",
+      "text": "Passing to Kai Nakamura (CM) instead would have created a higher-probability chance or reduced turnover risk compared with the low-probability shot, explaining whether the decision to shoot was suboptimal."
+    },
+    {
+      "experiment_id": "carry",
+      "text": "Theo Varga carrying the ball forward instead would have improved shooting angle/space and increased goal probability over the immediate shot, showing if taking extra dribbles mattered."
+    },
+    {
+      "experiment_id": "tight_H3",
+      "text": "If Kofi Asante-Rhys (LB, home) had been 3 m closer to Varga, the defender pressure would have meaningfully lowered the shot's success probability, explaining how defensive positioning changed the outcome."
+    }
+  ]
+}

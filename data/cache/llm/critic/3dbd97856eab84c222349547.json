@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "carry",
+      "verdict": "accepted",
+      "note": "Simulation shows a clear, stable change and is football-plausible."
+    },
+    {
+      "experiment_id": "pass_H8",
+      "verdict": "rejected",
+      "note": "Marked in input as not passing the rules."
+    }
+  ],
+  "claim": "Simulated futures show that if Leo Marchetti had carried the ball forward before shooting the chance of scoring would have been 18.5%, an increase of 6.9 percentage points over the actual 11.5%, so carrying forward would likely have made scoring more likely."
+}

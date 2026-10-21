@@ -1,0 +1,16 @@
+{
+  "hypotheses": [
+    {
+      "experiment_id": "carry",
+      "text": "If Leo Marchetti had carried the ball forward, the chance to score from the ensuing situation would have been higher than the 4.5% resulted from his shot."
+    },
+    {
+      "experiment_id": "pass_H2",
+      "text": "If Leo Marchetti had passed to Noah Fairley (RB), the chance to score from that sequence would have been higher than the 4.5% from Marchetti's shot."
+    },
+    {
+      "experiment_id": "pass_H16",
+      "text": "If Leo Marchetti had passed to Sami Okoro (CM), the chance to score from that sequence would have been higher than the 4.5% from Marchetti's shot."
+    }
+  ]
+}

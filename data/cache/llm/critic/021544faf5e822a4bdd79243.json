@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "carry",
+      "verdict": "rejected",
+      "note": "Effect (+1.1 points) was not stable across seeds."
+    },
+    {
+      "experiment_id": "pass_A20",
+      "verdict": "rejected",
+      "note": "Effect (+0.1 points) was not stable across seeds."
+    }
+  ],
+  "claim": "The real pass to A4 (intercepted) had a 6.1% chance of goal. Alternative simulations showed changes that were not stable across seeds, so the actual decision was a reasonable choice."
+}

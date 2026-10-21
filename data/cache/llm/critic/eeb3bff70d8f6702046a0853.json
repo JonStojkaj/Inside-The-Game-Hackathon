@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "pass_A20",
+      "verdict": "rejected",
+      "note": "Marked as not passing the rules (no reliable/stable improvement shown)."
+    },
+    {
+      "experiment_id": "carry",
+      "verdict": "rejected",
+      "note": "Marked as not passing the rules (no reliable/stable improvement shown)."
+    }
+  ],
+  "claim": "Because none of the alternative options were accepted by the analysis, the real decision to attempt the pass that was intercepted can be seen as a reasonable choice in that moment."
+}

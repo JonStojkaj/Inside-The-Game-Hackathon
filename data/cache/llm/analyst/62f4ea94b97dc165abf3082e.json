@@ -1,0 +1,16 @@
+{
+  "hypotheses": [
+    {
+      "experiment_id": "shoot",
+      "text": "If Bastian Holt had shot instead of passing, the chance to score would have been lower than the 11.0% produced by his actual pass to Theo Varga."
+    },
+    {
+      "experiment_id": "carry",
+      "text": "If Bastian Holt had carried the ball forward rather than passing, the resulting chance to score would have been lower than the 11.0% from his pass."
+    },
+    {
+      "experiment_id": "pass_A16",
+      "text": "If Bastian Holt had passed to Ilan Moreau (CM) instead, the chance to score would have been lower than the 11.0% achieved by his pass to Varga."
+    }
+  ]
+}

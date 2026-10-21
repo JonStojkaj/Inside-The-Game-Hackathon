@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "tight_H3",
+      "verdict": "rejected",
+      "note": "Rejected — experiment marked as not passing the rules in the input."
+    },
+    {
+      "experiment_id": "tight_H9",
+      "verdict": "rejected",
+      "note": "Rejected — experiment marked as not passing the rules in the input."
+    }
+  ],
+  "claim": "Given the available, rule-approved evidence, the real decision to let Felix Ondo shoot (a 5.9% chance) was reasonable."
+}

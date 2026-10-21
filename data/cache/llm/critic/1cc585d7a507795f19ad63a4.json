@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "pass_A7",
+      "verdict": "rejected",
+      "note": "Not marked as passing the rules, so not accepted."
+    },
+    {
+      "experiment_id": "pass_A11",
+      "verdict": "rejected",
+      "note": "Not marked as passing the rules, so not accepted."
+    }
+  ],
+  "claim": "Given the available analyses, the real decision to attempt the self-pass was a reasonable one."
+}

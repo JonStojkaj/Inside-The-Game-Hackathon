@@ -1,0 +1,20 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "tight_A4",
+      "verdict": "rejected",
+      "note": "Marked as failing the rules, so the simulated change is not considered meaningful or reliable."
+    },
+    {
+      "experiment_id": "tight_A3",
+      "verdict": "rejected",
+      "note": "Marked as failing the rules, so the simulated change is not considered meaningful or reliable."
+    },
+    {
+      "experiment_id": "tight_A2",
+      "verdict": "rejected",
+      "note": "Marked as failing the rules, so the simulated change is not considered meaningful or reliable."
+    }
+  ],
+  "claim": "Given none of the proposed defensive adjustments passed the review, the real decision — Leo Marchetti shooting and scoring with an 11.5% chance — was a reasonable one."
+}

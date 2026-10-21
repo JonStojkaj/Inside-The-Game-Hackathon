@@ -1,0 +1,12 @@
+{
+  "hypotheses": [
+    {
+      "experiment_id": "pass_H11",
+      "text": "Passing to Jonah Pike (LM) would have increased the chance to score compared with the 12.5% from Marchetti's shot."
+    },
+    {
+      "experiment_id": "carry",
+      "text": "If Leo Marchetti had carried the ball forward instead of shooting, the chance to score would have been lower than the 12.5% achieved by the shot."
+    }
+  ]
+}

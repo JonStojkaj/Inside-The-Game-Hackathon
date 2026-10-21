@@ -1,0 +1,16 @@
+{
+  "hypotheses": [
+    {
+      "experiment_id": "carry",
+      "text": "If Leo Marchetti carried the ball forward instead of shooting, he would have had space/time to create a higher-quality chance (explaining why the early shot was a low-probability decision)."
+    },
+    {
+      "experiment_id": "pass_H8",
+      "text": "If Leo Marchetti passed to Emil Strand (CM) instead, the resulting possession sequence would produce a better shooting opportunity than the rushed off-target attempt, showing the shot choice reduced scoring probability."
+    },
+    {
+      "experiment_id": "tight_A3",
+      "text": "If Dario Kesh (LB, away) had been 4 m closer to Marchetti, increased defensive pressure might explain the inaccuracy of the off-target shot and the high turnover likelihood."
+    }
+  ]
+}

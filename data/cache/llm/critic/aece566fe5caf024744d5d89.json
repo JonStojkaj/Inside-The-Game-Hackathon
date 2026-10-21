@@ -1,0 +1,20 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "carry",
+      "verdict": "accepted",
+      "note": "Stable result showing a meaningful increase from 12.5% to 19.8% ( +7.3 points)."
+    },
+    {
+      "experiment_id": "pass_H8",
+      "verdict": "accepted",
+      "note": "Stable result showing a meaningful decrease from 12.5% to 4.7% ( -7.8 points)."
+    },
+    {
+      "experiment_id": "tight_A3",
+      "verdict": "rejected",
+      "note": "Effect was not stable across seeds, so it is unreliable."
+    }
+  ],
+  "claim": "The original shot carried a 12.5% scoring chance; had Marchetti carried the ball forward it would have risen to 19.8%, while passing to Emil Strand would have reduced it to 4.7%."
+}

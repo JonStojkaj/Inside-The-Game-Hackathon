@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "pass_A20",
+      "verdict": "rejected",
+      "note": "Did not meet the input's acceptance rules (not marked as passing)."
+    },
+    {
+      "experiment_id": "pass_A16",
+      "verdict": "rejected",
+      "note": "Did not meet the input's acceptance rules (not marked as passing)."
+    }
+  ],
+  "claim": "No alternative passed the acceptance rules, so the real decision for Oscar Lindqvist to dribble (which ended in a tackle) should be considered a reasonable one based on the available analysis."
+}

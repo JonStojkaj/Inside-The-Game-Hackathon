@@ -1,0 +1,16 @@
+{
+  "hypotheses": [
+    {
+      "experiment_id": "shoot",
+      "text": "If Kai Nakamura had shot instead, the chance of scoring would likely have been higher than the risky pass outcome and explain whether a direct shot was the better, less turnover-prone option."
+    },
+    {
+      "experiment_id": "carry",
+      "text": "If Kai Nakamura had carried the ball forward instead, the possession would likely have been retained more often and this could show whether dribbling was a safer way to increase the scoring opportunity without the high turnover risk."
+    },
+    {
+      "experiment_id": "tight_H3",
+      "text": "If Kofi Asante-Rhys (LB, home) had stood 4 m closer to Kai Nakamura, increased pressure might have materially reduced the success of the pass and explain how defensive positioning changed the pass's risk/reward."
+    }
+  ]
+}

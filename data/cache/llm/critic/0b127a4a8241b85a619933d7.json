@@ -1,0 +1,20 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "tight_H3",
+      "verdict": "rejected",
+      "note": "Model shows chance-to-score would have risen, so it doesn't support the hypothesis."
+    },
+    {
+      "experiment_id": "tight_H7",
+      "verdict": "rejected",
+      "note": "Result increases chance-to-score rather than decreasing it, so hypothesis fails."
+    },
+    {
+      "experiment_id": "tight_H2",
+      "verdict": "rejected",
+      "note": "The simulated change raises the chance-to-score, contradicting the claimed defensive benefit."
+    }
+  ],
+  "claim": "No proposed defensive adjustment was shown to reduce Felix Ondo's 5.9% chance to score in these experiments, so the decision to shoot was a reasonable one."
+}

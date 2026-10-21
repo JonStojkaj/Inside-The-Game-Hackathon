@@ -1,0 +1,12 @@
+{
+  "hypotheses": [
+    {
+      "experiment_id": "pass_A11",
+      "text": "A pass to Bastian Holt (LM) would have been safer and would have given a higher chance to keep possession than the 14.3% of the intercepted pass."
+    },
+    {
+      "experiment_id": "pass_A16",
+      "text": "A pass to Ilan Moreau (CM) would have increased the chance to retain the ball compared with the intercepted pass, making keeping possession more likely than 14.3%."
+    }
+  ]
+}

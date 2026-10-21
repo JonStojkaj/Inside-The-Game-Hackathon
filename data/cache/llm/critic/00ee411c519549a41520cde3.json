@@ -1,0 +1,20 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "carry",
+      "verdict": "accepted",
+      "note": "Meaningful, stable across seeds and football-plausible improvement."
+    },
+    {
+      "experiment_id": "pass_H2",
+      "verdict": "rejected",
+      "note": "Marked as not passing the input rules."
+    },
+    {
+      "experiment_id": "pass_H20",
+      "verdict": "rejected",
+      "note": "Marked as not passing the input rules."
+    }
+  ],
+  "claim": "If Tomas Vell had carried the ball forward himself the chance of conceding would have been lower — the p_goal would be 7.3%, a +2.2 points improvement versus the intercepted pass to Mateo Brann."
+}

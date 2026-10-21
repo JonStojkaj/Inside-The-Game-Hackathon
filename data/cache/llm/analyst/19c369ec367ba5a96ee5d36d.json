@@ -1,0 +1,12 @@
+{
+  "hypotheses": [
+    {
+      "experiment_id": "pass_A16",
+      "text": "If Marcus Quill had passed to Ilan Moreau (CM) instead, the sequence would have resulted in a higher chance of a goal than the blocked long-range shot (i.e., passing was the better option)."
+    },
+    {
+      "experiment_id": "pass_A8",
+      "text": "If Marcus Quill had passed to Theo Varga (CM) instead, the possession would have been retained with a higher expected goal value than the low-probability shot (i.e., a central pass would have produced a better scoring opportunity)."
+    }
+  ]
+}

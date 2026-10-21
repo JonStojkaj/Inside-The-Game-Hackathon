@@ -1,0 +1,16 @@
+{
+  "hypotheses": [
+    {
+      "experiment_id": "tight_H5",
+      "text": "If Ruben Saldo (CB) had been 3 m closer to Kai Nakamura, the chance to score would likely have fallen noticeably, suggesting a tighter central mark could have prevented the shot or made it less accurate."
+    },
+    {
+      "experiment_id": "tight_H3",
+      "text": "If Kofi Asante-Rhys (LB) had been 5 m closer to Kai Nakamura, the reduced space on the shooter's left would have cut the shooting angle and chance to score, indicating closer wide pressure could have stopped the goal."
+    },
+    {
+      "experiment_id": "tight_H4",
+      "text": "If Lukas Hagen (CB) had been 5 m closer to Kai Nakamura, increased central pressure would likely have lowered the chance to score, showing that more aggressive closing from the central defenders could have prevented the finish."
+    }
+  ]
+}

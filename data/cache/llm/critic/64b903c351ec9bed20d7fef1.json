@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "tight_H9",
+      "verdict": "rejected",
+      "note": "The experiment increased the chance to score (+1.1 points) so it does not support that closer marking would have prevented the goal."
+    },
+    {
+      "experiment_id": "tight_H2",
+      "verdict": "rejected",
+      "note": "The experiment also raised the chance to score (+2.4 points), so it fails to show that closer positioning would have reduced the scoring risk."
+    }
+  ],
+  "claim": "No tested defensive adjustments passed our checks, so the real decision to shoot and score (10.9% chance) was a reasonable outcome given the available evidence."
+}

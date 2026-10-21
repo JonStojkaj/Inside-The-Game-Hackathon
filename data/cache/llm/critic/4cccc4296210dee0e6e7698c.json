@@ -1,0 +1,20 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "carry",
+      "verdict": "rejected",
+      "note": "Predicted chance (8.8%) was lower than the actual shot (11.5%), so not a better option."
+    },
+    {
+      "experiment_id": "pass_A8",
+      "verdict": "rejected",
+      "note": "Predicted chance (10.5%) was lower than the actual shot (11.5%), so not a better option."
+    },
+    {
+      "experiment_id": "pass_A11",
+      "verdict": "rejected",
+      "note": "Predicted chance (10.2%) was lower than the actual shot (11.5%), so not a better option."
+    }
+  ],
+  "claim": "Kai Nakamura’s decision to shoot was reasonable given the situation — the alternatives in the experiments showed lower chances to score than his 11.5% shot."
+}

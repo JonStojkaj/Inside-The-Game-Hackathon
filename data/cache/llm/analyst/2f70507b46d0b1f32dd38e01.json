@@ -1,0 +1,12 @@
+{
+  "hypotheses": [
+    {
+      "experiment_id": "pass_H11",
+      "text": "A pass to Jonah Pike (LM) would have given a higher chance to keep possession than Fairley’s dribble (i.e., increased the chance to keep the ball)."
+    },
+    {
+      "experiment_id": "tight_A2",
+      "text": "If teammate Callum Reyes (RB) had stood 5 m closer to Noah Fairley, Fairley would have had a higher chance to retain possession than with the attempted dribble."
+    }
+  ]
+}

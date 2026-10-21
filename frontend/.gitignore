@@ -28,3 +28,7 @@ dist-ssr
 
 # local test bundles (videos etc.), see scripts/sync-export.mjs
 public/dev/
+
+# demo videos are large: kept locally / baked into the image, not in git
+public/mock/*/video.mp4
+public/dev/

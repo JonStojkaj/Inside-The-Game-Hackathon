@@ -1,0 +1,20 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "pass_A20",
+      "verdict": "rejected",
+      "note": "Effect small and not stable across seeds."
+    },
+    {
+      "experiment_id": "carry",
+      "verdict": "accepted",
+      "note": "Stable across seeds with a meaningful +3.4 point increase."
+    },
+    {
+      "experiment_id": "tight_H3",
+      "verdict": "rejected",
+      "note": "Effect not stable across seeds."
+    }
+  ],
+  "claim": "Had Varga carried the ball forward, the model shows the goal probability would have been 14.3% instead of the 10.9% from the actual shot."
+}

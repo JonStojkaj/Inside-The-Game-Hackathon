@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "shoot",
+      "verdict": "accepted",
+      "note": "Meaningful, stable and football-plausible: shooting drops chance from 11.1% to 4.3%."
+    },
+    {
+      "experiment_id": "carry",
+      "verdict": "rejected",
+      "note": "Marked as failing the rules in the input."
+    }
+  ],
+  "claim": "Kai Nakamura's pass to Felix Ondo gave an 11.1% chance to score; if Nakamura had shot instead the chance would have been 4.3%, a decrease of 6.7 points."
+}

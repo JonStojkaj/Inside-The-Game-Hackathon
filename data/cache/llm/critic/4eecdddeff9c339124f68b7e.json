@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "tight_A4",
+      "verdict": "rejected",
+      "note": "Effect was not stable across seeds so it is not a reliable finding."
+    },
+    {
+      "experiment_id": "carry",
+      "verdict": "accepted",
+      "note": "Stable increase in goal probability of 6.9 points across seeds."
+    }
+  ],
+  "claim": "Simulations show that if Marchetti had carried the ball forward the goal probability would have been 18.5% versus the 11.5% that actually occurred, a 6.9-point increase."
+}

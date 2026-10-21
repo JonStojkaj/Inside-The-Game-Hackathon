@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "pass_A20",
+      "verdict": "accepted",
+      "note": "Marked as passing rules and is football-plausible with consistent results."
+    },
+    {
+      "experiment_id": "pass_A5",
+      "verdict": "accepted",
+      "note": "Marked as passing rules and is football-plausible with consistent results."
+    }
+  ],
+  "claim": "Neither pass would have improved retention: a pass to Kai Nakamura would have had a 9.1% chance to keep the ball (down 12.3 points versus the 21.4% from Dario Kesh’s dribble), and a pass to Felix Ondo would have had a 12.1% chance (down 9.3 points)."
+}

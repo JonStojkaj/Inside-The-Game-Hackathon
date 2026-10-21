@@ -1,0 +1,16 @@
+{
+  "hypotheses": [
+    {
+      "experiment_id": "tight_H3",
+      "text": "If left-back Kofi Asante-Rhys had been 1 m closer, his pressure would have reduced Ondo’s shooting angle and likely lowered the chance-to-score compared with 5.9%."
+    },
+    {
+      "experiment_id": "tight_H7",
+      "text": "If right midfielder Idris Calloway had been 3 m closer, cutting off space and a passing option, Ondo’s shot quality and chance-to-score would have decreased, showing nearer midfield support could have prevented the goal."
+    },
+    {
+      "experiment_id": "tight_H2",
+      "text": "If right-back Noah Fairley had been 5 m closer, increased defensive cover on that side would have constrained Ondo’s run and shooting corridor and meaningfully reduced the chance-to-score."
+    }
+  ]
+}

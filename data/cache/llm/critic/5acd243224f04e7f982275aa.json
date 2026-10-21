@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "pass_A11",
+      "verdict": "rejected",
+      "note": "Marked as not passing the rules (not a validated, stable improvement)."
+    },
+    {
+      "experiment_id": "tight_H9",
+      "verdict": "rejected",
+      "note": "Marked as not passing the rules (not a validated, stable improvement)."
+    }
+  ],
+  "claim": "Oscar Lindqvist dribbled and was tackled, with an estimated goal probability of 3.6%, and since none of the proposed alternatives passed the validation rules, the original decision was a reasonable one."
+}

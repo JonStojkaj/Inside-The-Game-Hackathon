@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "pass_A16",
+      "verdict": "rejected",
+      "note": "Effect was not stable across seeds."
+    },
+    {
+      "experiment_id": "pass_A8",
+      "verdict": "accepted",
+      "note": "Stable result showing a meaningful decrease in goal probability."
+    }
+  ],
+  "claim": "Keeping possession with Theo Varga would have lowered the goal probability from 9.9% to 7.7%, a stable decrease in scoring chance."
+}

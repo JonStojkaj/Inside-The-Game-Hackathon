@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "tight_H3",
+      "verdict": "rejected",
+      "note": "Model output shows higher goal probability (+1.5 points), so this hypothesis is not supported."
+    },
+    {
+      "experiment_id": "tight_H9",
+      "verdict": "rejected",
+      "note": "Model output shows higher goal probability (+1.1 points), so this hypothesis is not supported."
+    }
+  ],
+  "claim": "No proposed defensive adjustments were supported by the experiments, so the actual decision to let Theo Varga shoot and the resulting goal was a reasonable outcome."
+}

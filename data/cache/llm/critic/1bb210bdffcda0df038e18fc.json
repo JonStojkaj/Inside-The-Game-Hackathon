@@ -1,0 +1,20 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "pass_A16",
+      "verdict": "rejected",
+      "note": "Marked in the input as not passing the rules."
+    },
+    {
+      "experiment_id": "pass_A2",
+      "verdict": "rejected",
+      "note": "Marked in the input as not passing the rules."
+    },
+    {
+      "experiment_id": "carry",
+      "verdict": "accepted",
+      "note": "Meets the rules and is football-plausible with a consistent positive effect across seeds."
+    }
+  ],
+  "claim": "If Marcus Quill had carried the ball forward instead of shooting, the model estimates the scoring chance would have risen by 4.2 points to 14.1%, compared with Quill's original shot probability of 9.9%."
+}

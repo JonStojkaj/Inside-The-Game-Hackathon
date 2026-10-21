@@ -1,0 +1,16 @@
+{
+  "hypotheses": [
+    {
+      "experiment_id": "shoot",
+      "text": "If Oscar Lindqvist had shot instead of carrying, the chance of scoring would have been higher and the turnover risk lower, explaining whether shooting was the better option from 22 m."
+    },
+    {
+      "experiment_id": "pass_A11",
+      "text": "If Lindqvist had passed to Bastian Holt (LM) instead, the play would have shifted wide and likely reduced the high turnover risk, showing whether a pass to the flank would have preserved possession and increased scoring probability."
+    },
+    {
+      "experiment_id": "tight_H9",
+      "text": "If Mateo Brann had been 5 m closer to Lindqvist, Lindqvist would have had a safer short option and been less likely to be tackled, explaining whether teammate proximity would have prevented the turnover."
+    }
+  ]
+}

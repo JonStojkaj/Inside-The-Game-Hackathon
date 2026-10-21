@@ -1,0 +1,16 @@
+{
+  "hypotheses": [
+    {
+      "experiment_id": "tight_A4",
+      "text": "If Oscar Lindqvist (CB) had been 3 m closer to Leo Marchetti, the goal would likely have been prevented (closer CB pressure would have reduced the shot quality or forced a turnover)."
+    },
+    {
+      "experiment_id": "tight_A3",
+      "text": "If Dario Kesh (LB) had been 5 m closer to Leo Marchetti, the goal would likely have been prevented (additional closing from the left would have limited the shooting angle or blocked the attempt)."
+    },
+    {
+      "experiment_id": "tight_A2",
+      "text": "If Callum Reyes (RB) had been 5 m closer to Leo Marchetti, the goal would likely have been prevented (closer right‑side cover would have increased defensive pressure and decreased the chance of a clean finish)."
+    }
+  ]
+}

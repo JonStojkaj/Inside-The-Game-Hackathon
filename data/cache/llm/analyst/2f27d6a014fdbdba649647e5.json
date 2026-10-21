@@ -1,0 +1,16 @@
+{
+  "hypotheses": [
+    {
+      "experiment_id": "carry",
+      "text": "If Tomas Vell had carried the ball forward instead, the turnover probability would fall and the chance of creating a scoring opportunity would increase (i.e., dribbling would have been safer than the intercepted pass)."
+    },
+    {
+      "experiment_id": "pass_H20",
+      "text": "If Tomas Vell had passed to Leo Marchetti (CM) instead, the sequence would have had a lower interception/turnover risk and a higher chance to keep possession in midfield than the attempted pass to H9. "
+    },
+    {
+      "experiment_id": "tight_A11",
+      "text": "If Bastian Holt (LM, away) had been 5 m closer to Tomas Vell at the moment, increased pressure from that defender would explain the high interception/turnover outcome observed."
+    }
+  ]
+}

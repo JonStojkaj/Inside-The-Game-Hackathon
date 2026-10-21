@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "tight_A4",
+      "verdict": "rejected",
+      "note": "Rejected because the input marked it as not passing the rules."
+    },
+    {
+      "experiment_id": "tight_A3",
+      "verdict": "rejected",
+      "note": "Rejected because the input marked it as not passing the rules."
+    }
+  ],
+  "claim": "The real decision to shoot was reasonable — Leo Marchetti had an 11.5% chance to score and no tested defensive adjustment was accepted as a valid explanation for preventing the goal."
+}

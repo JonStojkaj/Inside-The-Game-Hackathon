@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "pass_H2",
+      "verdict": "accepted",
+      "note": "The scenario is football-plausible and marked as passing the rules."
+    },
+    {
+      "experiment_id": "pass_H20",
+      "verdict": "accepted",
+      "note": "The scenario is football-plausible and marked as passing the rules."
+    }
+  ],
+  "claim": "Passing to Noah Fairley would have raised the chance of a goal from 1.9% to 3.8% (a +1.9 points change), and the same improvement is predicted if Idris Calloway had passed to Leo Marchetti, so either option would have been safer than the attempted self-pass."
+}

@@ -1,0 +1,16 @@
+{
+  "hypotheses": [
+    {
+      "experiment_id": "carry",
+      "text": "If Idris Calloway had carried the ball forward instead, the high turnover probability would have fallen and the dangerous interception might have been avoided (reducing turnovers and possibly increasing offensive chance)."
+    },
+    {
+      "experiment_id": "pass_H20",
+      "text": "If Idris Calloway had passed to Leo Marchetti (CM) instead, the ball would have gone to a different position/player and may have reduced the chance of an immediate interception, altering the turnover/shot probabilities.  "
+    },
+    {
+      "experiment_id": "tight_A8",
+      "text": "If Theo Varga (CM, away) had been 5 m closer to Idris Calloway, increased opponent pressure would have made the interception even more likely, explaining why the pass to H7 was risky and was turned over."
+    }
+  ]
+}

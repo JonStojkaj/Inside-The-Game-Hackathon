@@ -1,0 +1,12 @@
+{
+  "hypotheses": [
+    {
+      "experiment_id": "carry",
+      "text": "If Oscar Lindqvist had carried the ball forward instead, the turnover probability would have decreased and the chance of creating a higher-quality shot would have increased compared with the intercepted pass to A4."
+    },
+    {
+      "experiment_id": "pass_A20",
+      "text": "If Oscar Lindqvist had passed to Kai Nakamura (CM) instead, the sequence would have been safer (lower turnover risk) and likely produced a higher expected goal probability than the intercepted pass to A4."
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "hypotheses": [
+    {
+      "experiment_id": "tight_H9",
+      "text": "If Mateo Brann (CF) had been 5 m closer to Kai Nakamura, his presence would have reduced Nakamura's chance to score by creating immediate pressure and blocking part of the shooting lane, meaningfully lowering the 10.8% chance."
+    },
+    {
+      "experiment_id": "tight_H8",
+      "text": "If Emil Strand (CM) had been 5 m closer to Kai Nakamura, the added midfield pressure would have constrained Nakamura’s space and time on the ball, reducing the shot quality and thereby decreasing the chance to score from 10.8%."
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "shoot",
+      "verdict": "accepted",
+      "note": "Effect is large and stable across seeds."
+    },
+    {
+      "experiment_id": "pass_A7",
+      "verdict": "rejected",
+      "note": "Effect was not stable across seeds."
+    },
+    {
+      "experiment_id": "tight_H9",
+      "verdict": "rejected",
+      "note": "Effect was not stable across seeds."
+    }
+  ],
+  "claim": "Simulating Lindqvist shooting instead lowers the chance of a goal from 6.1% to 0.1%, a drop of 6.0 percentage points, so the actual pass (though intercepted) was the better option than that particular shot."
+}

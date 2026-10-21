@@ -1,0 +1,16 @@
+{
+  "hypotheses": [
+    {
+      "experiment_id": "tight_H4",
+      "text": "If Lukas Hagen (CB, home) had been 5 m closer to Kai Nakamura, the shot would likely have been blocked/forced off-target and the chance of a goal would have dropped, explaining how defensive positioning changed the outcome."
+    },
+    {
+      "experiment_id": "tight_H3",
+      "text": "If Kofi Asante-Rhys (LB, home) had been 5 m closer to Kai Nakamura, increased pressure from the left could have reduced shooting space and accuracy, lowering the likelihood of a goal."
+    },
+    {
+      "experiment_id": "pass_A8",
+      "text": "If Kai Nakamura had passed to Theo Varga (CM) instead, a different final action (shorter-range shot or combination) might have produced a higher expected goal probability than the low-probability long shot that became the goal."
+    }
+  ]
+}

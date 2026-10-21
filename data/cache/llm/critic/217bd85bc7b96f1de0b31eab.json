@@ -1,0 +1,20 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "pass_A20",
+      "verdict": "rejected",
+      "note": "Marked as failing validation so it was not accepted."
+    },
+    {
+      "experiment_id": "carry",
+      "verdict": "rejected",
+      "note": "Marked as failing validation so it was not accepted."
+    },
+    {
+      "experiment_id": "tight_H16",
+      "verdict": "rejected",
+      "note": "Marked as failing validation so it was not accepted."
+    }
+  ],
+  "claim": "The actual pass to Felix Ondo, which was intercepted, had a 6.8% chance to keep the ball; none of the tested alternatives passed validation, so the real decision was a reasonable one."
+}

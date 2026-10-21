@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "tight_A9",
+      "verdict": "rejected",
+      "note": "Marked as not passing the rules in the input."
+    },
+    {
+      "experiment_id": "tight_A8",
+      "verdict": "rejected",
+      "note": "Marked as not passing the rules in the input."
+    }
+  ],
+  "claim": "Leo Marchetti's shot had an 11.5% chance to score; since none of the proposed alternatives passed the checks, the real decision to shoot was a reasonable one."
+}

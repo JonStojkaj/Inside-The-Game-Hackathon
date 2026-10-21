@@ -1,0 +1,12 @@
+{
+  "hypotheses": [
+    {
+      "experiment_id": "shoot",
+      "text": "Shooting would have produced a lower chance to score than the actual pass to Felix Ondo (i.e., Kai Nakamura shooting yields a smaller % than 11.1%)."
+    },
+    {
+      "experiment_id": "carry",
+      "text": "Carrying the ball forward would have resulted in a lower chance to score than the actual pass (i.e., Kai Nakamura carrying yields a smaller % than 11.1%)."
+    }
+  ]
+}
