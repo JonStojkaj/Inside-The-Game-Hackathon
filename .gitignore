@@ -222,5 +222,8 @@ __marimo__/
 # macOS
 .DS_Store
 
+# Personal Claude Code settings
+.claude/settings.local.json
+
 # Recorded matches (large); small samples can be force-added
 data/matches/
