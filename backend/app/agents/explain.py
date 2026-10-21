@@ -227,7 +227,7 @@ class ExplainTeam:
                 break
             review = self.llm.complete(CRITIC_SYSTEM, self._critic_prompt(ctx, base, results, chosen, menu, key), CriticReview, "critic")
             verdicts = {v.experiment_id: v for v in review.verdicts}
-            for h, exp_id in zip(pending, [c.experiment_id for c in chosen if c.experiment_id in results]):
+            for hyp, exp_id in zip(pending, [c.experiment_id for c in chosen if c.experiment_id in results]):
                 r = results[exp_id]
                 v = verdicts.get(exp_id)
                 stable = passes_rule(base, r, key)
@@ -236,13 +236,13 @@ class ExplainTeam:
                 if not self._clean(note, {pct(value(base, key)), pct(value(r, key))}, {points(base, r, key)}, ctx, r.description):
                     note = "(critic note withheld: it used numbers the simulator did not produce)"
                 if v and v.verdict == "accepted" and stable and sane:
-                    h.verdict, h.critic_note = "accepted", note
+                    hyp.verdict, hyp.critic_note = "accepted", note
                 elif v and v.verdict == "accepted":
                     why = "effect not stable across seeds" if not stable else "football-implausible direction (simulator artifact)"
-                    h.verdict, h.critic_note = "rejected", f"overruled by rule: {why}. ({note})"
+                    hyp.verdict, hyp.critic_note = "rejected", f"overruled by rule: {why}. ({note})"
                 else:
-                    h.verdict, h.critic_note = "rejected", note
-                if h.verdict == "accepted":
+                    hyp.verdict, hyp.critic_note = "rejected", note
+                if hyp.verdict == "accepted":
                     accepted.append(r)
             claim = review.claim
             if claimable(base, accepted, key):

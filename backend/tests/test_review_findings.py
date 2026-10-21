@@ -4,7 +4,6 @@ They started as xfail(strict=True) and became regular regression tests when each
 """
 
 import numpy as np
-import pytest
 from conftest import own
 
 from app.agents import explain

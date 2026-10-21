@@ -283,7 +283,7 @@ def _pass_meta(m: GrfMatch, passer: int, release: int, receive: int, start: tupl
         "ball_speed_kmh": round(max(speeds, default=0.0) * 3.6, 1),
         "flight_s": round((receive - release) * STEP_S, 1),
         "difficulty": pass_difficulty(distance, lane_clearance(start, end, opponents), receiver_open, passer_free),
-        "threat_gain": round(threat(*end, attacks_right) - threat(*start, attacks_right), 4),
+        "threat_gain": round(threat(end[0], end[1], attacks_right) - threat(start[0], start[1], attacks_right), 4),
         "intended_receiver": m.players[receiver].id,
     }
 
