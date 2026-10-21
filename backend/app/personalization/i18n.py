@@ -132,6 +132,10 @@ S: dict[str, dict[str, str]] = {
     "measure.p_goal": {"en": "chance to score", "de": "Torchance", "es": "probabilidad de gol"},
     "measure.p_keep": {"en": "chance to keep the ball", "de": "Chance, den Ball zu behalten",
                        "es": "probabilidad de conservar el balón"},
+    # the measure inside a sentence (German closes the infinitive clause with a comma)
+    "measure.p_goal.mid": {"en": "chance to score", "de": "Torchance", "es": "probabilidad de gol"},
+    "measure.p_keep.mid": {"en": "chance to keep the ball", "de": "Chance, den Ball zu behalten,",
+                           "es": "probabilidad de conservar el balón"},
     "alt.shoot": {"en": "shooting", "de": "einem Schuss", "es": "un disparo"},
     "alt.carry": {"en": "carrying the ball on", "de": "einem Dribbling", "es": "una conducción"},
     "alt.pass": {"en": "a pass to {target}", "de": "einem Pass auf {target}", "es": "un pase a {target}"},
