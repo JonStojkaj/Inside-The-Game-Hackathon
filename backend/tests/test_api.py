@@ -86,3 +86,18 @@ def test_live_messages_all_segments_and_start_frame(root):
     assert next(m["frame"] for m in messages if m["type"] == "frame") == 18
     # o-all (500..1500 ms) ended before frame 18 (1800 ms); o-an is still on screen and is sent at once
     assert [m["overlay"]["id"] for m in messages if m["type"] == "overlay"] == ["o-an", "o-fan"]
+
+
+def test_serves_export_folder_and_built_frontend(root, tmp_path):
+    dist = tmp_path / "dist"
+    dist.mkdir()
+    (dist / "index.html").write_text("<html>player</html>")
+    client = TestClient(create_app(root, frontend_dir=dist))
+    assert client.get("/").text == "<html>player</html>"
+    assert client.get("/export/test/match.json").json()["match_id"] == "test"
+    assert client.get("/api/matches").status_code == 200  # not shadowed by the "/" mount
+    assert client.get("/export/test/raw.jsonl").status_code == 404
+
+
+def test_no_frontend_mount_without_build(client):
+    assert client.get("/").status_code == 404

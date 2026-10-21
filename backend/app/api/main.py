@@ -4,9 +4,13 @@
   GET /api/matches                          summaries of every exported match
   GET /api/matches/{id}/{file}              match.json, frames.json, ..., video.mp4 (range requests)
   WS  /api/matches/{id}/live?speed=10&step=2&start_frame=0&segment=analyst-en
+  GET /export/{id}/{file}                   the export folder as static files (frontend's static mode)
+  GET /                                     the built web player (frontend/dist), if present
 
 Run from backend/:  .venv/bin/uvicorn app.api.main:app --reload
-EXPORT_DIR overrides the export root (default: <repo>/data/export).
+EXPORT_DIR overrides the export root (default: <repo>/data/export), FRONTEND_DIR the built
+frontend (default: <repo>/frontend/dist). APPLICATIONINSIGHTS_CONNECTION_STRING turns on
+Azure Monitor tracing when azure-monitor-opentelemetry is installed (the Docker image has it).
 """
 
 from __future__ import annotations
@@ -20,17 +24,31 @@ from typing import Any
 from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.api.live import ExportedMatch, live_messages
 from app.export.exporter import FILES, VIDEO_FILE
 
-DEFAULT_EXPORT_DIR = Path(__file__).resolve().parents[3] / "data" / "export"
+REPO = Path(__file__).resolve().parents[3]
+DEFAULT_EXPORT_DIR = REPO / "data" / "export"
+DEFAULT_FRONTEND_DIR = REPO / "frontend" / "dist"
 MATCH_ID = re.compile(r"^[A-Za-z0-9_-]+$")
 SERVED = {*FILES, VIDEO_FILE}
 
 
-def create_app(export_dir: str | Path | None = None) -> FastAPI:
+def _configure_monitoring() -> None:
+    if not os.environ.get("APPLICATIONINSIGHTS_CONNECTION_STRING"):
+        return
+    try:
+        from azure.monitor.opentelemetry import configure_azure_monitor
+    except ImportError:
+        return
+    configure_azure_monitor()
+
+
+def create_app(export_dir: str | Path | None = None, frontend_dir: str | Path | None = None) -> FastAPI:
     root = Path(export_dir or os.environ.get("EXPORT_DIR") or DEFAULT_EXPORT_DIR)
+    dist = Path(frontend_dir or os.environ.get("FRONTEND_DIR") or DEFAULT_FRONTEND_DIR)
     cache: dict[str, tuple[float, ExportedMatch]] = {}
     app = FastAPI(title="Sliding Doors API")
     app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -94,7 +112,13 @@ def create_app(export_dir: str | Path | None = None) -> FastAPI:
         except WebSocketDisconnect:
             pass
 
+    # static mounts last, so they never shadow /api
+    if root.is_dir():
+        app.mount("/export", StaticFiles(directory=root), name="export")
+    if (dist / "index.html").is_file():
+        app.mount("/", StaticFiles(directory=dist, html=True), name="frontend")
     return app
 
 
+_configure_monitoring()
 app = create_app()
