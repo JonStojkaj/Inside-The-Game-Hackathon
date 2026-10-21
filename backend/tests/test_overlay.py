@@ -60,6 +60,18 @@ def test_insights_only_in_stoppages_and_never_during_an_attack():
     assert not tl.overlaps_attack(o.start_ms, o.start_ms + o.duration_ms)
 
 
+def test_a_stoppage_replays_the_freshest_key_moment():
+    # two insights wait for the same dead-ball window: the newer moment airs there (like a broadcast replay),
+    # the older one gets the next window if it is still fresh enough, otherwise it is dropped
+    tl = Timeline(end_ms=100_000, attacks=[(5_000, 30_000), (40_000, 70_000)], stoppages=[(30_000, 40_000), (70_000, 80_000)])
+    older = cand("m45", 2_000, 90, slot="pitch", timing="stoppage", dur=9000, min_dur=4000, delay=45_000, type_="sliding_doors")
+    newer = cand("m50", 20_000, 60, slot="pitch", timing="stoppage", dur=9000, min_dur=4000, delay=45_000, type_="sliding_doors")
+    res = schedule([older, newer], tl, "s", "m")
+    by_id = {o.id.split(":")[1]: o for o in res.overlays}
+    assert by_id["m50"].start_ms == 30_000
+    assert "m45" in res.dropped  # its next chance (70 s) is past its 45 s freshness limit
+
+
 def test_insight_too_long_for_any_window_is_dropped():
     tl = Timeline(end_ms=100_000, attacks=[(10_000, 20_000), (23_000, 40_000)], stoppages=[(21_000, 23_000)])
     sd = cand("sd", 12_000, 90, slot="pitch", timing="stoppage", dur=9000, min_dur=4000, delay=30_000)

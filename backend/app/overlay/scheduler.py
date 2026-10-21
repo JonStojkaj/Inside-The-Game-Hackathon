@@ -176,7 +176,11 @@ def schedule(candidates: Sequence[Candidate], timeline: Timeline, segment_id: st
             overlays.append(_to_overlay(c, segment_id, match_id, c.ready_ms, end))
 
     placed: list[_Placed] = []
-    popups = sorted((c for c in candidates if c.timing != "persistent"), key=lambda c: (-c.priority, c.ready_ms, c.id))
+    # live/calm pop-ups by priority; stoppage pop-ups (insights) afterwards, freshest moment first:
+    # like a broadcast replay, a dead-ball window shows the latest key moment, an older one waits or goes stale
+    others = sorted((c for c in candidates if c.timing not in ("persistent", "stoppage")), key=lambda c: (-c.priority, c.ready_ms, c.id))
+    stoppage = sorted((c for c in candidates if c.timing == "stoppage"), key=lambda c: (-c.ready_ms, -c.priority, c.id))
+    popups = others + stoppage
     for c in popups:
         if c.slot in PERSISTENT_SLOTS:
             raise ValueError(f"{c.id}: slot {c.slot} is reserved for persistent elements")
