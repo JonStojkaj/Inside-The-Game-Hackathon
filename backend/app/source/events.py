@@ -10,6 +10,13 @@ happens between two spells:
   ball sent fast towards goal    -> shot (goal | saved | off_target | blocked)
   game mode changes              -> set_piece; ball went out -> out_of_play
 
+GRF records no ownership for one-touch finishes, so for goals we look for the last sharp ball
+acceleration before the score changed and credit the player who was at the ball (the finisher).
+
+Every event carries meta["known_frame"] when it is only known later than its frame (a pass is
+"complete" only once it is received, a shot's outcome only once it is decided). The live replayer
+publishes events then, never earlier, so overlays cannot spoil what has not happened yet.
+
 Within a spell we add carries (ball moved far) and pressure (an opponent close
 to the carrier for a while). All thresholds are named constants below.
 """
@@ -33,6 +40,8 @@ TACKLE_MAX_DIST = 2.5  # m between loser and winner at the change
 CARRY_MIN_DIST = 8.0  # m
 PRESSURE_DIST = 3.0  # m
 PRESSURE_MIN_FRAMES = 5  # 0.5 s
+KICK_SPEED_GAIN = 8.0  # m/s gained in one frame: somebody struck the ball
+KICK_MAX_DIST = 3.0  # m between the striker and the ball right before the strike
 
 
 @dataclass
@@ -140,6 +149,25 @@ def derive_events(match: GrfMatch) -> list[MatchEvent]:
         receive_xy = _xy(m.ball[nxt.start])
         gap = nxt.start - a.end - 1
 
+        goal_frame = nxt.start
+        if scored:
+            goal_frame = next(f for f in range(a.end + 1, nxt.start + 1) if (m.score[f] != m.score[a.end]).any())
+            finish = _finisher(m, a, goal_frame)
+            if finish is not None and finish[0] != a.player:  # one-touch finish: a.player's ball was the assist
+                finisher, kick = finish
+                touch_xy = _xy(m.ball[kick - 1])
+                b.add(a.end, "pass", a.player, target_id=m.players[finisher].id, start_xy=release_xy,
+                      end_xy=touch_xy, outcome="complete",
+                      meta={**_pass_meta(m, a.player, a.end, kick - 1, release_xy, touch_xy, finisher),
+                            "known_frame": kick - 1})
+                b.add(kick - 1, "shot", finisher, start_xy=touch_xy, outcome="goal",
+                      meta={**_kick_info(m, finisher, kick, goal_frame), "known_frame": goal_frame})
+                continue
+            if finish is not None:  # struck after the last owned frame: describe the actual strike
+                b.add(a.end, "shot", a.player, start_xy=release_xy, outcome="goal",
+                      meta={**_kick_info(m, a.player, finish[1], goal_frame), "known_frame": goal_frame})
+                continue
+
         if shot is not None or scored:
             if scored:
                 outcome = "goal"
@@ -157,18 +185,20 @@ def derive_events(match: GrfMatch) -> list[MatchEvent]:
                     "shot_speed_kmh": round(float(np.linalg.norm(m.ball_vel[min(a.end + 1, m.n_frames - 1), :2])) * 3.6, 1),
                     "xg": round(threat(*release_xy, attacks_right), 3),
                 }
-            b.add(a.end, "shot", a.player, start_xy=release_xy, outcome=outcome, meta=shot)
+            known = goal_frame if scored else _resolved(m, a.end, nxt.start)
+            b.add(a.end, "shot", a.player, start_xy=release_xy, outcome=outcome, meta={**shot, "known_frame": known})
             continue
 
         if restart:
-            b.add(a.end, "out_of_play", a.player, start_xy=release_xy)
+            b.add(a.end, "out_of_play", a.player, start_xy=release_xy, meta={"known_frame": _resolved(m, a.end, nxt.start)})
             continue
 
         if team_a == team_b:
             if nxt.player != a.player:
                 b.add(a.end, "pass", a.player, target_id=m.players[nxt.player].id, start_xy=release_xy,
                       end_xy=receive_xy, outcome="complete",
-                      meta=_pass_meta(m, a.player, a.end, nxt.start, release_xy, receive_xy, nxt.player))
+                      meta={**_pass_meta(m, a.player, a.end, nxt.start, release_xy, receive_xy, nxt.player),
+                            "known_frame": nxt.start})
             continue
 
         together = float(np.linalg.norm(m.pos[nxt.start, a.player] - m.pos[nxt.start, nxt.player]))
@@ -176,12 +206,51 @@ def derive_events(match: GrfMatch) -> list[MatchEvent]:
             b.add(nxt.start, "tackle", nxt.player, target_id=m.players[a.player].id, start_xy=receive_xy, outcome="won")
         else:
             b.add(a.end, "pass", a.player, start_xy=release_xy, end_xy=receive_xy, outcome="incomplete",
-                  meta=_pass_meta(m, a.player, a.end, nxt.start, release_xy, receive_xy, None))
+                  meta={**_pass_meta(m, a.player, a.end, nxt.start, release_xy, receive_xy, None), "known_frame": nxt.start})
             b.add(nxt.start, "interception", nxt.player, target_id=m.players[a.player].id, start_xy=receive_xy)
 
     b.events.sort(key=lambda e: (e.frame, e.id))
     _credit_scorers(b.events)
     return b.events
+
+
+def _resolved(m: GrfMatch, release: int, receive: int) -> int:
+    """First frame at which the fate of a ball released at `release` is decided: it went out
+    (reset jump / game-mode change) or somebody received it."""
+    for f in range(release + 1, receive + 1):
+        if m.jump[f] or m.game_mode[f] != 0:
+            return f
+    return receive
+
+
+def _finisher(m: GrfMatch, a: Spell, goal_frame: int) -> tuple[int, int] | None:
+    """(player index, kick frame) of the last strike by the scoring team before a goal.
+
+    The kick frame is the first frame of the fast ball; the striker is whoever of the scoring team
+    was at the ball the frame before (GRF often has no ownership frame for one-touch finishes).
+    """
+    team = slice(0, 11) if a.player < 11 else slice(11, 22)
+    speed = np.linalg.norm(m.ball_vel[:, :2], axis=1)
+    for f in range(goal_frame - 1, a.end, -1):
+        if m.jump[f] or speed[f] < SHOT_MIN_SPEED or speed[f] - speed[f - 1] < KICK_SPEED_GAIN:
+            continue
+        d = np.linalg.norm(m.pos[f - 1, team] - m.ball[f - 1, :2], axis=1)
+        if d.min() <= KICK_MAX_DIST:
+            return int(np.argmin(d)) + (team.start or 0), f
+    return None
+
+
+def _kick_info(m: GrfMatch, striker: int, kick: int, goal_frame: int) -> dict:
+    attacks_right = striker < 11
+    x, y = (float(v) for v in m.ball[kick - 1, :2])
+    goal_x = _attack_goal_x(0 if attacks_right else 1)
+    frames = range(kick, max(kick + 1, min(kick + 3, goal_frame)))
+    speed = max(float(np.linalg.norm(m.ball_vel[f, :2])) for f in frames)
+    return {
+        "distance_m": round(float(np.hypot(goal_x - x, GOAL_Y - y)), 1),
+        "shot_speed_kmh": round(speed * 3.6, 1),
+        "xg": round(threat(x, y, attacks_right), 3),
+    }
 
 
 def _credit_scorers(events: list[MatchEvent]) -> None:
@@ -214,7 +283,7 @@ def _pass_meta(m: GrfMatch, passer: int, release: int, receive: int, start: tupl
         "ball_speed_kmh": round(max(speeds, default=0.0) * 3.6, 1),
         "flight_s": round((receive - release) * STEP_S, 1),
         "difficulty": pass_difficulty(distance, lane_clearance(start, end, opponents), receiver_open, passer_free),
-        "threat_gain": round(threat(*end, attacks_right) - threat(*start, attacks_right), 4),
+        "threat_gain": round(threat(end[0], end[1], attacks_right) - threat(start[0], start[1], attacks_right), 4),
         "intended_receiver": m.players[receiver].id,
     }
 
@@ -224,7 +293,8 @@ def _within_spell(b: _Builder, s: Spell) -> None:
     start, end = m.ball[s.start, :2], m.ball[s.end, :2]
     dist = float(np.linalg.norm(end - start))
     if dist >= CARRY_MIN_DIST:
-        b.add(s.start, "carry", s.player, start_xy=_xy(start), end_xy=_xy(end), meta={"distance_m": round(dist, 1)})
+        b.add(s.start, "carry", s.player, start_xy=_xy(start), end_xy=_xy(end),
+              meta={"distance_m": round(dist, 1), "known_frame": s.end})
 
     opponents = slice(11, 22) if s.player < 11 else slice(0, 11)
     frames = np.arange(s.start, s.end + 1)
@@ -237,5 +307,5 @@ def _within_spell(b: _Builder, s: Spell) -> None:
             f = int(frames[i - PRESSURE_MIN_FRAMES + 1])
             presser = int(np.argmin(d[i - PRESSURE_MIN_FRAMES + 1])) + (11 if s.player < 11 else 0)
             b.add(f, "pressure", presser, target_id=m.players[s.player].id, start_xy=_xy(m.pos[f, s.player]),
-                  meta={"distance_m": round(float(d[i - PRESSURE_MIN_FRAMES + 1].min()), 1)})
+                  meta={"distance_m": round(float(d[i - PRESSURE_MIN_FRAMES + 1].min()), 1), "known_frame": int(frames[i])})
             break

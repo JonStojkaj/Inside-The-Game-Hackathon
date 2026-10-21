@@ -13,6 +13,11 @@ FRAMES = "frames"
 EVENTS = "events"
 
 
+def publish_frame(event: MatchEvent) -> int:
+    """First frame at which `event` (including its outcome) is known: no lookahead in live mode."""
+    return max(event.frame, int(event.meta.get("known_frame", event.frame)))
+
+
 async def replay(
     match: GrfMatch,
     events: list[MatchEvent],
@@ -22,15 +27,19 @@ async def replay(
     end_frame: int | None = None,
     realtime: bool = True,
 ) -> None:
-    """Publish every frame (10 Hz of match time) and each event at its frame.
+    """Publish every frame (10 Hz of match time) and each event once it is knowable.
+
+    An event is published at `publish_frame(event)`: its own frame, or later when its outcome is
+    only decided later (a pass is complete when received, a shot is a goal when the score changes).
+    The event keeps its original frame/t_ms, so consumers still see when the action started.
 
     speed=10 plays ten times faster than real time; realtime=False publishes as
     fast as consumers keep up (tests, batch processing).
     """
     end = match.n_frames if end_frame is None else min(end_frame, match.n_frames)
     by_frame: dict[int, list[MatchEvent]] = defaultdict(list)
-    for event in events:
-        by_frame[event.frame].append(event)
+    for event in sorted(events, key=lambda e: (publish_frame(e), e.frame)):
+        by_frame[publish_frame(event)].append(event)
 
     loop = asyncio.get_running_loop()
     t0 = loop.time()

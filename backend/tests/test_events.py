@@ -52,6 +52,42 @@ def test_goal_and_shot(match):
     assert [(g.team, g.player_id) for g in goals] == [("home", "H10")]
 
 
+def test_live_replay_never_publishes_an_outcome_before_it_happens(match):
+    import asyncio
+
+    from app.source.replayer import EVENTS, FRAMES, publish_frame, replay
+
+    match.pos[:, 9] = [90.0, 34.0]
+    own(match, 9, 0, 9)
+    match.ball_vel[10:13, :2] = [25.0, 0.0]
+    match.score[12:] = [1, 0]  # the ball crosses the line at frame 12
+    own(match, 11, 20, 30)
+    events = derive_events(match)
+
+    class Recorder:
+        def __init__(self):
+            self.log: list[tuple[str, object]] = []
+
+        async def publish(self, topic, message):
+            self.log.append((topic, message))
+
+        async def close(self):
+            pass
+
+    bus = Recorder()
+    asyncio.run(replay(match, events, bus, realtime=False))  # type: ignore[arg-type]
+    frame_now = -1
+    for topic, msg in bus.log:
+        if topic == FRAMES:
+            frame_now += 1
+        elif topic == EVENTS:
+            assert frame_now >= publish_frame(msg) >= msg.frame  # type: ignore[attr-defined]
+    shot = types(events, "shot")[0]
+    assert shot.frame == 9 and publish_frame(shot) == 12  # released at 9, known to be a goal at 12
+    complete = [i for i, (t, m) in enumerate(bus.log) if t == EVENTS and m is shot][0]
+    assert sum(t == FRAMES for t, _ in bus.log[:complete]) == 13  # frames 0..12 went out first
+
+
 def test_pressure_needs_sustained_closeness(match):
     match.pos[:, 15] = match.pos[:, 5] + [2.0, 0.0]
     own(match, 5, 0, 20)

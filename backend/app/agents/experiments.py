@@ -12,7 +12,7 @@ from dataclasses import dataclass
 import numpy as np
 from pydantic import BaseModel
 
-from app.models import FrameState, Intervention, MatchEvent, Moment, RolloutResult
+from app.models import PITCH_LENGTH, PITCH_WIDTH, FrameState, Intervention, MatchEvent, Moment, RolloutResult
 from app.rollout.engine import RolloutEngine
 from app.source.grf import GrfMatch
 from app.stats.metrics import threat
@@ -20,6 +20,7 @@ from app.stats.metrics import threat
 SEEDS = (101, 202, 303)
 N_ROLLOUTS = 500
 HORIZON_S = 15.0
+SHOOT_MAX_DIST = 30.0  # m from goal: the "had shot" experiment is only offered inside this
 
 
 class Experiment(BaseModel):
@@ -116,7 +117,9 @@ def experiment_menu(ctx: DecisionContext, max_passes: int = 3, max_defenders: in
         if iv != ctx.actual:
             menu.append(Experiment(id=eid, description=text, intervention=iv, expected_sign=expected_sign))
 
-    add("shoot", f"{me.name} had shot", Intervention(kind="swap_action", params={"action": "shoot"}))
+    goal_dist = float(np.hypot((PITCH_LENGTH if attacks_right else 0.0) - me.x, PITCH_WIDTH / 2 - me.y))
+    if goal_dist <= SHOOT_MAX_DIST:  # "the keeper should have shot from 90 m" is not an insight
+        add("shoot", f"{me.name} had shot", Intervention(kind="swap_action", params={"action": "shoot"}))
     add("carry", f"{me.name} had carried the ball forward", Intervention(kind="swap_action", params={"action": "carry"}))
     for p in sorted(mates, key=lambda p: -threat(p.x, p.y, attacks_right))[:max_passes]:
         add(f"pass_{p.id}", f"{me.name} had passed to {p.name} ({p.position})",
@@ -128,7 +131,8 @@ def experiment_menu(ctx: DecisionContext, max_passes: int = 3, max_defenders: in
         step = min(5.0, dist - 1.0)
         if step > 0.5:
             add(f"tight_{p.id}", f"defender {p.name} ({p.position}) had stood {step:.0f} m closer to {me.name}",
-                Intervention(kind="move_player", params={"player_id": p.id, "dx": dx / dist * step, "dy": dy / dist * step}),
+                Intervention(kind="move_player", params={"player_id": p.id, "dx": dx / dist * step, "dy": dy / dist * step,
+                                                         "then_action": dict(ctx.actual.params)}),
                 expected_sign=-1)
     return menu
 
