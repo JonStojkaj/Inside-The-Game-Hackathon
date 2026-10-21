@@ -17,6 +17,8 @@ export interface PitchProps {
   ghosts?: { insight: Ghosts; since: number } | null
   tags?: PitchTag[]
   focusPlayer?: string | null
+  /** Camera follows the focus player (player-focus mode) instead of showing the whole pitch. */
+  follow?: boolean
   showPressure?: boolean
   /** Draw only players/ball/ghosts on a transparent background (TV view). */
   transparent?: boolean
@@ -47,6 +49,13 @@ function ghostView(ins: Ghosts): View {
   const half = span / 2
   const cx = Math.min(Math.max((x0 + x1) / 2, half - 3), PITCH_L - half + 3)
   return { cx, cy: (y0 + y1) / 2 - span * 0.1, span }
+}
+
+const FOLLOW_SPAN = 50
+/** Broadcast "player cam": about half the pitch, centred on the player, kept inside the pitch. */
+function followView([x, y]: XY): View {
+  const half = FOLLOW_SPAN / 2
+  return { cx: Math.min(Math.max(x, half - 4), PITCH_L - half + 4), cy: Math.min(Math.max(y, 18), PITCH_W - 18), span: FOLLOW_SPAN }
 }
 
 const easeOut = (t: number) => 1 - Math.pow(1 - Math.min(Math.max(t, 0), 1), 3)
@@ -95,8 +104,14 @@ export function Pitch(props: PitchProps) {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       ctx.clearRect(0, 0, w, h)
 
-      // camera: whole pitch, or zoomed onto the ghost futures during Sliding Doors
-      const target = p.ghosts ? (views.get(p.ghosts.insight) ?? views.set(p.ghosts.insight, ghostView(p.ghosts.insight)).get(p.ghosts.insight)!) : FULL_VIEW
+      // camera: whole pitch, zoomed onto the ghost futures during Sliding Doors, or following the
+      // focus player
+      const fi = p.follow && p.focusPlayer ? m.playerIdx.get(p.focusPlayer) : undefined
+      const target = p.ghosts
+        ? (views.get(p.ghosts.insight) ?? views.set(p.ghosts.insight, ghostView(p.ghosts.insight)).get(p.ghosts.insight)!)
+        : fi != null
+          ? followView(frameAt(bundle, p.frozenFrame ?? pb.frame).players[fi])
+          : FULL_VIEW
       if (!cam) cam = { ...target }
       const k = 1 - Math.exp(-Math.min(now - lastNow, 100) / 380)
       lastNow = now

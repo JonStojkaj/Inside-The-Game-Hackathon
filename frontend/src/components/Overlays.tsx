@@ -82,7 +82,7 @@ function Versus({ metric, values, lang }: { metric: string; values: Record<Team,
 }
 
 /** Where the player has been: payload.heatmap[x][y] shares on a small pitch (home attacks right). */
-function Heatmap({ cells, color }: { cells: number[][]; color: string }) {
+export function Heatmap({ cells, color }: { cells: number[][]; color: string }) {
   const max = Math.max(...cells.flat(), 0.0001)
   const ny = cells[0]?.length ?? 0
   return (

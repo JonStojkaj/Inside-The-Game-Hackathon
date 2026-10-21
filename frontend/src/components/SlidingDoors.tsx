@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useMatch } from '../lib/context'
 import { clockLabel, comparison, type Doors } from '../lib/match'
 import { fmtPct, fmtPts, t } from '../lib/profile'
@@ -30,10 +30,17 @@ interface Props {
   simple?: boolean
   lang: Lang
   onClose?: () => void
+  /** Replaces the two probability boxes (player focus: the decision record). */
+  side?: ReactNode
+  /** Panel next to the card (analyst: every hypothesis tested). */
+  aside?: ReactNode
 }
 
-/** DOM layer of the Sliding Doors moment; the ghost futures themselves are drawn by <Pitch>. */
-export function SlidingDoorsCard({ doors, overlay, simple, lang, onClose }: Props) {
+/**
+ * DOM layer of the Sliding Doors moment; the ghost futures themselves are drawn by <Pitch>.
+ * `simple` is the club fan / casual one-liner: verdict, headline and one sentence, no numbers panel.
+ */
+export function SlidingDoorsCard({ doors, overlay, simple, lang, onClose, side, aside }: Props) {
   const { m } = useMatch()
   const cmp = comparison(doors.numbers, doors.metric)
   const actual = useCountUp(cmp.actual, 1100, 600)
@@ -97,6 +104,8 @@ export function SlidingDoorsCard({ doors, overlay, simple, lang, onClose }: Prop
             </div>
           )}
         </div>
+        {side && <div className="sd-side">{side}</div>}
+        {!simple && !side && (
         <div className="sd-probs">
           <div className={`sd-prob real ${altBetter ? '' : 'win'}`}>
             <div className="sd-plabel">{t(lang, 'what_happened')}</div>
@@ -127,6 +136,8 @@ export function SlidingDoorsCard({ doors, overlay, simple, lang, onClose }: Prop
             </div>
           )}
         </div>
+        )}
+        {aside && <div className="sd-aside">{aside}</div>}
       </div>
     </div>
   )
