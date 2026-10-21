@@ -33,8 +33,7 @@ def ev(i, type_, t_ms=0, team="home", outcome=None):
 
 # --- event derivation -----------------------------------------------------------------------
 
-@pytest.mark.xfail(strict=True, reason="R5: _pass_meta picks the intended receiver among ALL own players, passer included "
-                                       "(4 of 14 failed passes in full-34 are 'passes to himself')")
+# R5 fixed in 0ae244d (passer excluded from intended receivers)
 def test_failed_pass_is_never_intended_for_the_passer(match):
     match.pos[:, 15] = match.pos[:, 5] + [3.0, 0.0]  # interceptor 3 m from the passer, ball lost after a loose spell
     own(match, 5, 0, 9)
@@ -118,7 +117,7 @@ def test_a_zero_metre_defender_move_reproduces_the_actual_decision():
 
 # --- explain team: claim validation ---------------------------------------------------------
 
-@pytest.mark.xfail(strict=True, reason="R7: numbers_are_ours only checks '%' tokens; '3 times', '6 m', '0.12' pass unchecked")
+@pytest.mark.xfail(strict=True, reason="R7: since 0ae244d decimals and points are checked, but plain integers ('3 times', '6 m') still pass by design")
 def test_claim_with_invented_non_percentage_numbers_is_rejected():
     assert not numbers_are_ours("Shooting made a goal 3 times more likely; the full back was 6 m too high.", {"4.0%"})
 
