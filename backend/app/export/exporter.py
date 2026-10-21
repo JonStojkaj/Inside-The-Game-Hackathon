@@ -8,6 +8,12 @@ Layout of `data/export/<match_id>/` (contract with the frontend):
   insights.json  list[Insight]                 (produced by the explain team, copied in)
   stats.json     list[StatsSnapshot], every STATS_EVERY frames, players trimmed
   overlays.json  {segment_id: list[Overlay]}   (produced by the production team, copied in)
+  video.mp4      optional TV-view backdrop (match.json "video" = {"file": "video.mp4", "fps": 10})
+
+This folder is the whole production payload: the deployed API serves these files as they are and
+never runs the stats engine, the rollout engine or an LLM. Insights and overlays are computed
+offline (spikes/explain_demo.py, spikes/produce_demo.py; LLM answers cached in data/cache/llm/)
+and baked into the container image together with this folder (see infra/README.md).
 """
 
 from __future__ import annotations
@@ -150,9 +156,15 @@ def export_match(
     moments: list[Moment] = detect_moments(events, match.clock_s)
 
     sizes: dict[str, int] = {}
+    target = out / VIDEO_FILE
     if video is not None:
-        shutil.copyfile(video, out / VIDEO_FILE)
-        sizes[VIDEO_FILE] = (out / VIDEO_FILE).stat().st_size
+        if not Path(video).is_file():
+            raise FileNotFoundError(f"video not found: {video}")
+        if not (target.exists() and target.samefile(video)):
+            shutil.copyfile(video, target)
+        sizes[VIDEO_FILE] = target.stat().st_size
+    elif target.exists():
+        target.unlink()  # stale video from an earlier export: match.json says video=None, don't bake it in
     sizes["match.json"] = _write(out / "match.json", match_meta(match, video=video is not None))
     sizes["frames.json"] = _write(out / "frames.json", frames_payload(match))
     sizes["events.json"] = _write(out / "events.json", [e.model_dump(mode="json") for e in events])
