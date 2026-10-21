@@ -26,7 +26,8 @@ def root(tmp_path):
 
 @pytest.fixture
 def client(root):
-    return TestClient(create_app(root))
+    # explicit, non-existent frontend dir: the test must not depend on a local `frontend/dist` build
+    return TestClient(create_app(root, frontend_dir=root / "no-frontend-build"))
 
 
 def test_list_matches(client):
