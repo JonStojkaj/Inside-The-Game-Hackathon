@@ -17,5 +17,6 @@ esac
 exec docker run --rm --cpus="${GRF_CPUS:-2}" --platform linux/amd64 \
   -v "$PWD:/spike" \
   -v "$PWD/scenarios/sliding_doors_full.py:/usr/local/lib/python3.8/dist-packages/gfootball/scenarios/sliding_doors_full.py" \
-  -e GRF_DURATION="${GRF_DURATION:-3000}" -e GRF_DETERMINISTIC="${GRF_DETERMINISTIC:-1}" -w /spike \
+  -e GRF_DURATION="${GRF_DURATION:-3000}" -e GRF_DETERMINISTIC="${GRF_DETERMINISTIC:-1}" \
+  -e GRF_VARIANT="${GRF_VARIANT:-0}" -w /spike \
   gfootball:spike sh -c "$cmd"
