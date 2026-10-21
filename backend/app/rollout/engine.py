@@ -3,9 +3,15 @@
 Simulates N possible futures from one FrameState in parallel with numpy.
 Every future is a possession-level simulation: in each time step the ball
 holder shoots, passes or carries; off-ball players drift (attackers forward,
-defenders compact, the nearest defender presses). Probabilities come from
-simple, documented heuristics (xG from distance + goal angle, pass success
-from distance + openness + pressure, tackles from defender proximity).
+defenders compact, the nearest defender presses, the keeper comes off his line).
+Probabilities come from simple, documented heuristics (xG from distance, goal
+angle and keeper position; pass success from distance + openness + pressure;
+dispossession from defender density and closeness to goal).
+
+Interventions: move_player / remove_player change the start state; swap_action forces
+the first decision. move/remove accept params["then_action"] (same shape as swap_action
+params) to replay the actual decision, so such a counterfactual differs from the baseline
+only in the moved player (with equal seeds a 0 m move reproduces the baseline exactly).
 
 Outcomes are valued per possession, like possession-value models:
   GOAL_FOR      the attacking team scores before it loses the ball
@@ -36,18 +42,49 @@ from app.models import (
 GOAL_Y = PITCH_WIDTH / 2
 GOAL_HALF_WIDTH = 7.32 / 2
 MAX_SPEED = 7.0  # m/s, off-ball movement
-CARRY_SPEED = 5.0  # m/s, ball carrier
+KEEPER_REACH = 1.5  # m; half the width a keeper covers
+KEEPER_RUSH_DIST = 25.0  # m; the keeper leaves his line when the ball is this close to his goal
+KEEPER_MAX_OUT = 7.0  # m off the goal line at most
+TACKLE_GOAL_SCALE = 15.0  # m; how fast the extra near-goal dispossession risk fades
+CARRY_SPEED = 5.0  # m/s, ball carrier (default for EngineParams.carry_speed)
 
 GOAL_FOR, GOAL_AGAINST, RETAINED, LOST = range(4)
 ACTION_SHOOT, ACTION_PASS, ACTION_CARRY = range(3)
+ACTIONS = {"shoot": ACTION_SHOOT, "pass": ACTION_PASS, "carry": ACTION_CARRY}
 
 
 def _sigmoid(z: np.ndarray) -> np.ndarray:
     return 1.0 / (1.0 + np.exp(-z))
 
 
-def expected_goals(pos: np.ndarray, attacks_right: np.ndarray, pressure: np.ndarray) -> np.ndarray:
-    """xG for shots from `pos` (n, 2), reduced under defensive pressure (0..1)."""
+def _keeper_factor(pos: np.ndarray, goal_x: np.ndarray, angle: np.ndarray, keeper: np.ndarray, weight: float) -> np.ndarray:
+    """How much of the goal the keeper leaves open, relative to a keeper standing on his line.
+
+    A keeper covers about 2*atan(reach / distance) of the shooter's view of the goal; coming off
+    the line towards the shooter (1v1) covers more, so the base xG (keeper on the line) shrinks.
+    """
+    d_line = np.abs(goal_x - pos[:, 0]) + 1.0
+    d_keeper = np.linalg.norm(keeper - pos, axis=1)
+    in_front = np.abs(goal_x - keeper[:, 0]) < np.abs(goal_x - pos[:, 0])
+    cover_line = 2 * np.arctan(KEEPER_REACH / d_line)
+    cover = np.where(in_front, 2 * np.arctan(KEEPER_REACH / np.maximum(d_keeper, 0.5)), 0.0)
+    open_line = np.maximum(angle - cover_line, 1e-3)
+    return np.clip((angle - cover) / open_line, 0.05, 1.5) ** weight
+
+
+def expected_goals(
+    pos: np.ndarray,
+    attacks_right: np.ndarray,
+    pressure: np.ndarray,
+    keeper: np.ndarray | None = None,
+    keeper_weight: float = 1.0,
+) -> np.ndarray:
+    """xG for shots from `pos` (n, 2), reduced under defensive pressure (0..1).
+
+    The distance/angle curve assumes a keeper on his line; pass `keeper` (n, 2) to account for
+    where he actually stands (a keeper rushing out narrows the angle); `keeper_weight` (0..1)
+    damps that correction.
+    """
     goal_x = np.where(attacks_right, PITCH_LENGTH, 0.0)
     post_a = np.stack([goal_x, np.full_like(goal_x, GOAL_Y - GOAL_HALF_WIDTH)], axis=1) - pos
     post_b = np.stack([goal_x, np.full_like(goal_x, GOAL_Y + GOAL_HALF_WIDTH)], axis=1) - pos
@@ -56,7 +93,10 @@ def expected_goals(pos: np.ndarray, attacks_right: np.ndarray, pressure: np.ndar
     )
     angle = np.arccos(np.clip(cos, -1.0, 1.0))
     dist = np.hypot(goal_x - pos[:, 0], GOAL_Y - pos[:, 1])
-    return _sigmoid(-1.0 + 1.6 * angle - 0.09 * dist) * (1.0 - 0.5 * pressure)
+    xg = _sigmoid(-1.0 + 1.6 * angle - 0.09 * dist) * (1.0 - 0.5 * pressure)
+    if keeper is not None:
+        xg = np.clip(xg * _keeper_factor(pos, goal_x, angle, keeper, keeper_weight), 0.0, 0.95)
+    return xg
 
 
 def _lane_clearance(start: np.ndarray, end: np.ndarray, pos: np.ndarray, opponents: np.ndarray) -> np.ndarray:
@@ -77,24 +117,41 @@ def _nearest_opponent(opp_matrix: np.ndarray, pair: np.ndarray, sims: np.ndarray
 class EngineParams:
     """Behaviour knobs, tuned by app/rollout/calibration.py against recorded GRF matches.
 
-    Calibrated 2026-10-22 on 150 real GRF states (6 matches, 15 s horizon):
-      turnover  engine 0.89 vs GRF 0.77 (final third 0.90 vs 0.82)
-      goal      engine 0.071 vs GRF 0.060
-    The engine still over-predicts turnovers, so Sliding Doors only makes comparative claims.
+    Calibrated 2026-10-21 on 150 real GRF states (grf-1..6, 15 s horizon, n=100 per state), with the
+    decision-ranking gate (shoot beats carry at all 6 scenario spots within 12 m of goal):
+                         engine   GRF     (before this calibration)
+      turnover           0.875    0.773   (0.887)
+      turnover, final 3rd 0.902   0.824   (0.905)
+      goal               0.060    0.060   (0.073)
+      tackles / 15 s     0.67     0.70    (0.04)
+      shots / 15 s       0.46     0.29    (1.12)
+      passes / 15 s      3.59     3.12    (3.92), completion 0.79 vs 0.71
+      penalty spot (94, 34): shoot 0.24 vs carry 0.17   (before: 0.275 vs 0.350)
+    The old engine hit the outcome rates for the wrong reason: almost no tackles, and players ran
+    at goal and shot (dribbling beat shooting everywhere, review R1). Now dispossession grows with
+    defender density and closeness to goal, and the keeper comes out and narrows the angle.
+    Turnovers are still over-predicted, so Sliding Doors only makes comparative claims.
     """
 
-    shoot_base: float = 0.6  # per-step shot probability near goal
+    shoot_base: float = 0.2  # per-step shot probability within 8 m of goal
+    shoot_range: float = 3.0  # m; shot probability decays with exp(-(d_goal - 8) / range)
     pass_base: float = 0.03  # per-step pass probability when free
     pass_pressure: float = 0.1  # extra pass probability when pressed
     pass_distance_scale: float = 600.0  # m; pass success decays with exp(-d / scale)
     lane_block: float = 0.15  # max success reduction from an opponent in the lane
-    tackle_base: float = 0.02  # per-step tackle probability with a defender on top of the carrier
+    tackle_base: float = 0.2  # per-step dispossession probability per defender standing on the carrier
+    tackle_range: float = 1.0  # m; each defender's tackle threat decays with exp(-d / range) (density: summed)
+    tackle_goal_boost: float = 2.0  # extra risk near goal: x (1 + boost * exp(-d_goal / TACKLE_GOAL_SCALE))
+    keeper_advance: float = 0.5  # keeper stands this fraction of the way from goal to ball (ball inside 25 m)
+    keeper_xg_weight: float = 0.3  # how strongly shot xG depends on where the keeper stands (0 = ignore)
+    carry_speed: float = CARRY_SPEED  # m/s
 
 
 class RolloutEngine:
     def __init__(self, dt: float = 0.4, params: EngineParams | None = None) -> None:
         self.dt = dt
         self.params = params or EngineParams()
+        self.last_counts: dict[str, float] = {}
 
     def run(
         self,
@@ -129,12 +186,13 @@ class RolloutEngine:
                 base[i] += (float(params.get("dx", 0.0)), float(params.get("dy", 0.0)))
             elif intervention.kind == "remove_player":
                 present[index[params["player_id"]]] = False
-            elif intervention.kind == "swap_action":
-                forced_action = {"shoot": ACTION_SHOOT, "pass": ACTION_PASS, "carry": ACTION_CARRY}[
-                    params["action"]
-                ]
+            # swap_action forces the first decision; move/remove can replay one via "then_action",
+            # so a counterfactual differs from the actual decision only in what it changes
+            action_params = params if intervention.kind == "swap_action" else params.get("then_action")
+            if action_params:
+                forced_action = ACTIONS[action_params["action"]]
                 if forced_action == ACTION_PASS:
-                    forced_target = index[params["target_id"]]
+                    forced_target = index[action_params["target_id"]]
 
         base[:, 0] = np.clip(base[:, 0], 0.0, PITCH_LENGTH)
         base[:, 1] = np.clip(base[:, 1], 0.0, PITCH_WIDTH)
@@ -157,11 +215,13 @@ class RolloutEngine:
         paths = np.empty((steps + 1, k, 2))
         paths[0] = pos[rows[:k], owner[:k]]
 
+        tally: dict[str, float] = {"owned_s": 0.0, "passes": 0, "passes_completed": 0, "shots": 0, "tackles": 0}
         for step in range(steps):
             active = outcome < 0
             if not active.any():
                 paths[step + 1 :] = paths[step]
                 break
+            tally["owned_s"] += float(active.sum()) * dt
 
             hteam = team[owner]
             attacks_right = hteam == 0
@@ -177,7 +237,7 @@ class RolloutEngine:
             d_goal = np.hypot(goal_x - hpos[:, 0], GOAL_Y - hpos[:, 1])
 
             # --- choose action -------------------------------------------------
-            p_shoot = np.where(d_goal < 35.0, prm.shoot_base * np.exp(-np.maximum(d_goal - 8.0, 0.0) / 7.0), 0.0)
+            p_shoot = np.where(d_goal < 35.0, prm.shoot_base * np.exp(-np.maximum(d_goal - 8.0, 0.0) / prm.shoot_range), 0.0)
             p_pass = prm.pass_base + prm.pass_pressure * pressure
             u = rng.random(n)
             action = np.where(
@@ -191,8 +251,17 @@ class RolloutEngine:
             shoot = active & (action == ACTION_SHOOT)
             if shoot.any():
                 shooters = np.flatnonzero(shoot)
-                xg = expected_goals(hpos[shooters], attacks_right[shooters], pressure[shooters])
+                keeper_xy = None
+                if prm.keeper_xg_weight > 0:
+                    keeper_xy = hpos[shooters] + 50.0  # no keeper: far away, never "in front"
+                    for t in (0, 1):
+                        keeper = keeper_of[1 - t]
+                        sel = hteam[shooters] == t
+                        if keeper is not None and sel.any():
+                            keeper_xy[sel] = pos[shooters[sel], keeper]
+                xg = expected_goals(hpos[shooters], attacks_right[shooters], pressure[shooters], keeper_xy, prm.keeper_xg_weight)
                 scored = rng.random(shooters.size) < xg
+                tally["shots"] += int(shooters.size)
                 for_init = hteam[shooters] == init_team
                 outcome[shooters[scored & for_init]] = GOAL_FOR
                 outcome[shooters[scored & ~for_init]] = GOAL_AGAINST
@@ -233,6 +302,8 @@ class RolloutEngine:
                 )
                 p_success = np.where(is_gk[owner[rp]], 0.85, p_success)
                 ok = rng.random(rp.size) < p_success
+                tally["passes"] += int(rp.size)
+                tally["passes_completed"] += int(ok.sum())
                 owner[rp[ok]] = target[ok]
                 failed = rp[~ok]
                 if failed.size:
@@ -246,9 +317,15 @@ class RolloutEngine:
                 to_goal /= np.linalg.norm(to_goal, axis=1, keepdims=True) + 1e-9
                 heading = 0.6 * to_goal + 0.4 * np.stack([direction[rc], np.zeros(rc.size)], axis=1)
                 heading /= np.linalg.norm(heading, axis=1, keepdims=True) + 1e-9
-                pos[rc, owner[rc]] += heading * CARRY_SPEED * dt + rng.normal(0, 0.4, (rc.size, 2))
-                p_tackle = prm.tackle_base * np.exp(-d_press[rc] / 1.0)
+                pos[rc, owner[rc]] += heading * prm.carry_speed * dt + rng.normal(0, 0.4, (rc.size, 2))
+                # dispossession: every defender nearby adds risk (density), and defences defend
+                # deeper and more desperately close to their own goal
+                d_def = np.linalg.norm(pos[rc] - pos[rc, owner[rc]][:, None, :], axis=2)  # after the carry step
+                threat_sum = np.where(opp_matrix[owner[rc]], np.exp(-d_def / prm.tackle_range), 0.0).sum(1)
+                near_goal = 1.0 + prm.tackle_goal_boost * np.exp(-d_goal[rc] / TACKLE_GOAL_SCALE)
+                p_tackle = np.minimum(prm.tackle_base * threat_sum * near_goal, 0.95)
                 tackled = rc[rng.random(rc.size) < p_tackle]
+                tally["tackles"] += int(tackled.size)
                 if tackled.size:
                     owner[tackled] = _nearest_opponent(opp_matrix, pair, tackled, owner[tackled])
 
@@ -280,6 +357,18 @@ class RolloutEngine:
             away /= np.linalg.norm(away, axis=1, keepdims=True) + 1e-9
             target_pos[rows, presser] = ball + 1.5 * away
             target_pos[:, is_gk] = pos[:, is_gk]
+            # the defending keeper comes off his line towards a ball inside ~25 m: narrows the angle,
+            # pressures the shooter and can smother a carry (1v1 situations)
+            for t in (0, 1):
+                keeper = keeper_of[t]
+                if keeper is None:
+                    continue
+                own_goal = np.array([PITCH_LENGTH if t == 1 else 0.0, GOAL_Y])
+                to_ball = ball - own_goal
+                d_ball_goal = np.linalg.norm(to_ball, axis=1, keepdims=True)
+                out = np.minimum(prm.keeper_advance * d_ball_goal, KEEPER_MAX_OUT)
+                rush = (att_team != t) & (d_ball_goal[:, 0] < KEEPER_RUSH_DIST)
+                target_pos[rush, keeper] = own_goal + to_ball[rush] / (d_ball_goal[rush] + 1e-9) * out[rush]
             step_vec = target_pos - pos
             step_len = np.linalg.norm(step_vec, axis=2, keepdims=True)
             step_vec *= np.minimum(1.0, MAX_SPEED * dt / (step_len + 1e-9))
@@ -297,6 +386,8 @@ class RolloutEngine:
         nonzero = counts[counts > 0]
         entropy = float(-(nonzero * np.log(nonzero)).sum() / np.log(4))
 
+        # action rates of this run (per possession-second), for calibration against GRF event rates
+        self.last_counts = tally
         return RolloutResult(
             n=n,
             seed=seed,
