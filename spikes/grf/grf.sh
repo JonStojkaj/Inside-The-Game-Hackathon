@@ -12,9 +12,10 @@ case "$mode" in
   render) cmd="python3 /spike/render_match.py $*" ;;
   *) echo "usage: grf.sh record|render ..." >&2; exit 2 ;;
 esac
+# No DISPLAY on purpose: GRF then renders off-screen, which is reliable. (Xvfb + DISPLAY fails randomly
+# under amd64 emulation with "SDL: Video subsystem has not been initialized".)
 exec docker run --rm --cpus="${GRF_CPUS:-2}" --platform linux/amd64 \
   -v "$PWD:/spike" \
   -v "$PWD/scenarios/sliding_doors_full.py:/usr/local/lib/python3.8/dist-packages/gfootball/scenarios/sliding_doors_full.py" \
-  -e GRF_DURATION="${GRF_DURATION:-3000}" -e GRF_DETERMINISTIC="${GRF_DETERMINISTIC:-1}" \
-  -e SDL_VIDEODRIVER=x11 -e XDG_RUNTIME_DIR=/tmp -w /spike \
-  gfootball:spike sh -c "Xvfb :99 -screen 0 1280x720x24 >/dev/null 2>&1 & sleep 4; DISPLAY=:99 $cmd"
+  -e GRF_DURATION="${GRF_DURATION:-3000}" -e GRF_DETERMINISTIC="${GRF_DETERMINISTIC:-1}" -w /spike \
+  gfootball:spike sh -c "$cmd"
