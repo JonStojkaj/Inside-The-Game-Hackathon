@@ -37,10 +37,35 @@ Types in `src/types.ts` mirror `backend/app/models/__init__.py`.
 
 ## Views and controls
 
-- **Broadcast**: one viewer. Profile picker (mode, club, player, language) resolves to the overlay
-  segment exactly like `ViewerProfile.segment_id`, with a fallback to the same mode in another language.
-- **3-up**: three profiles on one timeline (default: analyst DE, club fan NOR EN, player focus #10 ES),
-  each a tall "second screen".
+- **Onboarding** (first visit): "How would you describe yourself?" with four cards (analyst, club fan
+  → pick a club, player focus → pick a player from `match.json`, casual) plus EN/DE/ES. The choice is
+  saved in `localStorage` (`sliding-doors.profile.v1`; works without storage too). Demo takes skip it
+  with `?profile=analyst|club_fan|player_focus|casual&club=home|away&player=A20&lang=de`; `?onboarding`
+  forces it; `?shot` and `view=split|control` skip it.
+- **My broadcast** (default): one viewer. The top bar always shows the profile ("Watching as …");
+  clicking it switches mode / club / player / language at any time, or starts over.
+- **The four views** (same match, same moment, different on first glance; `src/lib/derive.ts`):
+  - *Analyst*: data HUD (control vs chaos, pressing both teams, rhythm with trend sparkline, last pass
+    with difficulty, last shot with xG), the segment's metric cards, full Sliding Doors card plus
+    every hypothesis tested (real → counterfactual, confirmed / refuted / rejected).
+  - *Club fan*: stage themed in the club colour, partisan card ("We lead 2–1", "We're on top", us-vs-them
+    momentum bar, no numbers otherwise), full-screen GOAL! banner for our goals, "So close!" for our big
+    chances, opponent goals as a sober strip; ticker and alerts only for our team; Sliding Doors only
+    for our players' decisions, as a club-coloured one-liner.
+  - *Player focus*: player cam (camera follows him), live card (speed, top speed, pass accuracy, average
+    pass difficulty, decisions right / analysed, heatmap from the tracking data), alerts for his goals,
+    shots (xG), ball wins, key / hard passes and sprints; Sliding Doors only for his decisions, with a
+    decision record ("Best of N options": his action vs the swap_action rollouts, noise rejected by the
+    critic shown greyed) instead of the two probability boxes.
+  - *Casual*: centred scorebug, no gauges, no ticker; only goals and big chances as short cards with one
+    line on why they mattered (score before/after: opens the scoring, takes the lead, level again…;
+    big chance: "would have made it 1–1"), Sliding Doors one-liners for goals / big chances, full-time recap.
+  Produced overlays are used when the production team made exactly the viewer's segment; otherwise the
+  overlays (goal cards, Sliding Doors text, recap) are templated in the viewer's language from insights,
+  moments and stats (numbers only from the data, so the claim audit applies unchanged). Totals that
+  depend on match length (pass/shot counts, distance) are not shown: GRF plays 5 minutes on a 90' clock.
+- **Producer view · same moment, three viewers** (top bar): the 3-up (analyst DE, club fan HCY EN,
+  player focus #20 ES), each a tall "second screen", and the control room tab.
 - **Control room**: the selected insight's hypotheses replayed as an agent log (detector → analyst →
   experimenter → critic → explain team → production per segment), counters for accepted / rejected /
   unverified claims shown.
@@ -53,7 +78,8 @@ Types in `src/types.ts` mirror `backend/app/models/__init__.py`.
 - Transport: space play/pause, ←/→ ±5 s, `1`/`5`/`0` speed 1×/5×/10×, Esc closes a manual Sliding Doors.
   Diamonds on the timeline are moments (click = jump 4 s before); `SD1..n` opens an insight's
   Sliding Doors on every screen.
-- Demo takes: `?view=split&f=1695&speed=1&play` starts at a frame. `?tv` starts in TV mode,
+- Demo takes: `?view=split&f=1695&speed=1&play` starts at a frame (`scripts/shots.mjs` lists all takes,
+  including each single-viewer mode at f=1695). `?tv` starts in TV mode,
   `?cr=<insight id>` picks the control-room log, `?shot` skips enter animations (screenshots).
   §16 shots on full-34: 3-up live `f=1580`, 3-up Sliding Doors (all three screens) `f=1695`,
   broadcast Sliding Doors `f=2129`, control room `view=control&f=2131&cr=full-34-m01663-decisive_pass-insight`,
@@ -109,7 +135,9 @@ of the same replay. Ghost paths are cut at the first restart teleport.
   (they cannot be covered, they move); scoreboard and minimap are covered by us.
 - `alt_label` localised per segment (it is English in every language today).
 - `expected_direction` on `AnalystHypothesis` (the player falls back to reading the text).
-- Scheduler: the 50' insight airs at 63:50 for analyst-de (13 match minutes late).
+- Scheduler: the 50' insight airs at 63:50 for analyst-de (13 match minutes late); at f=1695 both
+  analyst segments air the 45' turnover instead, so the producer-view shot shows two different moments
+  (analyst 45', fan and player 50').
 - player_focus-A20-es gets `player_tag` overlays for H20 (Marchetti) instead of A20 (Nakamura).
 - Ghost paths continue through restarts (shot, then ball teleported to the centre spot).
 - `stats.json`: `teams.*.xg` for the club-fan widget (falls back to shots on target).
