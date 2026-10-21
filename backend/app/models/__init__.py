@@ -24,6 +24,9 @@ class PlayerState(BaseModel):
     vx: float = 0.0
     vy: float = 0.0
     role: Literal["gk", "outfield"] = "outfield"
+    name: str = ""
+    number: int = 0
+    position: str = ""  # GK, CB, LB, RB, DM, CM, LM, RM, AM, CF
 
 
 class BallState(BaseModel):
@@ -44,6 +47,37 @@ class FrameState(BaseModel):
     ball: BallState
     game_mode: str = "normal"
     score: tuple[int, int] = (0, 0)
+
+
+EventType = Literal[
+    "kickoff",
+    "pass",
+    "shot",
+    "goal",
+    "tackle",
+    "interception",
+    "pressure",
+    "carry",
+    "set_piece",
+    "out_of_play",
+]
+
+
+class MatchEvent(BaseModel):
+    """A football event derived from the frame stream (all positions in metres)."""
+
+    id: str
+    match_id: str
+    t_ms: int
+    frame: int
+    type: EventType
+    team: Team | None = None
+    player_id: str | None = None
+    target_id: str | None = None  # pass receiver, tackled/pressed player, ...
+    start_xy: tuple[float, float] | None = None
+    end_xy: tuple[float, float] | None = None
+    outcome: str | None = None  # complete | incomplete | out | goal | saved | off_target | won | ...
+    meta: dict[str, Any] = Field(default_factory=dict)
 
 
 class Intervention(BaseModel):

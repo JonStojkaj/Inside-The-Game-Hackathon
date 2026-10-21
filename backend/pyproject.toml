@@ -5,6 +5,9 @@ requires-python = ">=3.11"
 dependencies = [
     "numpy>=2.0",
     "pydantic>=2.7",
+    "openai>=1.106",
+    "azure-identity>=1.17",
+    "python-dotenv>=1.0",
 ]
 
 [project.optional-dependencies]
