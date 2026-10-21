@@ -396,7 +396,7 @@ const insights = [
     claim: 'Moreau shot from 22 m (9 % goal chance). Laying it off to Nakamura in space would have made a goal clearly more likely: 24 %.',
     evidence: [kAway.event, 'rollout:m1:base', 'rollout:m1:alt2'],
     numbers: { actual_p_goal: 0.09, actual_p_turnover: 0.41, best_alt_p_goal: 0.24, delta_p_goal: 0.15 },
-    verified: true, confidence: 'clear', decision_frame: kAway.frame,
+    verified: true, confidence: 'clear', metric: 'p_goal', decision_frame: kAway.frame,
     hypotheses: [
       hyp('A9 should have passed to A10, who was unmarked at the edge of the box', { kind: 'swap_action', params: { action: 'pass', target_id: 'A10' } }, 0.09, 0.24, 0.02, 'accepted', 'Effect +15 pts, stable across 5 seeds (spread 2 pts).'),
       hyp('A9 should have carried the ball 5 m further before shooting', { kind: 'swap_action', params: { action: 'carry' } }, 0.09, 0.11, 0.04, 'rejected', 'Effect +2 pts is inside the seed spread (4 pts). Not shown.'),
@@ -411,7 +411,7 @@ const insights = [
     claim: 'Marchetti squared it instead of shooting himself: the pass to Okoro made the goal about 3x more likely (34 % vs 11 %).',
     evidence: [kThrough.event, kGoal.event, 'rollout:m3:base', 'rollout:m3:alt1'],
     numbers: { actual_p_goal: 0.34, actual_p_turnover: 0.22, best_alt_p_goal: 0.11, delta_p_goal: -0.23 },
-    verified: true, confidence: 'clear', decision_frame: keys.h10_decision.frame + 6,
+    verified: true, confidence: 'clear', metric: 'p_goal', decision_frame: keys.h10_decision.frame + 6,
     hypotheses: [
       hyp('H10 shooting from 18 m would have been the better option', { kind: 'swap_action', params: { action: 'shoot' } }, 0.34, 0.11, 0.03, 'rejected', 'Counterfactual is worse by 23 pts: the real decision was the right one.'),
       hyp("Strand's through ball broke two lines and created the chance", { kind: 'remove_player', params: { player_id: 'A6' } }, 0.34, 0.37, 0.05, 'rejected', 'Removing A6 changes little (+3 pts, spread 5): A6 was not the key defender.'),
@@ -425,8 +425,8 @@ const insights = [
     id: 'i3', moment_id: 'm4',
     claim: 'Asante-Rhys forced the pass into midfield under pressure; switching it to Hagen would have kept the ball (turnover risk 12 % instead of 47 %).',
     evidence: [kTurn.event, kMiss.event, 'rollout:m4:base', 'rollout:m4:alt1'],
-    numbers: { actual_p_goal: 0.0, actual_p_turnover: 0.47, best_alt_p_goal: 0.0, delta_p_goal: 0.0, best_alt_p_turnover: 0.12, actual_p_goal_against: 0.14, best_alt_p_goal_against: 0.03 },
-    verified: true, confidence: 'slight', decision_frame: keys.h4_decision.frame,
+    numbers: { actual_p_goal: 0.0, actual_p_keep: 0.53, best_alt_p_keep: 0.88, delta_p_keep: 0.35 },
+    verified: true, confidence: 'slight', metric: 'p_keep', decision_frame: keys.h4_decision.frame,
     hypotheses: [
       hyp('H4 should have switched play to H5', { kind: 'swap_action', params: { action: 'pass', target_id: 'H5' } }, 0.14, 0.03, 0.04, 'accepted', 'Goal-against chance drops 11 pts; spread 4 pts, so "slightly" not "clearly".'),
       hyp('H6 dropping 5 m deeper would have opened a safe lane', { kind: 'move_player', params: { player_id: 'H6', dx: -5, dy: 0 } }, 0.14, 0.12, 0.05, 'rejected', 'Effect inside the seed spread. Not shown.'),

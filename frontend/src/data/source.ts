@@ -5,7 +5,9 @@ import type {
   MatchEvent,
   MatchInfo,
   Moment,
+  Overlay,
   OverlaysBySegment,
+  ProductionLog,
   StatsSnapshot,
 } from '../types'
 
@@ -43,21 +45,36 @@ async function getJson<T>(cfg: SourceConfig, file: string, fallback?: T): Promis
     if (fallback !== undefined) return fallback
     throw new Error(`${file}: HTTP ${res.status}`)
   }
-  return (await res.json()) as T
+  try {
+    return (await res.json()) as T
+  } catch (e) {
+    // dev servers answer missing files with index.html: treat as absent when optional
+    if (fallback !== undefined) return fallback
+    throw e
+  }
 }
 
 export async function loadMatch(cfg: SourceConfig = resolveSource()): Promise<MatchBundle> {
   // match + frames are required; everything the pipeline adds later is optional so the player
   // still works on a partial export.
-  const [match, frames, events, moments, insights, stats, overlays] = await Promise.all([
+  const [match, frames, events, moments, insights, stats, overlays, production] = await Promise.all([
     getJson<MatchInfo>(cfg, 'match.json'),
     getJson<Frames>(cfg, 'frames.json'),
     getJson<MatchEvent[]>(cfg, 'events.json', []),
     getJson<Moment[]>(cfg, 'moments.json', []),
     getJson<Insight[]>(cfg, 'insights.json', []),
     getJson<StatsSnapshot[]>(cfg, 'stats.json', []),
-    getJson<OverlaysBySegment>(cfg, 'overlays.json', {}),
+    getJson<OverlaysBySegment | Overlay[]>(cfg, 'overlays.json', {}),
+    getJson<ProductionLog | null>(cfg, 'production_log.json', null),
   ])
   events.sort((a, b) => a.t_ms - b.t_ms)
-  return { match, frames, events, moments, insights, stats, overlays, baseUrl: fileUrl(cfg, '').replace(/\/$/, '') }
+  return { match, frames, events, moments, insights, stats, overlays: bySegment(overlays), production, baseUrl: fileUrl(cfg, '').replace(/\/$/, '') }
+}
+
+/** overlays.json may be {segment: Overlay[]} or a flat list. */
+function bySegment(o: OverlaysBySegment | Overlay[]): OverlaysBySegment {
+  if (!Array.isArray(o)) return o
+  const out: OverlaysBySegment = {}
+  for (const x of o) (out[x.segment_id] ??= []).push(x)
+  return out
 }

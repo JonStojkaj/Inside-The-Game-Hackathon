@@ -9,7 +9,7 @@ export function Scorebug({ lang, overlay }: { lang: Lang; overlay?: Overlay }) {
   const { m, pb } = useMatch()
   const frame = useFrame(pb)
   const { home, away } = m.bundle.match
-  const score = m.bundle.frames.score[frame] ?? [0, 0]
+  const score = m.bundle.frames.score[Math.min(frame, m.bundle.frames.score.length - 1)] ?? [0, 0]
   const { shown, leaving } = usePresence(overlay)
   const share = Number(shown?.payload.home_share ?? 0.5)
 

@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useMatch } from '../lib/context'
-import { activeOverlays } from '../lib/match'
+import { activeOverlays, doorsFromInsight, doorsFromOverlay, payloadPlayer } from '../lib/match'
 import { useFrame } from '../lib/playback'
 import { resolveSegment, t } from '../lib/profile'
 import type { ViewerProfile } from '../types'
@@ -29,14 +29,13 @@ export function Screen({ profile, tv, label }: Props) {
   const active = activeOverlays(list, tMs)
 
   const sdOverlay = active.pitch?.type === 'sliding_doors' ? active.pitch : undefined
-  const insight = m.insight(forcedInsight ?? (sdOverlay?.payload.insight_id as string | undefined))
-  const sd = insight && insight.decision_frame != null ? insight : undefined
+  const sd = forcedInsight ? doorsFromInsight(m.insight(forcedInsight)) : sdOverlay ? doorsFromOverlay(m, sdOverlay) : undefined
   const sdSince = useMemo(() => (sd ? performance.now() : 0), [sd])
 
   const tagOverlay = active.pitch?.type === 'player_tag' ? active.pitch : undefined
   const tagSince = useMemo(() => (tagOverlay ? performance.now() : 0), [tagOverlay?.id]) // eslint-disable-line react-hooks/exhaustive-deps
   const tags: PitchTag[] = tagOverlay
-    ? [{ playerId: String(tagOverlay.payload.player_id), label: tagOverlay.headline.toUpperCase(), since: tagSince }]
+    ? [{ playerId: String(payloadPlayer(tagOverlay)), label: tagOverlay.headline.toUpperCase(), since: tagSince }]
     : []
 
   const fullscreen = active.fullscreen
@@ -56,7 +55,7 @@ export function Screen({ profile, tv, label }: Props) {
           />
         </div>
         {showTv && <div className="tv-mask" />}
-        {sd && <div key={sd.id} className="sd-vignette" />}
+        {sd && <div key={sd.key} className="sd-vignette" />}
 
         <Scorebug lang={profile.language} overlay={active.scorebug} />
         {!sd && <Persistent profile={profile} />}
@@ -64,8 +63,8 @@ export function Screen({ profile, tv, label }: Props) {
         {!sd && !fullscreen && <LowerThird overlay={active.lower_third} />}
         {sd && (
           <SlidingDoorsCard
-            key={sd.id}
-            insight={sd}
+            key={sd.key}
+            doors={sd}
             overlay={forcedInsight ? undefined : sdOverlay}
             lang={profile.language}
             onClose={forcedInsight ? () => setForcedInsight(null) : undefined}

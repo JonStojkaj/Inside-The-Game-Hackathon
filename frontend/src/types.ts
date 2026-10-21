@@ -97,8 +97,12 @@ export interface Intervention {
   params: Record<string, unknown>
 }
 
+/** What a probability measures: chance to score, or chance to keep the ball (turnover moments). */
+export type Metric = 'p_goal' | 'p_keep'
+
 export interface Hypothesis {
   text: string
+  metric?: Metric // values below are in this metric despite the field names
   intervention: Intervention | null
   baseline_p_goal: number | null
   counterfactual_p_goal: number | null
@@ -112,10 +116,11 @@ export interface Insight {
   moment_id: string
   claim: string
   evidence: string[]
-  // backend keys: actual_p_goal, actual_p_turnover, best_alt_p_goal, delta_p_goal
+  // keys: actual_<metric>, best_alt_<metric>, delta_<metric> (best_alt missing = no better alternative)
   numbers: Record<string, number>
   verified: boolean
   confidence: 'clear' | 'slight'
+  metric?: Metric
   hypotheses: Hypothesis[]
   decision_frame: number | null
   ghost_paths: XY[][]
@@ -221,6 +226,19 @@ export interface ViewerProfile {
   favourite_players: string[]
 }
 
+export interface ProductionStep {
+  segment_id: string
+  agent: string // producer | narrator | recap | scheduler
+  moment_id: string | null
+  decision: string
+  detail: Record<string, unknown>
+}
+
+export interface ProductionLog {
+  stats: Record<string, Record<string, number>>
+  steps: ProductionStep[]
+}
+
 export interface MatchBundle {
   match: MatchInfo
   frames: Frames
@@ -229,5 +247,6 @@ export interface MatchBundle {
   insights: Insight[]
   stats: StatsSnapshot[]
   overlays: OverlaysBySegment
+  production: ProductionLog | null
   baseUrl: string // where match.video etc. are served from
 }

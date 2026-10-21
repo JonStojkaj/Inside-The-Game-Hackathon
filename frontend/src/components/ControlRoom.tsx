@@ -20,6 +20,7 @@ const AGENT_LABEL: Record<Agent, string> = {
   production: 'Production',
 }
 const STEP_MS = 650
+const METRIC = { p_goal: 'chance to score', p_keep: 'chance to keep the ball' }
 
 const pct = (v: number | null | undefined) => (v == null ? '–' : `${Math.round(v * 100)} %`)
 
@@ -43,7 +44,7 @@ function script(ins: Insight, m: MatchIndex): Line[] {
     lines.push({ agent: 'analyst', text: `H${k + 1}: ${h.text}` })
     lines.push({
       agent: 'experimenter',
-      text: `run_rollouts(${describe(h.intervention)}, n=500 × 5 seeds) → ${pct(h.baseline_p_goal)} → ${pct(h.counterfactual_p_goal)}${h.seed_spread != null ? ` (spread ±${Math.round(h.seed_spread * 100)} pts)` : ''}`,
+      text: `run_rollouts(${describe(h.intervention)}, n=500 × 5 seeds) → ${METRIC[h.metric ?? 'p_goal']} ${pct(h.baseline_p_goal)} → ${pct(h.counterfactual_p_goal)}${h.seed_spread != null ? ` (spread ±${Math.round(h.seed_spread * 100)} pts)` : ''}`,
     })
     lines.push({
       agent: 'critic',
@@ -51,10 +52,10 @@ function script(ins: Insight, m: MatchIndex): Line[] {
       tone: h.verdict === 'accepted' ? 'ok' : h.verdict === 'rejected' ? 'bad' : 'dim',
     })
   })
-  const cmp = comparison(ins)
+  const cmp = comparison(ins.numbers, ins.metric)
   lines.push({
     agent: 'explain',
-    text: `${ins.verified ? '✓ verified' : '✗ not verified'} · ${ins.confidence} · ${cmp.key.replace('_', ' ')} ${pct(cmp.actual)} vs ${pct(cmp.alt)} · "${ins.claim}"`,
+    text: `${ins.verified ? '✓ verified' : '✗ not verified'} · ${ins.confidence} · ${METRIC[cmp.metric]} ${pct(cmp.actual)}${cmp.alt != null ? ` vs ${pct(cmp.alt)}` : ' · no better alternative'} · "${ins.claim}"`,
     tone: ins.verified ? 'ok' : 'bad',
   })
   const produced = Object.entries(m.bundle.overlays)

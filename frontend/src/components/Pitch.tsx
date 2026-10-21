@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react'
 import { useMatch } from '../lib/context'
 import { frameAt, PITCH_L, PITCH_W } from '../lib/match'
-import type { Insight, XY } from '../types'
+import type { XY } from '../types'
+
+type Ghosts = { ghost_paths: XY[][]; alt_ghost_paths: XY[][] }
 
 export interface PitchTag {
   playerId: string
@@ -12,7 +14,7 @@ export interface PitchTag {
 export interface PitchProps {
   /** Freeze on this frame (Sliding Doors) instead of following the clock. */
   frozenFrame?: number | null
-  ghosts?: { insight: Insight; since: number } | null
+  ghosts?: { insight: Ghosts; since: number } | null
   tags?: PitchTag[]
   focusPlayer?: string | null
   showPressure?: boolean
@@ -30,10 +32,10 @@ interface View {
   span: number // metres of pitch length visible
 }
 const FULL_VIEW: View = { cx: PITCH_L / 2, cy: PITCH_W / 2, span: PITCH_L }
-const views = new WeakMap<Insight, View>()
+const views = new WeakMap<Ghosts, View>()
 
 /** Frame the ghost futures (plus margin), keeping the lower part of the screen free for the card. */
-function ghostView(ins: Insight): View {
+function ghostView(ins: Ghosts): View {
   const pts = [...ins.ghost_paths, ...ins.alt_ghost_paths].flat()
   if (!pts.length) return FULL_VIEW
   // 5-95 % of the points: a few stray futures must not zoom the camera out

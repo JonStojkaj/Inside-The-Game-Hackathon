@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useMatch } from '../lib/context'
-import { clockLabel, comparison } from '../lib/match'
+import { clockLabel, comparison, type Doors } from '../lib/match'
 import { t } from '../lib/profile'
-import type { Insight, Lang, Overlay } from '../types'
+import type { Lang, Overlay } from '../types'
 
 function useCountUp(target: number, ms: number, delay: number): number {
   const [v, setV] = useState(0)
@@ -21,20 +21,20 @@ function useCountUp(target: number, ms: number, delay: number): number {
 }
 
 interface Props {
-  insight: Insight
+  doors: Doors
   overlay?: Overlay
   lang: Lang
   onClose?: () => void
 }
 
 /** DOM layer of the Sliding Doors moment; the ghost futures themselves are drawn by <Pitch>. */
-export function SlidingDoorsCard({ insight, overlay, lang, onClose }: Props) {
+export function SlidingDoorsCard({ doors: insight, overlay, lang, onClose }: Props) {
   const { m } = useMatch()
-  const cmp = comparison(insight)
+  const cmp = comparison(insight.numbers, insight.metric)
   const actual = useCountUp(cmp.actual * 100, 1200, 700)
-  const alt = useCountUp(cmp.alt * 100, 1200, 2100)
-  const altBetter = cmp.key === 'goal_chance' ? cmp.alt > cmp.actual : cmp.alt < cmp.actual
-  const rejected = insight.hypotheses.filter((h) => h.verdict === 'rejected').length
+  const alt = useCountUp((cmp.alt ?? 0) * 100, 1200, 2100)
+  const altBetter = cmp.alt != null && cmp.alt > cmp.actual
+  const rejected = insight.rejected
   const futures = insight.ghost_paths.length + insight.alt_ghost_paths.length
   const simple = Boolean(overlay?.payload.simple)
 
@@ -78,7 +78,7 @@ export function SlidingDoorsCard({ insight, overlay, lang, onClose }: Props) {
             <div className="sd-meta">
               <span className={`chip ${insight.confidence}`}>{t(lang, insight.confidence)}</span>
               <span>
-                ✓ {t(lang, 'verified')} · {insight.hypotheses.length} {t(lang, 'tested')}, {rejected} {t(lang, 'rejected')}
+                ✓ {t(lang, 'verified')} · {insight.tested} {t(lang, 'tested')}, {rejected} {t(lang, 'rejected')}
               </span>
             </div>
           )}
@@ -89,23 +89,29 @@ export function SlidingDoorsCard({ insight, overlay, lang, onClose }: Props) {
             <div className="sd-plabel">
               {t(lang, 'what_happened')}
               <br />
-              <small>{t(lang, cmp.key)}</small>
+              <small>{t(lang, cmp.metric)}</small>
             </div>
             <div className="sd-pbar">
               <i style={{ width: `${Math.min(100, actual * 2)}%` }} />
             </div>
           </div>
+          {cmp.alt == null ? (
+            <div className="sd-prob alt none">
+              <div className="sd-plabel">{t(lang, 'no_better')}</div>
+            </div>
+          ) : (
           <div className={`sd-prob alt ${altBetter ? 'win' : ''}`}>
             <div className="sd-pct">{Math.round(alt)}%</div>
             <div className="sd-plabel">
               {t(lang, 'alternative')}
               <br />
-              <small>{t(lang, cmp.key)}</small>
+              <small>{t(lang, cmp.metric)}</small>
             </div>
             <div className="sd-pbar">
               <i style={{ width: `${Math.min(100, alt * 2)}%` }} />
             </div>
           </div>
+          )}
         </div>
       </div>
     </div>

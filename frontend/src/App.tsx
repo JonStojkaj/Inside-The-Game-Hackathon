@@ -5,7 +5,7 @@ import { Screen } from './components/Screen'
 import { Transport } from './components/Transport'
 import { loadMatch, resolveSource } from './data/source'
 import { MatchContext, type MatchCtx } from './lib/context'
-import { indexMatch } from './lib/match'
+import { indexMatch, timelineFrames } from './lib/match'
 import { createPlayback } from './lib/playback'
 import { PRESETS } from './lib/profile'
 import type { MatchBundle, ViewerProfile } from './types'
@@ -36,7 +36,7 @@ export default function App() {
 function Player({ bundle }: { bundle: MatchBundle }) {
   const q = new URLSearchParams(window.location.search)
   const m = useMemo(() => indexMatch(bundle), [bundle])
-  const pb = useMemo(() => createPlayback(bundle.frames.t_ms.length, bundle.match.fps), [bundle])
+  const pb = useMemo(() => createPlayback(timelineFrames(bundle), bundle.match.fps), [bundle])
   const [forcedInsight, setForcedInsight] = useState<string | null>(null)
   const [view, setView] = useState<View>((q.get('view') as View) || 'broadcast')
   const [tv, setTv] = useState(q.has('tv'))
