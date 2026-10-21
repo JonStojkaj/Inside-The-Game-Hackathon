@@ -1,5 +1,5 @@
 from app.agents.experiments import ExperimentResult
-from app.agents.explain import numbers_are_ours, passes_rule, plausible, points
+from app.agents.explain import headline, numbers_are_ours, passes_rule, plausible, points
 
 
 def res(p_goal, spread=0.002, exp_id="x"):
@@ -19,6 +19,17 @@ def test_numbers_must_come_from_our_results():
     assert not numbers_are_ours("The chance rose to 15%.", allowed, deltas)  # invented percentage
     assert not numbers_are_ours("a 3.8-point increase", allowed, deltas)  # LLM did its own arithmetic
     assert not numbers_are_ours("an xG of 0.31", allowed, deltas)  # unexplained decimal
+
+
+def test_headline_prefers_a_better_option_and_turnovers_need_a_safer_one():
+    worse_big, better_small = res(0.04, exp_id="pass"), res(0.13, exp_id="carry")
+    assert headline(BASE, [worse_big, better_small]).experiment_id == "carry"
+    assert headline(BASE, [worse_big]).experiment_id == "pass"  # the actual choice was the best tested one
+    keep = BASE.model_copy(update={"p_keep": 0.20})
+    riskier = res(0.0, exp_id="riskier").model_copy(update={"p_keep": 0.10})
+    safer = res(0.0, exp_id="safer").model_copy(update={"p_keep": 0.30})
+    assert headline(keep, [riskier], "p_keep") is None  # "even riskier than the lost pass" is no insight
+    assert headline(keep, [riskier, safer], "p_keep").experiment_id == "safer"
 
 
 def test_stability_rule():
