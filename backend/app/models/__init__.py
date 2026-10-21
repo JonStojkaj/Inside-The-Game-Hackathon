@@ -151,7 +151,10 @@ class Insight(BaseModel):
     verified: bool
     confidence: Literal["clear", "slight"]
     hypotheses: list[Hypothesis] = Field(default_factory=list)
-    ghost_paths: list[list[tuple[float, float]]] = Field(default_factory=list)
+    decision_frame: int | None = None  # frame the counterfactuals start from
+    ghost_paths: list[list[tuple[float, float]]] = Field(default_factory=list)  # futures of what really happened
+    alt_ghost_paths: list[list[tuple[float, float]]] = Field(default_factory=list)  # futures of the best alternative
+    alt_label: str = ""
 
 
 ProfileMode = Literal["analyst", "club_fan", "player_focus", "casual"]

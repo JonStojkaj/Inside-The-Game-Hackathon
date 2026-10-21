@@ -13,7 +13,8 @@ def build_scenario(builder):
   builder.config().game_duration = int(os.environ.get('GRF_DURATION', '54000'))
   builder.config().left_team_difficulty = float(os.environ.get('GRF_LEFT_DIFFICULTY', '0.9'))
   builder.config().right_team_difficulty = float(os.environ.get('GRF_RIGHT_DIFFICULTY', '0.9'))
-  builder.config().deterministic = False
+  # deterministic=1 makes headless and rendered runs of the same seed identical (pick a match fast, render it later)
+  builder.config().deterministic = os.environ.get('GRF_DETERMINISTIC', '0') == '1'
   builder.SetTeam(Team.e_Left)
   builder.AddPlayer(-1.000000, 0.000000, e_PlayerRole_GK)
   builder.AddPlayer(0.000000,  0.020000, e_PlayerRole_RM)
