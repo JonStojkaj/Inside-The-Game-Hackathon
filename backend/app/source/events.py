@@ -22,6 +22,7 @@ import numpy as np
 
 from app.models import PITCH_LENGTH, PITCH_WIDTH, MatchEvent
 from app.source.grf import GAME_MODES, STEP_S, GrfMatch
+from app.stats.metrics import lane_clearance, pass_difficulty, threat
 
 GOAL_Y = PITCH_WIDTH / 2
 SHOT_MIN_SPEED = 12.0  # m/s right after release
@@ -104,7 +105,11 @@ def _shot_info(match: GrfMatch, shooter: int, release: int, until: int) -> dict 
     y_at_line = start[1] + v[1] * (goal_x - start[0]) / v[0]
     if abs(y_at_line - GOAL_Y) > 3.66 + SHOT_GOAL_MARGIN:
         return None
-    return {"distance_m": round(dist, 1), "shot_speed_kmh": round(max(speeds) * 3.6, 1)}
+    return {
+        "distance_m": round(dist, 1),
+        "shot_speed_kmh": round(max(speeds) * 3.6, 1),
+        "xg": round(threat(float(start[0]), float(start[1]), team == 0), 3),
+    }
 
 
 def derive_events(match: GrfMatch) -> list[MatchEvent]:
@@ -144,7 +149,15 @@ def derive_events(match: GrfMatch) -> list[MatchEvent]:
                 outcome = "off_target"
             else:
                 outcome = "blocked"
-            b.add(a.end, "shot", a.player, start_xy=release_xy, outcome=outcome, meta=shot or {})
+            if shot is None:  # scored without a fast shot (tap-in, deflection): describe it from the position
+                attacks_right = a.player < 11
+                goal_x = _attack_goal_x(0 if attacks_right else 1)
+                shot = {
+                    "distance_m": round(float(np.hypot(goal_x - release_xy[0], GOAL_Y - release_xy[1])), 1),
+                    "shot_speed_kmh": round(float(np.linalg.norm(m.ball_vel[min(a.end + 1, m.n_frames - 1), :2])) * 3.6, 1),
+                    "xg": round(threat(*release_xy, attacks_right), 3),
+                }
+            b.add(a.end, "shot", a.player, start_xy=release_xy, outcome=outcome, meta=shot)
             continue
 
         if restart:
@@ -154,7 +167,8 @@ def derive_events(match: GrfMatch) -> list[MatchEvent]:
         if team_a == team_b:
             if nxt.player != a.player:
                 b.add(a.end, "pass", a.player, target_id=m.players[nxt.player].id, start_xy=release_xy,
-                      end_xy=receive_xy, outcome="complete", meta=_pass_meta(m, a.end, nxt.start, release_xy, receive_xy))
+                      end_xy=receive_xy, outcome="complete",
+                      meta=_pass_meta(m, a.player, a.end, nxt.start, release_xy, receive_xy, nxt.player))
             continue
 
         together = float(np.linalg.norm(m.pos[nxt.start, a.player] - m.pos[nxt.start, nxt.player]))
@@ -162,7 +176,7 @@ def derive_events(match: GrfMatch) -> list[MatchEvent]:
             b.add(nxt.start, "tackle", nxt.player, target_id=m.players[a.player].id, start_xy=receive_xy, outcome="won")
         else:
             b.add(a.end, "pass", a.player, start_xy=release_xy, end_xy=receive_xy, outcome="incomplete",
-                  meta=_pass_meta(m, a.end, nxt.start, release_xy, receive_xy))
+                  meta=_pass_meta(m, a.player, a.end, nxt.start, release_xy, receive_xy, None))
             b.add(nxt.start, "interception", nxt.player, target_id=m.players[a.player].id, start_xy=receive_xy)
 
     b.events.sort(key=lambda e: (e.frame, e.id))
@@ -182,12 +196,25 @@ def _credit_scorers(events: list[MatchEvent]) -> None:
             last_goal_shot = None
 
 
-def _pass_meta(m: GrfMatch, release: int, receive: int, start: tuple, end: tuple) -> dict:
+def _pass_meta(m: GrfMatch, passer: int, release: int, receive: int, start: tuple, end: tuple, receiver: int | None) -> dict:
     speeds = [float(np.linalg.norm(m.ball_vel[f, :2])) for f in range(release + 1, min(release + 4, receive + 1))]
+    distance = float(np.hypot(end[0] - start[0], end[1] - start[1]))
+    own = slice(0, 11) if passer < 11 else slice(11, 22)
+    opp = slice(11, 22) if passer < 11 else slice(0, 11)
+    opponents = m.pos[release, opp]
+    if receiver is None:  # intended receiver of a failed pass: team-mate closest to where it ended
+        mates = m.pos[receive, own]
+        receiver = int(np.argmin(np.linalg.norm(mates - np.asarray(end), axis=1))) + own.start
+    receiver_open = float(np.linalg.norm(opponents - m.pos[release, receiver], axis=1).min())
+    passer_free = float(np.linalg.norm(opponents - m.pos[release, passer], axis=1).min())
+    attacks_right = passer < 11
     return {
-        "distance_m": round(float(np.hypot(end[0] - start[0], end[1] - start[1])), 1),
+        "distance_m": round(distance, 1),
         "ball_speed_kmh": round(max(speeds, default=0.0) * 3.6, 1),
         "flight_s": round((receive - release) * STEP_S, 1),
+        "difficulty": pass_difficulty(distance, lane_clearance(start, end, opponents), receiver_open, passer_free),
+        "threat_gain": round(threat(*end, attacks_right) - threat(*start, attacks_right), 4),
+        "intended_receiver": m.players[receiver].id,
     }
 
 

@@ -6,14 +6,19 @@ Consumes only FrameState and MatchEvent, so it works with any data source
 
 from __future__ import annotations
 
+from collections import deque
 from dataclasses import dataclass, field
+from typing import Any
 
+import numpy as np
 from pydantic import BaseModel
 
 from app.models import FrameState, MatchEvent
+from app.stats.metrics import control_chaos, pressure_index, rhythm
 
 MAX_STEP_M = 1.5  # displacement per frame above this is a reset jump, not running
 ON_TARGET = {"goal", "saved"}
+WINDOW_S = 300.0  # rolling window for control/chaos, rhythm and pressing (5 minutes of play)
 
 
 class PlayerStats(BaseModel):
@@ -63,6 +68,10 @@ class StatsSnapshot(BaseModel):
     teams: dict[str, TeamStats]
     players: dict[str, PlayerStats]
     ball_speed_kmh: float = 0.0
+    pressure_on_ball: float = 0.0  # pressure index on the current ball carrier
+    pressing: dict[str, float] = {}  # avg pressure each team applied in the window
+    control: dict[str, Any] = {}  # control vs chaos over the window
+    rhythm: dict[str, Any] = {}  # actions per minute + trend
 
 
 @dataclass
@@ -80,6 +89,9 @@ class StatsEngine:
         self._last: FrameState | None = None
         self._clock_s = 0.0
         self._ball_speed = 0.0
+        self._pressure_on_ball = 0.0
+        self._events: deque[MatchEvent] = deque()
+        self._press: dict[str, deque[tuple[int, float]]] = {"home": deque(), "away": deque()}
 
     # --- frames ---------------------------------------------------------------
     def on_frame(self, frame: FrameState, clock_s: float | None = None) -> None:
@@ -96,14 +108,26 @@ class StatsEngine:
                 if step <= MAX_STEP_M:
                     ps.distance_m += step
         owner = next((p for p in frame.players if p.id == frame.ball.owner_id), None)
+        self._pressure_on_ball = 0.0
         if owner is not None:
             self.teams[owner.team].possession_frames += 1
+            defenders = np.array([[p.x, p.y] for p in frame.players if p.team != owner.team])
+            self._pressure_on_ball = pressure_index((owner.x, owner.y), defenders)
+            pressing_team = "away" if owner.team == "home" else "home"
+            self._press[pressing_team].append((frame.t_ms, self._pressure_on_ball))
+        horizon = frame.t_ms - WINDOW_S * 1000
+        for samples in self._press.values():
+            while samples and samples[0][0] < horizon:
+                samples.popleft()
         self._ball_speed = (frame.ball.vx**2 + frame.ball.vy**2) ** 0.5 * 3.6
         self._clock_s = clock_s if clock_s is not None else frame.t_ms / 1000
         self._last = frame
 
     # --- events ---------------------------------------------------------------
     def on_event(self, event: MatchEvent) -> None:
+        self._events.append(event)
+        while self._events and self._events[0].t_ms < event.t_ms - 2 * WINDOW_S * 1000:
+            self._events.popleft()
         team = self.teams[event.team].stats if event.team else None
         player = self.players.get(event.player_id) if event.player_id else None
         if event.type == "pass" and team and player:
@@ -144,12 +168,21 @@ class StatsEngine:
             s.distance_km = round(sum(p.distance_m for p in self.players.values() if p.team == key) / 1000, 2)
             teams[key] = s
         last = self._last
+        now = last.t_ms if last else 0
+        window_ms = WINDOW_S * 1000
+        current = [e for e in self._events if e.t_ms > now - window_ms]
+        previous = [e for e in self._events if now - 2 * window_ms < e.t_ms <= now - window_ms]
+        elapsed_s = min(WINDOW_S, now / 1000) or WINDOW_S
         return StatsSnapshot(
             match_id=self.match_id,
-            t_ms=last.t_ms if last else 0,
+            t_ms=now,
             clock_s=round(self._clock_s, 1),
             score=last.score if last else (0, 0),
             teams=teams,
             players={k: v.model_copy() for k, v in self.players.items()},
             ball_speed_kmh=round(self._ball_speed, 1),
+            pressure_on_ball=round(self._pressure_on_ball, 2),
+            pressing={t: round(float(np.mean([v for _, v in s])), 3) if s else 0.0 for t, s in self._press.items()},
+            control=control_chaos(current, elapsed_s),
+            rhythm=rhythm(current, previous, elapsed_s),
         )

@@ -105,3 +105,91 @@ class RolloutResult(BaseModel):
     outcome_entropy: float  # 0 = fully predictable future ("control"), 1 = maximal spread ("chaos")
     sample_paths: list[list[tuple[float, float]]]  # ball path per sampled future, for ghost rendering
     elapsed_ms: float
+
+
+# --- explanation + broadcast contract (stages c-e) ------------------------------------------
+
+MomentKind = Literal["goal", "big_chance", "decisive_pass", "dangerous_turnover"]
+
+
+class Moment(BaseModel):
+    """A key moment picked by the deterministic Moment Detector."""
+
+    id: str
+    match_id: str
+    frame: int
+    t_ms: int
+    clock_s: float
+    kind: MomentKind
+    score: float  # 0..1 importance
+    team: Team
+    player_ids: list[str]
+    event_ids: list[str]
+    reason: str  # human-readable trigger, e.g. "shot from 14 m, xG 0.31"
+
+
+class Hypothesis(BaseModel):
+    """One step of the explain team's work, kept for the control-room panel."""
+
+    text: str
+    intervention: Intervention | None = None
+    baseline_p_goal: float | None = None
+    counterfactual_p_goal: float | None = None
+    seed_spread: float | None = None
+    verdict: Literal["accepted", "rejected", "pending"] = "pending"
+    critic_note: str = ""
+
+
+class Insight(BaseModel):
+    """A verified explanation of why a moment mattered. Numbers come from code, never from the LLM."""
+
+    id: str
+    moment_id: str
+    claim: str  # neutral English master text; narrators adapt it per segment
+    evidence: list[str]  # event ids, rollout ids
+    numbers: dict[str, float]
+    verified: bool
+    confidence: Literal["clear", "slight"]
+    hypotheses: list[Hypothesis] = Field(default_factory=list)
+    ghost_paths: list[list[tuple[float, float]]] = Field(default_factory=list)
+
+
+ProfileMode = Literal["analyst", "club_fan", "player_focus", "casual"]
+
+
+class ViewerProfile(BaseModel):
+    mode: ProfileMode
+    language: str = "en"
+    favourite_club: Team | None = None
+    favourite_players: list[str] = Field(default_factory=list)
+    my_metric: str | None = None
+
+    @property
+    def segment_id(self) -> str:
+        """Production runs per segment, not per viewer (cost independent of audience size)."""
+        focus = self.favourite_club if self.mode == "club_fan" else (self.favourite_players[:1] or [""])[0]
+        return "-".join(x for x in (self.mode, focus or "", self.language) if x)
+
+
+OverlaySlot = Literal["scorebug", "lower_third", "side_panel", "pitch", "ticker", "fullscreen"]
+OverlayType = Literal[
+    "event_card", "stat_card", "player_tag", "alert", "insight", "sliding_doors", "momentum", "recap"
+]
+
+
+class Overlay(BaseModel):
+    """Timed, machine-readable graphic for one segment: what a broadcast rendering partner consumes."""
+
+    id: str
+    match_id: str
+    segment_id: str  # "*" = every segment
+    start_ms: int  # match time at which it appears
+    duration_ms: int
+    slot: OverlaySlot
+    type: OverlayType
+    priority: int = 50  # 0..100, scheduler drops the lowest when slots collide
+    lang: str = "en"
+    headline: str = ""
+    body: str = ""
+    payload: dict[str, Any] = Field(default_factory=dict)
+    evidence: list[str] = Field(default_factory=list)
