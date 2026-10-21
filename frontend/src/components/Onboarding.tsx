@@ -96,7 +96,7 @@ export function Onboarding({ initial, onDone, onClose }: Props) {
             <p className="ob-sub">{t(lang, 'ob_sub')}</p>
             <div className="ob-cards">
               {MODES.map((mode, i) => (
-                <button key={mode} className={`ob-card m-${mode}`} style={{ animationDelay: `${120 + i * 90}ms` }} onClick={() => pick(mode)}>
+                <button key={mode} className={`ob-card m-${mode}`} style={{ animationDelay: `${60 + i * 50}ms` }} onClick={() => pick(mode)}>
                   <span className="ob-icon">{ICONS[mode]}</span>
                   <span className="ob-card-t">{t(lang, `ob_${mode}_t`)}</span>
                   <span className="ob-card-d">{t(lang, `ob_${mode}_d`)}</span>
@@ -112,7 +112,7 @@ export function Onboarding({ initial, onDone, onClose }: Props) {
             <h1 className="ob-title">{t(lang, 'ob_pick_club')}</h1>
             <div className="ob-clubs">
               {[home, away].map((c, i) => (
-                <button key={c.key} className="ob-club" style={{ '--c': c.color, animationDelay: `${100 + i * 100}ms` } as React.CSSProperties} onClick={() => done('club_fan', c.key)}>
+                <button key={c.key} className="ob-club" style={{ '--c': c.color, animationDelay: `${50 + i * 60}ms` } as React.CSSProperties} onClick={() => done('club_fan', c.key)}>
                   <span className="ob-crest">{c.short}</span>
                   <span className="ob-club-name">{c.name}</span>
                 </button>
