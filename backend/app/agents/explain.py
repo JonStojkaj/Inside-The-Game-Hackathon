@@ -67,7 +67,8 @@ QUESTIONS = {
             "could have done to prevent it. Never suggest the scorer should not have shot.",
     "big_chance": "A big chance did not go in. Was taking the shot the right decision, or was there a better option?",
     "decisive_pass": "A pass sharply raised the scoring chance. How much better was it than the alternatives?",
-    "dangerous_turnover": "The ball was lost close to the team's own goal. What would have kept it safe?",
+    "dangerous_turnover": "The ball was lost close to the team's own goal. What would have kept it safe? Only an alternative "
+                          "with a HIGHER chance to keep the ball answers this; never present the lost pass as the safe option.",
 }
 
 
@@ -151,11 +152,36 @@ def numbers_are_ours(
     return not (words & NUMBER_WORDS)
 
 
+def claimable(base: ExperimentResult, accepted: list[ExperimentResult], key: str = "p_goal") -> list[ExperimentResult]:
+    """Accepted findings worth telling viewers.
+
+    For a lost ball only a *safer* alternative is an insight: "passing elsewhere would have been even
+    riskier" than a pass that was intercepted reads as if the intercepted pass were the safe choice.
+    """
+    if key == "p_keep":
+        return [r for r in accepted if value(r, key) > value(base, key)]
+    return accepted
+
+
+def headline(base: ExperimentResult, accepted: list[ExperimentResult], key: str = "p_goal") -> ExperimentResult | None:
+    """The finding the claim is about: the best better option if there is one, else the clearest worse one."""
+    usable = claimable(base, accepted, key)
+    better = [r for r in usable if value(r, key) > value(base, key)]
+    if better:
+        return max(better, key=lambda r: value(r, key))
+    return max(usable, key=lambda r: abs(value(r, key) - value(base, key))) if usable else None
+
+
 def template_claim(ctx: DecisionContext, base: ExperimentResult, accepted: list[ExperimentResult], key: str = "p_goal") -> str:
     label = METRIC_LABEL[key]
-    if not accepted:
-        return f"{ctx.actual_label} — a reasonable decision: no tested alternative did clearly better ({pct(value(base, key))} {label})."
-    best = max(accepted, key=lambda r: abs(value(r, key) - value(base, key)))
+    best = headline(base, accepted, key)
+    if best is None:
+        now = f"{pct(value(base, key))} {label}"
+        if key == "p_keep":
+            return f"{ctx.actual_label} — none of the tested alternatives would clearly have kept the ball safer ({now})."
+        if ctx.moment.kind == "goal" and not ctx.assist:
+            return f"{ctx.actual_label} — none of the tested defensive changes would clearly have prevented it ({now})."
+        return f"{ctx.actual_label} — a reasonable decision: no tested alternative did clearly better ({now})."
     direction = "risen" if value(best, key) > value(base, key) else "fallen"
     return f"If {best.description}, the {label} would have {direction} from {pct(value(base, key))} to {pct(value(best, key))}."
 
@@ -219,19 +245,20 @@ class ExplainTeam:
                 if h.verdict == "accepted":
                     accepted.append(r)
             claim = review.claim
-            if accepted:
+            if claimable(base, accepted, key):
                 break
 
-        # only the baseline and ACCEPTED findings may be stated as fact; plain integers must come from
-        # texts we generated (decision label, accepted experiment descriptions, the minute)
+        # only the baseline and ACCEPTED (claimable) findings may be stated as fact; plain integers must
+        # come from texts we generated (decision label, accepted experiment descriptions, the minute)
+        usable = claimable(base, accepted, key)
         minute = str(int(moment.clock_s // 60))
-        allowed = {pct(value(base, key))} | {pct(value(r, key)) for r in accepted}
-        allowed_points = {points(base, r, key) for r in accepted}
-        plain = integers_in(ctx.actual_label, minute, *(r.description for r in accepted))
+        allowed = {pct(value(base, key))} | {pct(value(r, key)) for r in usable}
+        allowed_points = {points(base, r, key) for r in usable}
+        plain = integers_in(ctx.actual_label, minute, *(r.description for r in usable))
         if not claim or not numbers_are_ours(claim, allowed, allowed_points, plain) or PLAYER_ID.search(claim):
             claim = template_claim(ctx, base, accepted, key)
 
-        best = max(accepted, key=lambda r: abs(value(r, key) - value(base, key))) if accepted else None
+        best = headline(base, accepted, key)
         numbers = {"actual_p_goal": base.p_goal, "actual_p_keep": base.p_keep, f"actual_{key}": value(base, key)}
         if best:
             numbers |= {f"best_alt_{key}": value(best, key), f"delta_{key}": round(value(best, key) - value(base, key), 4)}
