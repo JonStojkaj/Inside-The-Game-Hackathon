@@ -36,7 +36,7 @@ from agent_framework import (
 )
 from pydantic import BaseModel
 
-from app.agents.llm import CACHE_DIR, FakeLLM, cache_path
+from app.agents.llm import CACHE_DIR, FakeLLM, cache_path, request_timeout
 
 T = TypeVar("T", bound=BaseModel)
 R = TypeVar("R")
@@ -200,7 +200,7 @@ def _azure_client() -> Any:
         return await asyncio.to_thread(sync_token)
 
     # an explicit client: the framework's own Azure settings loader rejects AZURE_OPENAI_ENDPOINT + base_url together
-    return OpenAIChatCompletionClient(model=deployment, async_client=AsyncOpenAI(base_url=endpoint, api_key=token))
+    return OpenAIChatCompletionClient(model=deployment, async_client=AsyncOpenAI(base_url=endpoint, api_key=token, timeout=request_timeout()))
 
 
 class FrameworkLLM:

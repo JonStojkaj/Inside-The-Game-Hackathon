@@ -85,6 +85,12 @@ The agents run on the **Microsoft Agent Framework** (`agent-framework-core` 1.23
 - **Guards stay in code.** Both runtimes call the same step functions: menu restriction, `passes_rule` (effect ≥ 1.5
   points and above the seed noise) and `plausible` (football prior) overrule the Critic, `numbers_are_ours` +
   player-id check on every LLM text, template fallback for the claim and for Narrator/Recap texts.
+- **Ask Sliding Doors (live).** A fan pauses and asks "What if Holt had shot?" in EN/DE/ES. The deployed API
+  runs the same explain workflow on Azure for that moment (`POST /api/matches/{id}/ask`, streamed steps): the
+  Analyst maps the question onto the experiment menu (or declines politely if nothing on it tests the question),
+  1,500 simulations per experiment, Critic + rules, number check, then a translation that must keep every number.
+  ~10–15 s end to end; one question at a time, rate-limited, feature flag `ASK_ENABLED`, keyless via the
+  container's managed identity.
 - **Offline and replayable.** `LLM_PROVIDER=fake` swaps in a deterministic fake chat client that still drives the
   framework's tool loop (tests and offline demos need no network). A chat middleware caches every model call
   (`LLM_CACHE=readwrite|replay|off`); on replay the tools simply run again as code. `AGENT_RUNTIME=sdk` selects

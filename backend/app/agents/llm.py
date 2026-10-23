@@ -23,6 +23,11 @@ T = TypeVar("T", bound=BaseModel)
 CACHE_DIR = Path(__file__).resolve().parents[3] / "data" / "cache" / "llm"
 
 
+def request_timeout() -> float:
+    """Seconds per model request (the SDK default is 10 min; a hung call must not block Ask Sliding Doors)."""
+    return float(os.environ.get("AZURE_OPENAI_TIMEOUT_S", "45"))
+
+
 class LLMClient(Protocol):
     name: str
 
@@ -37,7 +42,7 @@ class AzureLLM:
         from openai import OpenAI
 
         token_provider = get_bearer_token_provider(DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default")
-        self._client = OpenAI(base_url=os.environ["AZURE_OPENAI_ENDPOINT"], api_key=token_provider)
+        self._client = OpenAI(base_url=os.environ["AZURE_OPENAI_ENDPOINT"], api_key=token_provider, timeout=request_timeout())
         self.deployment = deployment or os.environ.get("AZURE_OPENAI_DEPLOYMENT_FAST", "fast")
         self.reasoning_effort = reasoning_effort
         self.name = f"azure:{self.deployment}"
