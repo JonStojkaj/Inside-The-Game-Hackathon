@@ -12,13 +12,21 @@ from __future__ import annotations
 
 import json
 import re
+from dataclasses import dataclass, field
 from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from app.agents.experiments import DecisionContext, ExperimentResult, ExperimentRunner, decision_context, experiment_menu
-from app.agents.llm import FakeLLM, LLMClient
-from app.models import Hypothesis, Insight, MatchEvent, Moment
+from app.agents.experiments import (
+    DecisionContext,
+    Experiment,
+    ExperimentResult,
+    ExperimentRunner,
+    decision_context,
+    experiment_menu,
+)
+from app.agents.llm import FakeLLM, LLMClient, llm_from_env
+from app.models import Hypothesis, Insight, MatchEvent, Moment, RolloutResult
 from app.source.grf import GrfMatch
 
 MIN_EFFECT = 0.015  # absolute change in goal probability worth talking about
@@ -188,6 +196,29 @@ def template_claim(ctx: DecisionContext, base: ExperimentResult, accepted: list[
 
 # --- the team -------------------------------------------------------------------------------
 
+@dataclass
+class Episode:
+    """The explain team's working state for one moment; the steps below (and the framework workflow's executors)
+    read and update it, so both runtimes share every guard."""
+
+    ctx: DecisionContext
+    key: str
+    menu: dict[str, Experiment]
+    base: ExperimentResult
+    base_rollout: RolloutResult
+    events: list[MatchEvent] = field(default_factory=list)
+    results: dict[str, ExperimentResult] = field(default_factory=dict)
+    rollouts: dict[str, RolloutResult] = field(default_factory=dict)
+    hypotheses: list[Hypothesis] = field(default_factory=list)
+    accepted: list[ExperimentResult] = field(default_factory=list)
+    tried: set[str] = field(default_factory=set)
+    chosen: list[AnalystHypothesis] = field(default_factory=list)
+    claim: str = ""
+    round_no: int = 0
+    probes: dict[str, tuple[ExperimentResult, RolloutResult]] = field(default_factory=dict)  # run by the tool
+    path: list[str] = field(default_factory=list)  # agent hand-offs, for logs
+
+
 class ExplainTeam:
     def __init__(self, llm: LLMClient, runner: ExperimentRunner | None = None, max_rounds: int = 2) -> None:
         self.llm = llm
@@ -195,59 +226,99 @@ class ExplainTeam:
         self.max_rounds = max_rounds
 
     def explain(self, match: GrfMatch, moment: Moment, events: list[MatchEvent]) -> Insight:
+        """Hand-written orchestration (AGENT_RUNTIME=sdk). app.agents.workflow runs the same steps as a
+        Microsoft Agent Framework workflow."""
+        ep = self.start(match, moment, events)
+        for _ in range(self.max_rounds):
+            if not self.available(ep):
+                break
+            ep.round_no += 1
+            self.choose(ep, self.llm.complete(ANALYST_SYSTEM, self.analyst_prompt(ep), AnalystPlan, "analyst"))
+            self.experiment(ep)
+            if not self.pending(ep):
+                break
+            self.judge(ep, self.llm.complete(CRITIC_SYSTEM, self.critic_prompt(ep), CriticReview, "critic"))
+            if claimable(ep.base, ep.accepted, ep.key):
+                break
+        return self.finalize(ep)
+
+    # --- steps --------------------------------------------------------------------------------
+    def start(self, match: GrfMatch, moment: Moment, events: list[MatchEvent]) -> Episode:
         ctx = decision_context(match, moment, events)
-        key = METRIC[moment.kind]
-        menu = {e.id: e for e in experiment_menu(ctx)}
         base, base_rollout = self.runner.baseline(ctx)
-        results: dict[str, ExperimentResult] = {}
-        rollouts = {}
-        hypotheses: list[Hypothesis] = []
-        accepted: list[ExperimentResult] = []
-        tried: set[str] = set()
-        claim = ""
+        return Episode(ctx=ctx, key=METRIC[moment.kind], menu={e.id: e for e in experiment_menu(ctx)}, base=base,
+                       base_rollout=base_rollout, events=events)
 
-        for round_no in range(self.max_rounds):
-            available = {k: v for k, v in menu.items() if k not in tried}
-            if not available:
-                break
-            plan = self.llm.complete(ANALYST_SYSTEM, self._analyst_prompt(ctx, base, available, hypotheses, key), AnalystPlan, "analyst")
-            chosen = list({h.experiment_id: h for h in plan.hypotheses if h.experiment_id in available}.values())[:3]
-            for h in chosen:
-                exp = available[h.experiment_id]
-                tried.add(exp.id)
-                results[exp.id], rollouts[exp.id] = self.runner.run(ctx, exp.id, exp.description, exp.intervention)
-                # the control room shows this text: it may only use the baseline it was shown
-                text = h.text if self._clean(h.text, {pct(value(base, key))}, set(), ctx, exp.description) else f"If {exp.description}."
-                hypotheses.append(Hypothesis(text=text, intervention=exp.intervention, metric=key,
-                                             baseline_p_goal=value(base, key),
-                                             counterfactual_p_goal=value(results[exp.id], key),
-                                             seed_spread=spread(results[exp.id], key)))
-            pending = [h for h in hypotheses if h.verdict == "pending"]
-            if not pending:
-                break
-            review = self.llm.complete(CRITIC_SYSTEM, self._critic_prompt(ctx, base, results, chosen, menu, key), CriticReview, "critic")
-            verdicts = {v.experiment_id: v for v in review.verdicts}
-            for hyp, exp_id in zip(pending, [c.experiment_id for c in chosen if c.experiment_id in results]):
-                r = results[exp_id]
-                v = verdicts.get(exp_id)
-                stable = passes_rule(base, r, key)
-                sane = plausible(r, base, menu[exp_id].expected_sign, key)
-                note = v.note if v else "no verdict"
-                if not self._clean(note, {pct(value(base, key)), pct(value(r, key))}, {points(base, r, key)}, ctx, r.description):
-                    note = "(critic note withheld: it used numbers the simulator did not produce)"
-                if v and v.verdict == "accepted" and stable and sane:
-                    hyp.verdict, hyp.critic_note = "accepted", note
-                elif v and v.verdict == "accepted":
-                    why = "effect not stable across seeds" if not stable else "football-implausible direction (simulator artifact)"
-                    hyp.verdict, hyp.critic_note = "rejected", f"overruled by rule: {why}. ({note})"
-                else:
-                    hyp.verdict, hyp.critic_note = "rejected", note
-                if hyp.verdict == "accepted":
-                    accepted.append(r)
-            claim = review.claim
-            if claimable(base, accepted, key):
-                break
+    @staticmethod
+    def available(ep: Episode) -> dict[str, Experiment]:
+        """The menu minus what was already tried: the only experiments the Analyst may pick (or run)."""
+        return {k: v for k, v in ep.menu.items() if k not in ep.tried}
 
+    def analyst_prompt(self, ep: Episode) -> str:
+        return self._analyst_prompt(ep.ctx, ep.base, self.available(ep), ep.hypotheses, ep.key)
+
+    def choose(self, ep: Episode, plan: AnalystPlan) -> None:
+        """Menu restriction: ids not on the (remaining) menu are dropped, duplicates collapsed, at most 3."""
+        available = self.available(ep)
+        ep.chosen = list({h.experiment_id: h for h in plan.hypotheses if h.experiment_id in available}.values())[:3]
+
+    def run_experiment(self, ep: Episode, exp_id: str) -> tuple[ExperimentResult, RolloutResult]:
+        """The Experimenter: the rollout engine, never an LLM. Results the Analyst already probed are reused."""
+        if exp_id not in ep.probes:
+            exp = ep.menu[exp_id]
+            ep.probes[exp_id] = self.runner.run(ep.ctx, exp.id, exp.description, exp.intervention)
+        return ep.probes[exp_id]
+
+    def experiment(self, ep: Episode) -> None:
+        key, base = ep.key, ep.base
+        for h in ep.chosen:
+            exp = ep.menu[h.experiment_id]
+            ep.tried.add(exp.id)
+            ep.results[exp.id], ep.rollouts[exp.id] = self.run_experiment(ep, exp.id)
+            # the control room shows this text: it may only use the baseline it was shown
+            text = h.text if self._clean(h.text, {pct(value(base, key))}, set(), ep.ctx, exp.description) else f"If {exp.description}."
+            ep.hypotheses.append(Hypothesis(text=text, intervention=exp.intervention, metric=key,
+                                            baseline_p_goal=value(base, key),
+                                            counterfactual_p_goal=value(ep.results[exp.id], key),
+                                            seed_spread=spread(ep.results[exp.id], key)))
+
+    @staticmethod
+    def pending(ep: Episode) -> list[Hypothesis]:
+        return [h for h in ep.hypotheses if h.verdict == "pending"]
+
+    def critic_prompt(self, ep: Episode) -> str:
+        return self._critic_prompt(ep.ctx, ep.base, ep.results, ep.chosen, ep.menu, ep.key)
+
+    def judge(self, ep: Episode, review: CriticReview) -> None:
+        """The Critic proposes, the rules decide: an 'accepted' verdict on an unstable or implausible effect is overruled."""
+        key, base, menu, results = ep.key, ep.base, ep.menu, ep.results
+        verdicts = {v.experiment_id: v for v in review.verdicts}
+        for hyp, exp_id in zip(self.pending(ep), [c.experiment_id for c in ep.chosen if c.experiment_id in results]):
+            r = results[exp_id]
+            v = verdicts.get(exp_id)
+            stable = passes_rule(base, r, key)
+            sane = plausible(r, base, menu[exp_id].expected_sign, key)
+            note = v.note if v else "no verdict"
+            if not self._clean(note, {pct(value(base, key)), pct(value(r, key))}, {points(base, r, key)}, ep.ctx, r.description):
+                note = "(critic note withheld: it used numbers the simulator did not produce)"
+            if v and v.verdict == "accepted" and stable and sane:
+                hyp.verdict, hyp.critic_note = "accepted", note
+            elif v and v.verdict == "accepted":
+                why = "effect not stable across seeds" if not stable else "football-implausible direction (simulator artifact)"
+                hyp.verdict, hyp.critic_note = "rejected", f"overruled by rule: {why}. ({note})"
+            else:
+                hyp.verdict, hyp.critic_note = "rejected", note
+            if hyp.verdict == "accepted":
+                ep.accepted.append(r)
+        ep.claim = review.claim
+
+    def wants_retry(self, ep: Episode) -> bool:
+        """Critic gate: another Analyst round only if nothing claimable survived and rounds/menu are left."""
+        return ep.round_no < self.max_rounds and not claimable(ep.base, ep.accepted, ep.key) and bool(self.available(ep))
+
+    def finalize(self, ep: Episode) -> Insight:
+        ctx, key, base, accepted, moment = ep.ctx, ep.key, ep.base, ep.accepted, ep.ctx.moment
+        claim = ep.claim
         # only the baseline and ACCEPTED (claimable) findings may be stated as fact; plain integers must
         # come from texts we generated (decision label, accepted experiment descriptions, the minute)
         usable = claimable(base, accepted, key)
@@ -271,10 +342,10 @@ class ExplainTeam:
             verified=True,
             confidence=confidence(base, best, key) if best else "clear",
             metric=key,
-            hypotheses=hypotheses,
+            hypotheses=ep.hypotheses,
             decision_frame=ctx.frame,
-            ghost_paths=base_rollout.sample_paths,
-            alt_ghost_paths=rollouts[best.experiment_id].sample_paths if best else [],
+            ghost_paths=ep.base_rollout.sample_paths,
+            alt_ghost_paths=ep.rollouts[best.experiment_id].sample_paths if best else [],
             alt_label=best.description if best else "",
         )
 
@@ -317,6 +388,18 @@ class ExplainTeam:
                 "passes_rules": rules(h.experiment_id),
             } for h in chosen if h.experiment_id in results],
         }, indent=1)
+
+
+def explain_team_from_env(fake: FakeLLM | None = None, runner: ExperimentRunner | None = None) -> ExplainTeam:
+    """AGENT_RUNTIME=framework: agents + workflow on the Microsoft Agent Framework; sdk: the loop above."""
+    llm = llm_from_env(fake if fake is not None else fake_explain_llm())
+    if type(llm).__name__ == "FrameworkLLM":
+        from app.agents.framework import FrameworkLLM
+        from app.agents.workflow import FrameworkExplainTeam
+
+        assert isinstance(llm, FrameworkLLM)
+        return FrameworkExplainTeam(llm, runner)
+    return ExplainTeam(llm, runner)
 
 
 def fake_explain_llm() -> FakeLLM:
