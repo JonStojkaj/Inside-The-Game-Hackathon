@@ -45,12 +45,36 @@ export function TvVideo({ hidden, onFail }: { hidden: boolean; onFail: () => voi
     }
     if (dbg) el.addEventListener('timeupdate', tick)
     const unsubDbg = dbg ? pb.subscribe(tick) : () => undefined
+    // the picture is the stage: while it buffers or seeks, the data clock waits for it (never a
+    // frozen picture with a running clock); a safety timer lets the clock go if the video hangs
+    let safety = 0
+    const hold = () => {
+      if (!pb.playing) return
+      pb.hold('video', true)
+      window.clearTimeout(safety)
+      safety = window.setTimeout(() => pb.hold('video', false), 2500)
+    }
+    const release = () => {
+      window.clearTimeout(safety)
+      pb.hold('video', false)
+    }
+    el.addEventListener('waiting', hold)
+    el.addEventListener('seeking', hold)
+    el.addEventListener('playing', release)
+    el.addEventListener('seeked', release)
+    el.addEventListener('canplay', release)
     el.addEventListener('loadedmetadata', sync)
     // also from the video side: if the frame clock stalls (background tab), the video must not run away
     el.addEventListener('timeupdate', sync)
     const unsub = pb.subscribe(sync)
     sync()
     return () => {
+      el.removeEventListener('waiting', hold)
+      el.removeEventListener('seeking', hold)
+      el.removeEventListener('playing', release)
+      el.removeEventListener('seeked', release)
+      el.removeEventListener('canplay', release)
+      release()
       el.removeEventListener('loadedmetadata', sync)
       el.removeEventListener('timeupdate', sync)
       el.removeEventListener('timeupdate', tick)

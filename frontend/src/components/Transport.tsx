@@ -17,7 +17,7 @@ interface Props {
 
 /** Play/pause, the match-story strip (scrubber + key moments) and speed. */
 export function Transport({ lang, hint, onHintDone }: Props) {
-  const { m, pb, setForcedInsight } = useMatch()
+  const { m, pb, closeDoors } = useMatch()
   const frame = useFrame(pb)
   const { playing, speed } = usePlaybackState(pb)
 
@@ -27,7 +27,7 @@ export function Transport({ lang, hint, onHintDone }: Props) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement || e.target instanceof HTMLTextAreaElement) return
       if (e.code === 'Space') {
         e.preventDefault()
         pb.toggle()
@@ -36,11 +36,11 @@ export function Transport({ lang, hint, onHintDone }: Props) {
       else if (e.key === '1') pb.setSpeed(1)
       else if (e.key === '5') pb.setSpeed(5)
       else if (e.key === '0') pb.setSpeed(10)
-      else if (e.code === 'Escape') setForcedInsight(null)
+      else if (e.code === 'Escape') closeDoors(false)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [pb, setForcedInsight])
+  }, [pb, closeDoors])
 
   return (
     <div className="transport">

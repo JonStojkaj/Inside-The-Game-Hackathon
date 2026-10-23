@@ -96,7 +96,8 @@ export function Onboarding({ initial, onDone, onClose }: Props) {
             <p className="ob-sub">{t(lang, 'ob_sub')}</p>
             <div className="ob-cards">
               {MODES.map((mode, i) => (
-                <button key={mode} className={`ob-card m-${mode}`} style={{ animationDelay: `${60 + i * 50}ms` }} onClick={() => pick(mode)}>
+                <button key={mode} className={`ob-card m-${mode} ${initial?.mode === mode ? 'last' : ''}`} style={{ animationDelay: `${60 + i * 50}ms` }} onClick={() => pick(mode)} autoFocus={initial?.mode === mode}>
+                  {initial?.mode === mode && <span className="ob-last">{t(lang, 'ob_last')}</span>}
                   <span className="ob-icon">{ICONS[mode]}</span>
                   <span className="ob-card-t">{t(lang, `ob_${mode}_t`)}</span>
                   <span className="ob-card-d">{t(lang, `ob_${mode}_d`)}</span>
@@ -112,7 +113,7 @@ export function Onboarding({ initial, onDone, onClose }: Props) {
             <h1 className="ob-title">{t(lang, 'ob_pick_club')}</h1>
             <div className="ob-clubs">
               {[home, away].map((c, i) => (
-                <button key={c.key} className="ob-club" style={{ '--c': c.color, animationDelay: `${50 + i * 60}ms` } as React.CSSProperties} onClick={() => done('club_fan', c.key)}>
+                <button key={c.key} className={`ob-club ${initial?.favourite_club === c.key ? 'last' : ''}`} style={{ '--c': c.color, animationDelay: `${50 + i * 60}ms` } as React.CSSProperties} onClick={() => done('club_fan', c.key)}>
                   <span className="ob-crest">{c.short}</span>
                   <span className="ob-club-name">{c.name}</span>
                 </button>
@@ -134,7 +135,7 @@ export function Onboarding({ initial, onDone, onClose }: Props) {
                     {players
                       .filter((p) => p.team === c.key)
                       .map((p) => (
-                        <button key={p.id} className="ob-player" style={{ '--c': c.color } as React.CSSProperties} onClick={() => done('player_focus', null, p.id)}>
+                        <button key={p.id} className={`ob-player ${initial?.favourite_players[0] === p.id ? 'last' : ''}`} style={{ '--c': c.color } as React.CSSProperties} onClick={() => done('player_focus', null, p.id)}>
                           <span className="ob-pnum">{p.number}</span>
                           <span className="ob-pname">{p.name}</span>
                           <span className="ob-ppos">{p.position}</span>

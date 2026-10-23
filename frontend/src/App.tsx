@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AskButton, AskPanel } from './components/AskPanel'
+import { useAskAvailable } from './lib/ask'
 import { Commentator } from './components/Commentator'
 import { ControlRoom } from './components/ControlRoom'
 import { Onboarding } from './components/Onboarding'
@@ -7,12 +8,14 @@ import { ProfilePicker } from './components/ProfilePicker'
 import { Screen } from './components/Screen'
 import { Transport } from './components/Transport'
 import { loadMatch, resolveSource } from './data/source'
-import { MatchContext, type MatchCtx } from './lib/context'
+import { unlockAudio } from './lib/audio'
+import { MatchContext, type DoorsBreak, type MatchCtx } from './lib/context'
 import { resetExplainer } from './lib/explainer'
 import { indexMatch, timelineFrames } from './lib/match'
+import { doorsForMoment, doorsOverlays, overlayList } from './lib/overlays'
 import { createPlayback } from './lib/playback'
 import { loadProfile, presets, profileFromQuery, saveProfile, t } from './lib/profile'
-import type { Insight, MatchBundle, ViewerProfile } from './types'
+import type { Insight, MatchBundle, Moment, ViewerProfile } from './types'
 
 /** viewer = the single-viewer product (default); split / control = the producer view. */
 type View = 'viewer' | 'split' | 'control'
@@ -38,6 +41,8 @@ function initialView(q: URLSearchParams): View {
   return v === 'split' || v === 'control' ? v : 'viewer'
 }
 
+let breakSeq = 0
+
 function Player({ bundle }: { bundle: MatchBundle }) {
   const q = useMemo(() => new URLSearchParams(window.location.search), [])
   const base = useMemo(() => indexMatch(bundle), [bundle])
@@ -50,31 +55,112 @@ function Player({ bundle }: { bundle: MatchBundle }) {
     if (q.has('f')) p.seek(Number(q.get('f'))) // before any child reads the clock (e.g. ?ask_open)
     return p
   }, [bundle, q])
-  const [forcedInsight, setForcedInsight] = useState<string | null>(null)
   const [view, setView] = useState<View>(() => initialView(q))
-  const [tv, setTv] = useState(q.has('tv'))
   const demo = useMemo(() => presets(bundle.overlays, bundle.match.players), [bundle])
   const players = bundle.match.players
-  // URL profile (demo takes) > saved profile > onboarding
-  const [profile, setProfile] = useState<ViewerProfile | null>(() => profileFromQuery(players) ?? (q.has('onboarding') ? null : loadProfile(players)))
-  const [onboarding, setOnboarding] = useState(() => q.has('onboarding') || (!profile && initialView(q) === 'viewer' && !q.has('shot')))
+  // demo takes put the profile in the URL; everyone else answers the questions first (the last
+  // answer is pre-selected, never auto-applied)
+  const urlProfile = useMemo(() => profileFromQuery(players), [players])
+  const skipOnboarding = Boolean(urlProfile) || initialView(q) !== 'viewer' || q.has('shot')
+  const [profile, setProfile] = useState<ViewerProfile | null>(() => urlProfile ?? (skipOnboarding ? loadProfile(players) : null))
+  const [onboarding, setOnboarding] = useState(() => q.has('onboarding') || !skipOnboarding)
+  const lastProfile = useMemo(() => loadProfile(players), [players])
   const [menu, setMenu] = useState(false)
   const [split, setSplit] = useState<ViewerProfile[]>(demo)
-  // first-run hint after onboarding (or ?hint for the screenshot)
-  const [hint, setHint] = useState(q.has('hint'))
-  const doneHint = useCallback(() => setHint(false), [])
-  // commentary: on by default, audible after the first user gesture (browsers block autoplay)
   const [sound, setSound] = useState(true)
-  const [unlocked, setUnlocked] = useState(q.has('shot'))
   const hasAudio = bundle.audio.length > 0
-  const ctx = useMemo<MatchCtx>(
-    () => ({ m, pb, forcedInsight, setForcedInsight, addAsked, askedQuestion: (id) => (id ? asked[id]?.question : undefined) }),
-    [m, pb, forcedInsight, addAsked, asked],
-  )
   const [askOpen, setAskOpen] = useState(q.has('ask_open'))
-  const hasVideo = Boolean(bundle.match.video)
+  const askOk = useAskAvailable()
   const me = profile ?? demo[0]
   const lang = profile?.language ?? 'en'
+  const producer = view !== 'viewer'
+  const primary = producer ? split[0] : me
+
+  // ---------------------------------------------------------------- Sliding Doors breaks
+  const [doorsBreak, setBreak] = useState<DoorsBreak | null>(null)
+  const breakRef = useRef<DoorsBreak | null>(null)
+  const lastShown = useRef<string | null>(null)
+  const primaryList = useMemo(() => overlayList(m, primary).list, [m, primary])
+  const primaryDoors = useMemo(() => doorsOverlays(m, primaryList), [m, primaryList])
+
+  const openDoors = useCallback(
+    (b: Omit<DoorsBreak, 'key'>) => {
+      pb.pause()
+      const next = { ...b, key: `brk-${++breakSeq}` }
+      if (b.overlay) lastShown.current = b.overlay.id
+      breakRef.current = next
+      setBreak(next)
+    },
+    [pb],
+  )
+  const closeDoors = useCallback(
+    (resume: boolean) => {
+      const b = breakRef.current
+      breakRef.current = null
+      setBreak(null)
+      if (resume) {
+        if (b?.resumeFrame != null) pb.seek(b.resumeFrame)
+        pb.play()
+      }
+    },
+    [pb],
+  )
+  const openMoment = useCallback(
+    (mo: Moment) => {
+      const o = doorsForMoment(m, primaryList, mo.id)
+      const ins = m.insightForMoment(mo.id)
+      const resumeFrame = Math.max(0, mo.frame - 40) // then watch it happen for real
+      if (o) {
+        pb.seek(mo.frame)
+        openDoors({ overlay: o, auto: true, resumeFrame })
+      } else if (ins && ins.decision_frame != null) {
+        pb.seek(mo.frame)
+        openDoors({ insightId: ins.id, auto: true, resumeFrame })
+      } else {
+        closeDoors(false)
+        pb.seek(resumeFrame)
+        pb.play()
+      }
+    },
+    [m, pb, primaryList, openDoors, closeDoors],
+  )
+
+  // the clock crossing the start of one of the primary viewer's Sliding Doors overlays pauses the
+  // match for the break; playing again (Continue, space, play button) always ends a break
+  useEffect(() => {
+    let prev = pb.frame
+    if (import.meta.env.DEV) (window as unknown as { __doors: unknown }).__doors = { list: primaryDoors, lastShown }
+    return pb.subscribe(() => {
+      const now = pb.frame
+      if (pb.playing && breakRef.current) {
+        breakRef.current = null
+        setBreak(null)
+      }
+      // a break that was shown may come back once the viewer rewinds well before it
+      const shown = lastShown.current ? primaryDoors.find((x) => x.id === lastShown.current) : undefined
+      if (shown && (now / pb.fps) * 1000 < shown.start_ms - 20000) lastShown.current = null
+      const step = now - prev
+      if (pb.playing && step > 0 && step < pb.fps * 2 * Math.max(1, pb.speed)) {
+        const t0 = (prev / pb.fps) * 1000
+        const t1 = (now / pb.fps) * 1000
+        const o = primaryDoors.find((x) => x.start_ms > t0 && x.start_ms <= t1 && x.id !== lastShown.current)
+        if (o) {
+          prev = now
+          openDoors({ overlay: o, auto: true })
+          return
+        }
+      }
+      prev = now
+    })
+  }, [pb, primaryDoors, openDoors])
+
+  const forcedInsight = doorsBreak?.insightId ?? null
+  const setForcedInsight = useCallback((id: string | null) => (id ? openDoors({ insightId: id, auto: false }) : closeDoors(false)), [openDoors, closeDoors])
+
+  const ctx = useMemo<MatchCtx>(
+    () => ({ m, pb, doorsBreak, openDoors, closeDoors, openMoment, forcedInsight, setForcedInsight, addAsked, askedQuestion: (id) => (id ? asked[id]?.question : undefined) }),
+    [m, pb, doorsBreak, openDoors, closeDoors, openMoment, forcedInsight, setForcedInsight, addAsked, asked],
+  )
 
   const choose = (p: ViewerProfile) => {
     setProfile(p)
@@ -91,20 +177,27 @@ function Player({ bundle }: { bundle: MatchBundle }) {
     return () => pb.pause()
   }, [pb])
 
+  // ?moment=<moment id>: a demo take opens that moment's Sliding Doors break
   useEffect(() => {
-    if (unlocked) return
-    const on = () => setUnlocked(true)
-    window.addEventListener('pointerdown', on, { once: true })
-    window.addEventListener('keydown', on, { once: true })
+    const id = q.get('moment')
+    const mo = id ? m.moment(id) : undefined
+    if (mo && !onboarding) openMoment(mo)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // the first click / key (the onboarding answer) unlocks audio for the whole session
+  useEffect(() => {
+    const on = () => unlockAudio()
+    window.addEventListener('pointerdown', on, { capture: true })
+    window.addEventListener('keydown', on, { capture: true })
     return () => {
-      window.removeEventListener('pointerdown', on)
-      window.removeEventListener('keydown', on)
+      window.removeEventListener('pointerdown', on, { capture: true })
+      window.removeEventListener('keydown', on, { capture: true })
     }
-  }, [unlocked])
+  }, [])
 
   const who = me.mode === 'club_fan' && me.favourite_club ? m.club(me.favourite_club) : null
   const fav = me.mode === 'player_focus' ? m.player(me.favourite_players[0]) : undefined
-  const producer = view !== 'viewer'
+  const ask = askOk ? () => setAskOpen(true) : undefined
 
   return (
     <MatchContext.Provider value={ctx}>
@@ -116,9 +209,6 @@ function Player({ bundle }: { bundle: MatchBundle }) {
               <i />
             </span>
             <span className="brand-name">Sliding Doors</span>
-            <span className="brand-match">
-              {bundle.match.home.name} v {bundle.match.away.name}
-            </span>
           </div>
 
           {!producer && (
@@ -157,6 +247,11 @@ function Player({ bundle }: { bundle: MatchBundle }) {
             </div>
           )}
 
+          <span className="topbar-match">
+            <i style={{ background: bundle.match.home.color }} />
+            {bundle.match.home.name} <span>v</span> {bundle.match.away.name}
+            <i style={{ background: bundle.match.away.color }} />
+          </span>
           <div className="topbar-spacer" />
           <nav className="views">
             {producer ? (
@@ -182,9 +277,6 @@ function Player({ bundle }: { bundle: MatchBundle }) {
               </button>
             )}
             <AskButton lang={lang} open={askOpen} onToggle={() => setAskOpen(!askOpen)} />
-            <button className={`tv ${tv ? 'on' : ''}`} disabled={!hasVideo} title={t(lang, hasVideo ? 'tv_title' : 'tv_none')} onClick={() => setTv(!tv)}>
-              {t(lang, 'tv_view')}
-            </button>
           </nav>
           {hasAudio && (
             <button
@@ -194,43 +286,45 @@ function Player({ bundle }: { bundle: MatchBundle }) {
               aria-label={t(lang, sound ? 'sound_on' : 'sound_off')}
               aria-pressed={sound}
             >
-              {sound ? '🔊' : '🔇'}
+              <span aria-hidden>{sound ? '🔊' : '🔇'}</span>
+              <small>{t(lang, sound ? 'sound_on' : 'sound_off')}</small>
             </button>
           )}
         </header>
 
         <main className="main" onClick={() => menu && setMenu(false)}>
-          {view === 'viewer' && <Screen profile={me} tv={tv} />}
+          {view === 'viewer' && <Screen profile={me} primary onAsk={ask} holdBreak={askOpen} />}
           {view === 'split' && (
             <div className="split">
               {split.map((p, i) => (
                 <div key={i} className="split-col">
                   <ProfilePicker compact profile={p} onChange={(np) => setSplit(split.map((x, k) => (k === i ? np : x)))} />
-                  <Screen profile={p} tv={tv} label />
+                  <Screen profile={p} label primary={i === 0} onAsk={i === 0 ? ask : undefined} holdBreak={askOpen} />
                 </div>
               ))}
             </div>
           )}
           {view === 'control' && (
             <div className="control-layout">
-              <Screen profile={split[0]} tv={tv} />
+              <Screen profile={split[0]} primary onAsk={ask} holdBreak={askOpen} />
               <ControlRoom />
             </div>
           )}
         </main>
 
         {askOpen && <AskPanel lang={producer ? split[0].language : lang} onClose={() => setAskOpen(false)} />}
-        <Transport lang={lang} hint={hint && !onboarding} onHintDone={doneHint} />
-        {hasAudio && <Commentator profile={producer ? split[0] : me} audible={sound && unlocked} lang={lang} />}
+        <Transport lang={lang} />
+        {hasAudio && !onboarding && <Commentator profile={primary} audible={sound} />}
         {onboarding && (
           <Onboarding
-            initial={profile}
+            initial={profile ?? lastProfile}
             onDone={(p) => {
               choose(p)
               setOnboarding(false)
               setView('viewer')
               resetExplainer()
-              setHint(true)
+              // the answer was a click: audio is unlocked, so the match can start right away
+              if (!q.has('shot')) pb.play()
             }}
             onClose={profile ? () => setOnboarding(false) : undefined}
           />

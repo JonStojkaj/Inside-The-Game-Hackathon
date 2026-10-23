@@ -50,7 +50,7 @@ function whyItMattered(m: MatchIndex, mo: Moment, lang: Lang): string {
  * Doubles as the scrubber; shared by every view, the producer view included.
  */
 export function MatchStory({ lang }: { lang: Lang }) {
-  const { m, pb, forcedInsight, setForcedInsight } = useMatch()
+  const { m, pb, forcedInsight, doorsBreak, openMoment } = useMatch()
   const frame = useFrame(pb)
   const ref = useRef<HTMLDivElement>(null)
   const [hover, setHover] = useState<string | null>(null)
@@ -79,18 +79,7 @@ export function MatchStory({ lang }: { lang: Lang }) {
     pb.seek(((clientX - r.left) / r.width) * n)
   }
 
-  const open = (mo: Moment) => {
-    const ins = m.insightForMoment(mo.id)
-    if (ins && ins.decision_frame != null) {
-      pb.pause()
-      pb.seek(ins.decision_frame)
-      setForcedInsight(ins.id)
-    } else {
-      setForcedInsight(null)
-      pb.seek(Math.max(0, mo.frame - 40))
-      pb.play()
-    }
-  }
+  const open = (mo: Moment) => openMoment(mo)
 
   const pos = (f: number) => `${(Math.min(f, n) / n) * 100}%`
   const head = pos(frame)
@@ -107,7 +96,7 @@ export function MatchStory({ lang }: { lang: Lang }) {
         <div className="ms-lane">
           {m.bundle.moments.map((mo) => {
             const ins = m.insightForMoment(mo.id)
-            const on = ins != null && forcedInsight === ins.id
+            const on = (ins != null && forcedInsight === ins.id) || (doorsBreak?.overlay != null && doorsBreak.overlay.payload.moment_id === mo.id)
             return (
               <button
                 key={mo.id}

@@ -17,21 +17,35 @@ export interface Playback {
   pause(): void
   toggle(): void
   setSpeed(speed: number): void
+  /** Hold the clock without pausing (e.g. while the TV picture buffers), so data and video never drift apart. */
+  hold(reason: string, on: boolean): void
+  readonly held: boolean
 }
 
 export function createPlayback(nFrames: number, fps: number): Playback {
   const listeners = new Set<() => void>()
   let raf = 0
+  let timer = 0
   let last = 0
+  const holds = new Set<string>()
   const emit = () => listeners.forEach((fn) => fn())
 
   const tick = (now: number) => {
-    const dt = Math.min(now - last, 100)
+    // real time up to 0.5 s per tick: a throttled rAF (busy page, hidden pane) must not slow the
+    // clock down against the video; longer gaps (background tab) are not caught up
+    const dt = Math.min(now - last, 500)
     last = now
-    pb.frame = Math.min(pb.frame + (dt / 1000) * fps * pb.speed, nFrames - 1)
+    if (!holds.size) pb.frame = Math.min(pb.frame + (dt / 1000) * fps * pb.speed, nFrames - 1)
     if (pb.frame >= nFrames - 1) pb.playing = false
     emit()
+    cancelAnimationFrame(raf)
     if (pb.playing) raf = requestAnimationFrame(tick)
+    else window.clearInterval(timer)
+  }
+  // fallback when rAF stalls (page not rendered, e.g. a hidden pane or a covered window): the TV
+  // picture keeps playing, so the clock must too
+  const watchdog = () => {
+    if (pb.playing && performance.now() - last > 200) tick(performance.now())
   }
 
   const pb: Playback = {
@@ -54,11 +68,14 @@ export function createPlayback(nFrames: number, fps: number): Playback {
       pb.playing = true
       last = performance.now()
       raf = requestAnimationFrame(tick)
+      window.clearInterval(timer)
+      timer = window.setInterval(watchdog, 100)
       emit()
     },
     pause() {
       pb.playing = false
       cancelAnimationFrame(raf)
+      window.clearInterval(timer)
       emit()
     },
     toggle() {
@@ -68,6 +85,13 @@ export function createPlayback(nFrames: number, fps: number): Playback {
     setSpeed(speed) {
       pb.speed = speed
       emit()
+    },
+    hold(reason, on) {
+      if (on) holds.add(reason)
+      else holds.delete(reason)
+    },
+    get held() {
+      return holds.size > 0
     },
   }
   return pb
