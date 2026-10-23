@@ -8,6 +8,7 @@ import '@fontsource/barlow-condensed/900-italic.css'
 import '@fontsource-variable/inter'
 import './index.css'
 import './modes.css'
+import './layout.css'
 import App from './App.tsx'
 
 createRoot(document.getElementById('root')!).render(

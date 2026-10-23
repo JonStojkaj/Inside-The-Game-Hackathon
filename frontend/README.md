@@ -1,6 +1,6 @@
 # Sliding Doors · web player
 
-The broadcast front end: a 2D tactical pitch (or the TV picture) with timed, per-segment overlays,
+The broadcast front end: the TV picture (or a 2D tactical pitch) with timed, per-segment overlays,
 three viewer profiles side by side, the Sliding Doors replay and the control room. React + Vite +
 TypeScript, no UI framework; the pitch is a canvas, everything else is DOM + CSS animation.
 
@@ -37,76 +37,66 @@ Types in `src/types.ts` mirror `backend/app/models/__init__.py`.
 
 ## Views and controls
 
-- **Onboarding** (first visit): "How would you describe yourself?" with four cards (analyst, club fan
-  → pick a club, player focus → pick a player from `match.json`, casual) plus EN/DE/ES. The choice is
-  saved in `localStorage` (`sliding-doors.profile.v1`; works without storage too). Demo takes skip it
-  with `?profile=analyst|club_fan|player_focus|casual&club=home|away&player=A20&lang=de`; `?onboarding`
-  forces it; `?shot` and `view=split|control` skip it.
-- **My broadcast** (default): one viewer. The top bar always shows the profile ("Watching as …");
-  clicking it switches mode / club / player / language at any time, or starts over.
-- **The four views** (same match, same moment, different on first glance; `src/lib/derive.ts`):
-  - *Analyst*: data HUD (control vs chaos, pressing both teams, rhythm with trend sparkline, last pass
-    with difficulty, last shot with xG), the segment's metric cards, full Sliding Doors card plus
-    every hypothesis tested (real → counterfactual, confirmed / refuted / rejected).
-  - *Club fan*: stage themed in the club colour, partisan card ("We lead 2–1", "We're on top", us-vs-them
-    momentum bar, no numbers otherwise), full-screen GOAL! banner for our goals, "So close!" for our big
-    chances, opponent goals as a sober strip; ticker and alerts only for our team; Sliding Doors only
-    for our players' decisions, as a club-coloured one-liner.
-  - *Player focus*: player cam (camera follows him), live card (speed, top speed, pass accuracy, average
-    pass difficulty, decisions right / analysed, heatmap from the tracking data), alerts for his goals,
-    shots (xG), ball wins, key / hard passes and sprints; Sliding Doors only for his decisions, with a
-    decision record ("Best of N options": his action vs the swap_action rollouts, noise rejected by the
-    critic shown greyed) instead of the two probability boxes.
-  - *Casual*: centred scorebug, no gauges, no ticker; only goals and big chances as short cards with one
-    line on why they mattered (score before/after: opens the scoring, takes the lead, level again…;
-    big chance: "would have made it 1–1"), Sliding Doors one-liners for goals / big chances, full-time recap.
-  Produced overlays are used when the production team made exactly the viewer's segment; otherwise the
-  overlays (goal cards, Sliding Doors text, recap) are templated in the viewer's language from insights,
-  moments and stats (numbers only from the data, so the claim audit applies unchanged). Totals that
-  depend on match length (pass/shot counts, distance) are not shown: GRF plays 5 minutes on a 90' clock.
-- **Producer view · same moment, three viewers** (top bar): the 3-up (analyst DE, club fan HCY EN,
-  player focus #20 ES), each a tall "second screen", and the control room tab.
-- **Control room**: the selected insight's hypotheses replayed as an agent log (detector → analyst →
-  experimenter → critic → explain team → production per segment), counters for accepted / rejected /
-  unverified claims shown.
-- **TV**: enabled when `match.video` is set; the video is slaved to the frame clock (paused: video
-  frame N for data frame N; playing: drift absorbed with the playback rate, hard seek beyond 0.25 s).
-  Our scorebug lands on GRF's scoreboard and our radar (drawn from the tracking data) on GRF's minimap.
-  During Sliding Doors the picture cross-fades to the pitch. Without video, or if the browser cannot
-  decode it (needs H.264, yuv420p), the pitch is shown. Test bundle: `public/dev/` (gitignored), built
-  with `sync-export.mjs` from a GRF render; `?syncdebug` prints data frame vs video frame.
-- **Match story strip** (bottom, shared by every view incl. the producer view, `MatchStory.tsx`): the
-  scrubber is a momentum chart: home share of control above the line, away below (from
-  `stats.json` `control`, smoothed), chaos as the gold band underneath, goals as gold lines. Key moments
-  (`moments.json`) sit above it as chips with icon + minute; hover = one line on why it mattered (score
-  change for goals, "would have made it 1–1" for big chances, the insight verdict otherwise); click =
-  that moment's Sliding Doors on every screen (or a jump 4 s before it when there is no insight).
-- Transport: space play/pause, ←/→ ±5 s, `1`/`5`/`0` speed 1×/5×/10×, Esc closes a manual Sliding Doors.
-- **First-time clarity**: after onboarding a dismissible hint above the play button ("Press play ...",
-  `?hint` forces it); the first Sliding Doors card a viewer sees says "We replayed this moment 1,500
-  times ..." (rollouts per seed × seeds: `insight.numbers.n_rollouts` / `n_seeds` if present, else
-  500 × the seeds in the rollout evidence ids). Top bar: profile left; Producer view, TV view and the
-  commentary toggle right.
-- **Stats per mode**: one hero element each, every number with a plain-language line/tooltip. Analyst:
-  control-vs-chaos gauge (+ tempo), pressing, xG flow (cumulative xG from shot events), last pass
-  difficulty. Club fan: only the us-vs-them momentum bar. Player focus: the player card. Casual: the
-  score (plus goal / big-chance cards).
-- **Commentator** (`Commentator.tsx`): optional `audio.json` next to the other files,
-  `[{id, segment_id, start_ms, duration_ms, file: "audio/<name>.mp3", lang, text}]`. Clips of the
-  viewer's exact segment (or `"*"`) start when the clock crosses `start_ms`, only while playing at 1×;
-  pause, seek or another speed stops them. Caption "🎙 Commentator" + text while a clip runs (also when
-  muted). Toggle in the top bar (only shown when the export has audio); on by default, audible after the
-  first click/key (autoplay policy). Producer view: only the first column speaks. Local stub:
-  `public/dev/audio-test/` (gitignored: symlinks to demo-109 + `audio.json` + a `say` mp3), shot
-  `9-commentator` (`AUDIO_SRC=...` to point elsewhere; headless virtual time barely advances the clock,
-  so check playback in a real browser).
-- Demo takes: `?view=split&f=1600&speed=1&play` starts at a frame (`scripts/shots.mjs` lists all takes
-  on demo-109: onboarding, analyst + strip + hint, analyst Sliding Doors, fan, player, casual, producer
-  view at the 46' Sliding Doors, control room, recap). `?tv` starts in TV mode,
-  `?cr=<insight id>` picks the control-room log, `?shot` skips enter animations (screenshots).
-  §16 shots on full-34: 3-up live `f=1580`, 3-up Sliding Doors (all three screens) `f=1695`,
-  broadcast Sliding Doors `f=2129`, control room `view=control&f=2131&cr=full-34-m01663-decisive_pass-insight`,
-  full-time recap `f=3090`.
+Layout: **the TV picture is the main stage** (`match.video`), a slim sidebar on the right carries a few
+mode-specific blocks, the match-story strip is at the bottom. Without a video (or when the browser
+cannot decode it) the 2D tactical pitch is the stage. The pitch also appears during a Sliding Doors
+break (ghost futures).
+
+- **Onboarding always first**: opening the page asks "How would you describe yourself?" (four cards,
+  then club or player, EN/DE/ES). The last answer (`localStorage` `sliding-doors.profile.v1`) is
+  pre-selected ("Last time"), never auto-applied. Demo takes skip it with
+  `?profile=analyst|club_fan|player_focus|casual&club=home|away&player=A20&lang=de`, `?view=split|control`
+  or `?shot`; `?onboarding` forces it. The answer click unlocks audio and starts the match.
+- **Top bar**: profile chip left ("Watching as …", click = switch mode / club / player / language or
+  start over); right: Producer view, Ask Sliding Doors (only with a backend), commentary on/off.
+- **Stage graphics on the video**: our scorebug sits on GRF's scoreboard (x210-602, y15-42 of the
+  1280x720 render), our radar (drawn from tracking data; gold ring = followed player) on GRF's minimap
+  (x535-745, y565-690). Nothing tints the picture. The video is slaved to the frame clock; while it
+  buffers or seeks the clock waits (`pb.hold`), so picture, sidebar and ticker never drift apart.
+- **Sidebar per mode** (`components/side/`; numbers only from the export, never totals that depend on
+  match length since GRF plays 5 minutes on a 90' clock):
+  - *Club fan*: mood meter + "we/us" line + **win probability** for us (line over the match; model
+    estimate, `lib/models.ts winProbability`: Poisson goals in the remaining minutes from a prior of
+    1.35 goals/90 per team, home x1.08 / away x0.92, blended with the xG rate so far up to 60 %);
+    **live league table** with what's at stake (`public/league.json`, fictional 20-club league,
+    standings before this match; only this match is live: "If it ends like this: 3rd ▲2", "Win → 3rd ·
+    Draw → 5th · Loss → 6th", rivals tagged); our latest events. Stage: big GOAL! banner for our goals,
+    opponent goals as a sober grey line, "So close!" for our big chances.
+  - *Player focus*: **live rating 1–10** (`lib/models.ts`: 6 + 3.5·tanh(S/3), S = completed pass
+    +0.05 + 0.10·difficulty/100, failed pass −0.12, shot +0.15 + 2·xG, goal +1.2, tackle won /
+    interception +0.30, pressure won (ball won within 3 s) +0.15) vs his season average from
+    `league.json` (`season_ratings`), the four parts, his **best action** (click = watch it); **his duel**
+    vs the direct opponent (mirrored position): rating, pass accuracy, pass difficulty; **his decisions**
+    replayed by Sliding Doors (✓ right call / ✗ better option, click = open it). Pitch fallback: camera
+    follows him; video: gold ring in the radar.
+  - *Analyst*: control vs chaos + tempo, pressing, xG flow, last pass difficulty; the production's stat
+    card when on air; during a break every hypothesis tested; latest events.
+  - *Casual*: the score, big; big moments so far (goals, big chances) with one line each (click =
+    watch it). Stage: one short card per goal / big chance.
+- **Sliding Doors = pause, then continue** (`components/DoorsBreak.tsx`, break logic in `App.tsx`):
+  when the clock crosses the start of one of the viewer's Sliding Doors overlays the match pauses, the
+  stage shows the pitch with the ghost futures and a compact card (verdict, one sentence, what
+  happened vs best alternative with the metric, Continue ▶, Ask about this moment). It continues by
+  itself after 8 s (or when the moment's commentator clip has finished, max 20 s; held while the Ask
+  panel is open). Playing again by any means ends the break: there is never a frozen Sliding Doors view
+  while the clock runs. Timeline click on a moment = jump there, same break, Continue plays from 4 s
+  before the moment. Player focus shows the decision record, analyst the hypotheses in the sidebar.
+- **Producer view · same moment, three viewers**: three columns (analyst DE, club fan EN, player focus
+  ES), each stage + sidebar; the first column drives breaks and commentary. **Control room**: the agent
+  log next to the stage.
+- **Match story strip** (bottom, `MatchStory.tsx`): momentum chart (home control above the line, away
+  below, chaos as the gold band, goals as gold lines) with the key moments as chips; hover = why it
+  mattered, click = that moment's break.
+- Transport: space play/pause, ←/→ ±5 s, `1`/`5`/`0` speed 1×/5×/10×, Esc closes a break.
+- **Commentator** (`Commentator.tsx`, `lib/audio.ts`): optional `audio.json`
+  `[{id, segment_id, start_ms, duration_ms, file: "audio/<name>.mp3", lang, text}]`. One shared audio
+  element, unlocked by the first click (the onboarding answer); clips of the next 25 s are prefetched as
+  blobs; a clip starts when the clock reaches `start_ms` (or up to 1.5 s later, e.g. after a seek),
+  pauses and resumes with the match, plays only at 1×; during a break the moment's clip plays (matched by
+  insight id, else by start time) and may finish after Continue. Caption on the stage (also when muted).
+- Demo takes: `?f=1600&speed=1&play` starts at a frame, `?moment=<moment id>` opens that moment's break,
+  `?cr=<insight id>` picks the control-room log, `?shot` skips enter animations and the countdown
+  (screenshots, `scripts/shots.mjs`), `?syncdebug` prints data frame vs video frame.
 
 ## Ask Sliding Doors (live agents)
 
@@ -152,7 +142,7 @@ the Analyst's prediction (`expected_direction`, or read from the hypothesis text
 
 ## Sliding Doors
 
-Shown when a `sliding_doors` overlay is active (or opened by hand): the pitch freezes on
+Shown during a break (see above): the pitch freezes on
 `insight.decision_frame`, the camera zooms onto the futures, `ghost_paths` (white) and then
 `alt_ghost_paths` (gold, `alt_label`) are drawn growing out of the decision point, and a card shows
 the overlay's headline/body (localised) or `insight.claim`, plus the two probabilities from
@@ -180,3 +170,7 @@ of the same replay. Ghost paths are cut at the first restart teleport.
 - `insight.numbers.n_rollouts` (and `n_seeds`) so the "replayed N times" line is read, not assumed (500).
 - `audio.json` segment ids must equal `ViewerProfile.segment_id` (`analyst-de`, `club_fan-away-en`, ...);
   clips for segments nobody watches are never played.
+- The GRF render still shows the engine's player-name labels and its own "GOAL FOR …" banner across the
+  top of the picture; disable both in the render (our graphics cover only the scoreboard and minimap).
+- `public/league.json` assumes the two clubs of the match (`short` or `name`) are in the league; a match
+  between other clubs hides the table and season averages (`season_ratings` is keyed by player name).

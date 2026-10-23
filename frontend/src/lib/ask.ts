@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import type { Hypothesis, Insight, Lang } from '../types'
 
 /**
@@ -144,3 +145,20 @@ export async function ask(
     if (done) throw new AskFailure('failed', 'stream ended without an answer')
   }
 }
+
+// one feature check per page load; null = no backend (static demo): the button is hidden
+let available: Promise<boolean | null> | null = null
+/** Ask feature check (undefined while checking, null = no backend). */
+export function useAskAvailable(): boolean | null | undefined {
+  const [ok, setOk] = useState<boolean | null | undefined>(undefined)
+  useEffect(() => {
+    let live = true
+    available ??= askAvailable(askBase())
+    void available.then((v) => live && setOk(v))
+    return () => {
+      live = false
+    }
+  }, [])
+  return ok
+}
+

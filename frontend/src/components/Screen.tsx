@@ -1,141 +1,160 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useSyncExternalStore } from 'react'
+import { caption } from '../lib/audio'
 import { useMatch } from '../lib/context'
-import { deriveOverlays, keepForMode, tickerFilter } from '../lib/derive'
-import { activeOverlays, doorsFromInsight, doorsFromOverlay, isDoorsOverlay, payloadPlayer } from '../lib/match'
+import { overlayMoment } from '../lib/derive'
+import { activeOverlays, doorsFromInsight, doorsFromOverlay, payloadPlayer, type Doors } from '../lib/match'
+import { doorsOverlays, useOverlayList } from '../lib/overlays'
 import { useFrame } from '../lib/playback'
-import { resolveSegment, t } from '../lib/profile'
-import type { ViewerProfile } from '../types'
-import { AnalystHud, Hypotheses } from './modes/Analyst'
+import { t } from '../lib/profile'
+import type { Overlay, ViewerProfile } from '../types'
+import { DoorsBreak } from './DoorsBreak'
 import { CasualMoments } from './modes/Casual'
-import { FanBanner, FanMomentum } from './modes/Fan'
-import { DecisionRecordView, PlayerAlert, PlayerCard } from './modes/Player'
-import { Fullscreen, LowerThird, SidePanel } from './Overlays'
+import { FanBanner } from './modes/Fan'
+import { PlayerAlert } from './modes/Player'
+import { Fullscreen, LowerThird } from './Overlays'
 import { Pitch, type PitchTag } from './Pitch'
 import { Radar } from './Radar'
 import { Scorebug } from './Scorebug'
-import { SlidingDoorsCard } from './SlidingDoors'
-import { Ticker } from './Ticker'
+import { FanSide } from './side/FanSide'
+import { AnalystSide, CasualSide } from './side/OtherSides'
+import { PlayerSide } from './side/PlayerSide'
 import { TvVideo } from './TvVideo'
 
 interface Props {
   profile: ViewerProfile
-  tv?: boolean
   label?: boolean
+  /** The viewer the commentator speaks for (shows the caption). */
+  primary?: boolean
+  /** Ask Sliding Doors is available: the break card offers it. */
+  onAsk?: () => void
+  /** Hold the break countdown (Ask panel open). */
+  holdBreak?: boolean
 }
 
 /**
- * One viewer's broadcast. The same match clock, moments and insights, but each mode selects,
- * words and lays out them differently (PLAN §8): analyst HUD, club-fan banners in club colours,
- * a player cam with live card, or the casual big-moments view.
+ * One viewer's broadcast: the TV picture is the stage (our scorebug and radar sit on the engine's
+ * own HUD), a slim sidebar carries the few mode-specific blocks, and at a key moment the match
+ * pauses for Sliding Doors (pitch with the ghost futures + one compact card), then plays on.
+ * Without a video the 2D tactical pitch is the stage.
  */
-export function Screen({ profile, tv, label }: Props) {
-  const { m, pb, forcedInsight, setForcedInsight, askedQuestion } = useMatch()
+export function Screen({ profile, label, primary, onAsk, holdBreak }: Props) {
+  const { m, pb, doorsBreak, closeDoors, askedQuestion } = useMatch()
   const frame = useFrame(pb)
-  const { overlays, match } = m.bundle
+  const { match } = m.bundle
   const { mode, language: lang } = profile
-  const seg = resolveSegment(overlays, profile)
-  // produced segment when the production team made exactly this one, else derived client-side in
-  // the viewer's language (never another language's text)
-  const list = useMemo(() => {
-    const base = seg.exact ? (overlays[seg.id] ?? []) : deriveOverlays(m, profile)
-    return [...(overlays['*'] ?? []), ...base].filter((o) => keepForMode(m, profile, o))
-  }, [m, overlays, seg.id, seg.exact, profile])
-  const ticker = useMemo(() => tickerFilter(profile), [profile])
+  const { list, segment, exact } = useOverlayList(m, profile)
   const tMs = (frame / match.fps) * 1000
   const active = activeOverlays(list, tMs)
 
-  const sdOverlay = isDoorsOverlay(active.pitch) ? active.pitch : undefined
-  const sd = forcedInsight ? doorsFromInsight(m.insight(forcedInsight)) : sdOverlay ? doorsFromOverlay(m, sdOverlay) : undefined
+  // Sliding Doors only during a break (the clock is paused), never as a frozen view while playing
+  const mine = useMemo(() => doorsOverlays(m, list), [m, list])
+  const br = doorsBreak
+  const asked = br?.insightId ? askedQuestion(br.insightId) : undefined
+  let sdOverlay: Overlay | undefined
+  let sd: Doors | undefined
+  if (br) {
+    if (br.overlay && list.includes(br.overlay)) sdOverlay = br.overlay
+    else {
+      const mo = br.overlay ? overlayMoment(m, br.overlay) : br.insightId ? m.moment(m.insight(br.insightId)?.moment_id) : undefined
+      if (!asked) sdOverlay = mine.find((o) => mo && overlayMoment(m, o)?.id === mo.id)
+    }
+    sd = sdOverlay ? doorsFromOverlay(m, sdOverlay) : br.insightId ? doorsFromInsight(m.insight(br.insightId)) : br.overlay ? doorsFromOverlay(m, br.overlay) : undefined
+  }
   const sdSince = useMemo(() => (sd ? performance.now() : 0), [sd])
-  const oneLine = mode === 'club_fan' || mode === 'casual'
+  const oneLine = !asked && (mode === 'club_fan' || mode === 'casual')
 
   const pid = mode === 'player_focus' ? profile.favourite_players[0] : undefined
   const club = mode === 'club_fan' && profile.favourite_club ? m.club(profile.favourite_club) : undefined
 
   const tagOverlay = active.pitch?.type === 'player_tag' ? active.pitch : undefined
   const tagSince = useMemo(() => (tagOverlay ? performance.now() : 0), [tagOverlay?.id]) // eslint-disable-line react-hooks/exhaustive-deps
-  const tags: PitchTag[] = tagOverlay
-    ? [{ playerId: String(payloadPlayer(tagOverlay)), label: tagOverlay.headline.toUpperCase(), since: tagSince }]
-    : []
+  const tags: PitchTag[] = tagOverlay ? [{ playerId: String(payloadPlayer(tagOverlay)), label: tagOverlay.headline.toUpperCase(), since: tagSince }] : []
 
   const fullscreen = active.fullscreen
   const [videoFailed, setVideoFailed] = useState(false)
-  const hasVideo = Boolean(tv && match.video && !videoFailed)
-  const showTv = hasVideo && !sd
+  const hasVideo = Boolean(match.video && !videoFailed)
+  const showVideo = hasVideo && !sd
+  const quiet = Boolean(sd || fullscreen)
+  const breakInsight = sd?.insight
 
   return (
     <div
-      className={`screen mode-${mode} ${showTv ? 'on-tv' : ''} ${sd ? 'in-doors' : ''}`}
+      className={`screen mode-${mode} ${showVideo ? 'on-tv' : ''} ${sd ? 'in-doors' : ''}`}
       style={club ? ({ '--club': club.color } as React.CSSProperties) : undefined}
     >
-      <div className="stage">
-        {hasVideo && (
-          <div className={`tv-box ${showTv ? '' : 'hidden'}`}>
-            <TvVideo hidden={false} onFail={() => setVideoFailed(true)} />
-            {/* our graphics sit exactly on the engine's own HUD (scoreboard top-left, minimap bottom-centre) */}
-            <div className="tv-cover tv-cover-score">
-              <span className="brand-mark">
-                <i />
-                <i />
-              </span>
-              {match.home.short} – {match.away.short}
-            </div>
-            <Radar focusPlayer={pid ?? null} />
-          </div>
-        )}
-        <div className={`pitch-wrap ${showTv ? 'hidden' : ''}`}>
-          <Pitch
-            frozenFrame={sd?.decision_frame ?? null}
-            ghosts={sd ? { insight: sd, since: sdSince } : null}
-            tags={tags}
-            focusPlayer={pid ?? null}
-            follow={mode === 'player_focus'}
-            showPressure={mode === 'analyst'}
-          />
-        </div>
-        {club && <div className="club-frame" />}
-        {sd && <div key={`vignette-${sd.key}`} className="sd-vignette" />}
-
-        <Scorebug lang={lang} overlay={sd ? undefined : active.scorebug} />
-        <div className="feed">
-          {!sd && mode === 'analyst' && (
-            <div className="hud-col">
-              <AnalystHud lang={lang} />
-              <SidePanel overlay={active.side_panel} lang={lang} />
+      <div className="stage-col">
+        <div className="stage">
+          {hasVideo && (
+            <div className={`tv-box ${showVideo ? '' : 'hidden'}`}>
+              <TvVideo hidden={false} onFail={() => setVideoFailed(true)} />
+              <Radar focusPlayer={pid ?? null} />
             </div>
           )}
-          {!sd && club && <FanMomentum team={club.key} lang={lang} />}
-          {!sd && pid && <PlayerCard pid={pid} lang={lang} />}
-          {!sd && !fullscreen && pid && <PlayerAlert pid={pid} lang={lang} />}
-          {!sd && !fullscreen && mode !== 'casual' && <LowerThird overlay={active.lower_third} />}
-        </div>
-        {!sd && !fullscreen && club && <FanBanner team={club.key} lang={lang} />}
-        {!sd && !fullscreen && mode === 'casual' && <CasualMoments lang={lang} />}
-        {sd && (
-          <SlidingDoorsCard
-            key={sd.key}
-            doors={sd}
-            overlay={forcedInsight ? undefined : sdOverlay}
-            headline={askedQuestion(forcedInsight)}
-            simple={!forcedInsight && oneLine}
-            lang={lang}
-            onClose={forcedInsight ? () => setForcedInsight(null) : undefined}
-            side={mode === 'player_focus' && sd.insight ? <DecisionRecordView ins={sd.insight} lang={lang} /> : undefined}
-            aside={mode === 'analyst' && sd.insight ? <Hypotheses ins={sd.insight} lang={lang} /> : undefined}
-          />
-        )}
-        {ticker && <Ticker lang={lang} overlay={active.ticker} filter={ticker} />}
-        <Fullscreen overlay={fullscreen} />
+          {(!hasVideo || sd) && (
+            <div className="pitch-wrap">
+              <Pitch
+                frozenFrame={sd?.decision_frame ?? null}
+                ghosts={sd ? { insight: sd, since: sdSince } : null}
+                tags={tags}
+                focusPlayer={pid ?? null}
+                follow={mode === 'player_focus' && !sd}
+                showPressure={mode === 'analyst'}
+              />
+            </div>
+          )}
+          {club && <div className="club-frame" />}
 
-        {label && (
-          <div className="screen-label" title={seg.exact ? `overlay segment ${seg.id}` : t(lang, 'derived')}>
-            <b>{t(lang, mode)}</b>
-            {club && <span style={{ boxShadow: `inset 0.25em 0 0 ${club.color}` }}>{club.short}</span>}
-            {pid && <span>#{m.player(pid)?.number}</span>}
-            <span className="lang">{lang.toUpperCase()}</span>
-          </div>
-        )}
+          <Scorebug lang={lang} overlay={quiet || mode === 'casual' ? undefined : active.scorebug} />
+          {!quiet && pid && <PlayerAlert pid={pid} lang={lang} />}
+          {!quiet && !pid && mode !== 'casual' && <LowerThird overlay={active.lower_third ?? (active.ticker?.type === 'alert' ? active.ticker : undefined)} />}
+          {!quiet && club && <FanBanner team={club.key} lang={lang} />}
+          {!quiet && mode === 'casual' && <CasualMoments lang={lang} />}
+          {sd && (
+            <DoorsBreak
+              key={`${br?.key}-${sd.key}`}
+              doors={sd}
+              overlay={sdOverlay}
+              headline={asked}
+              simple={oneLine}
+              audit={mode === 'analyst'}
+              lang={lang}
+              auto={Boolean(br?.auto)}
+              hold={holdBreak}
+              onContinue={() => closeDoors(true)}
+              onAsk={onAsk}
+            />
+          )}
+          <Fullscreen overlay={fullscreen} />
+          {primary && <Caption lang={lang} />}
+
+          {label && (
+            <div className="screen-label" title={exact ? `overlay segment ${segment}` : t(lang, 'derived')}>
+              <b>{t(lang, mode)}</b>
+              {club && <span style={{ boxShadow: `inset 0.25em 0 0 ${club.color}` }}>{club.short}</span>}
+              {pid && <span>#{m.player(pid)?.number}</span>}
+              <span className="lang">{lang.toUpperCase()}</span>
+            </div>
+          )}
+        </div>
       </div>
+      <aside className={`side side-${mode}`} aria-label={t(lang, mode)}>
+        {mode === 'club_fan' && club && <FanSide team={club.key} lang={lang} />}
+        {mode === 'player_focus' && pid && <PlayerSide pid={pid} lang={lang} breakInsight={breakInsight} />}
+        {mode === 'analyst' && <AnalystSide lang={lang} panel={active.side_panel} breakInsight={breakInsight} />}
+        {mode === 'casual' && <CasualSide lang={lang} />}
+      </aside>
+    </div>
+  )
+}
+
+/** The commentator's words while a clip plays (also when muted). */
+function Caption({ lang }: { lang: ViewerProfile['language'] }) {
+  const c = useSyncExternalStore(caption.subscribe, caption.get)
+  if (!c) return null
+  return (
+    <div className="commentary" key={c.id} role="status" aria-live="polite">
+      <span className="commentary-tag">🎙 {t(lang, 'commentator')}</span>
+      <span className="commentary-text">{c.text}</span>
     </div>
   )
 }

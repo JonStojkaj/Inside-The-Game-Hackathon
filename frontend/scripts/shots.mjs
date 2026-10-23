@@ -13,27 +13,27 @@ const OUT = resolve(process.argv[3] ?? 'shots')
 const ONLY = process.argv[4]
 const CHROME = process.env.CHROME ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
 
-// single-viewer takes pin the profile in the URL (?profile=...), which skips onboarding
-const AN = 'profile=analyst&lang=de'
-const FAN = 'profile=club_fan&club=away&lang=en'
-const PF = 'profile=player_focus&player=A20&lang=es'
+// single-viewer takes pin the profile in the URL (?profile=...), which skips onboarding;
+// ?moment=<id> opens that moment's Sliding Doors break (the match pauses there)
+const FAN = 'profile=club_fan&club=home&lang=en'
+const PF = 'profile=player_focus&player=H20&lang=en'
+const AN = 'profile=analyst&lang=en'
 const CAS = 'profile=casual&lang=en'
 
-// frames refer to the default bundle demo-109 (goal events f=415 and f=1519; analyst Sliding Doors
-// airs f=1549-1639, player focus f=1555-1645)
+// frames refer to demo-109 (goals f=407 home and f=1505 away); headless Chrome does not decode the
+// TV video under virtual time, so these show the pitch fallback: check the video stage by hand
 export const SHOTS = [
   { name: '0-onboarding', q: 'shot&onboarding&f=1200', wait: 2500 },
-  { name: '1-analyst-strip-hint', q: `shot&${AN}&f=1200&hint`, wait: 3000 },
-  { name: '2-analyst-sliding-doors', q: `shot&${AN}&f=1600`, wait: 7000 },
-  { name: '3-fan-live', q: `shot&${FAN}&f=1200`, wait: 3000 },
-  { name: '3b-fan-goal', q: `shot&${FAN}&f=1530`, wait: 3000 },
-  { name: '4-player-live', q: `shot&${PF}&f=1200`, wait: 3000 },
-  { name: '5-casual-live', q: `shot&${CAS}&f=1200`, wait: 3000 },
-  { name: '6-producer-key-moment', q: 'shot&view=split&f=1600', wait: 7000 },
+  { name: '1-fan-goal', q: `shot&${FAN}&f=415`, wait: 3000 },
+  { name: '2-fan-key-moment', q: `shot&${FAN}&moment=demo-109-m00407-goal`, wait: 6000 },
+  { name: '3-player', q: `shot&${PF}&f=1300`, wait: 3000 },
+  { name: '3b-player-key-moment', q: `shot&${PF}&moment=demo-109-m01203-big_chance`, wait: 6000 },
+  { name: '4-analyst', q: `shot&${AN}&f=1300`, wait: 3000 },
+  { name: '4b-analyst-key-moment', q: `shot&${AN}&moment=demo-109-m01505-goal`, wait: 6000 },
+  { name: '5-casual', q: `shot&${CAS}&f=1520`, wait: 3000 },
+  { name: '6-producer', q: 'shot&view=split&f=1520', wait: 4000 },
   { name: '7-control-room', q: 'shot&view=control&f=1600&cr=demo-109-m01505-goal-insight', wait: 12000 },
   { name: '8-fulltime-recap', q: 'shot&view=split&f=2990', wait: 4000 },
-  // commentator caption; needs a bundle with audio.json (local stub: public/dev/audio-test, gitignored)
-  { name: '9-commentator', src: process.env.AUDIO_SRC ?? '/dev/audio-test', q: 'shot&profile=analyst&lang=en&f=1195&play&speed=1', wait: 6000 },
 ]
 
 mkdirSync(OUT, { recursive: true })
