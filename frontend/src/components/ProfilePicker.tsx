@@ -1,23 +1,21 @@
 import { useMatch } from '../lib/context'
-import { LANGS, MODES, presets, resolveSegment, segmentId, t } from '../lib/profile'
+import { LANGS, MODES, presets, t } from '../lib/profile'
 import type { ViewerProfile } from '../types'
 
 interface Props {
   profile: ViewerProfile
   onChange: (p: ViewerProfile) => void
-  compact?: boolean
 }
 
 /** Mode / club / player / language; the result is the overlay segment this viewer gets. */
-export function ProfilePicker({ profile, onChange, compact }: Props) {
+export function ProfilePicker({ profile, onChange }: Props) {
   const { m } = useMatch()
   const { home, away, players } = m.bundle.match
-  const seg = resolveSegment(m.bundle.overlays, profile)
   const set = (patch: Partial<ViewerProfile>) => onChange({ ...profile, ...patch })
   const lang = profile.language
 
   return (
-    <div className={`picker ${compact ? 'compact' : ''}`}>
+    <div className="picker">
       <div className="seg-ctl">
         {MODES.map((mode) => (
           <button
@@ -72,12 +70,6 @@ export function ProfilePicker({ profile, onChange, compact }: Props) {
           </button>
         ))}
       </div>
-      {!compact && (
-        <div className={`seg-id ${seg.exact ? 'ok' : 'fallback'}`} title="overlay segment (the production team runs once per segment)">
-          segment <code>{segmentId(profile)}</code>
-          {!seg.exact && <span className="seg-none"> · {t(lang, 'derived')}</span>}
-        </div>
-      )}
     </div>
   )
 }

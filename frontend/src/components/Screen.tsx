@@ -22,7 +22,6 @@ import { TvVideo } from './TvVideo'
 
 interface Props {
   profile: ViewerProfile
-  label?: boolean
   /** The viewer the commentator speaks for (shows the caption). */
   primary?: boolean
   /** Ask Sliding Doors is available: the break card offers it. */
@@ -37,12 +36,12 @@ interface Props {
  * pauses for Sliding Doors (pitch with the ghost futures + one compact card), then plays on.
  * Without a video the 2D tactical pitch is the stage.
  */
-export function Screen({ profile, label, primary, onAsk, holdBreak }: Props) {
+export function Screen({ profile, primary, onAsk, holdBreak }: Props) {
   const { m, pb, doorsBreak, closeDoors, askedQuestion } = useMatch()
   const frame = useFrame(pb)
   const { match } = m.bundle
   const { mode, language: lang } = profile
-  const { list, segment, exact } = useOverlayList(m, profile)
+  const { list } = useOverlayList(m, profile)
   const tMs = (frame / match.fps) * 1000
   const active = activeOverlays(list, tMs)
 
@@ -127,14 +126,6 @@ export function Screen({ profile, label, primary, onAsk, holdBreak }: Props) {
           <Fullscreen overlay={fullscreen} />
           {primary && <Caption lang={lang} />}
 
-          {label && (
-            <div className="screen-label" title={exact ? `overlay segment ${segment}` : t(lang, 'derived')}>
-              <b>{t(lang, mode)}</b>
-              {club && <span style={{ boxShadow: `inset 0.25em 0 0 ${club.color}` }}>{club.short}</span>}
-              {pid && <span>#{m.player(pid)?.number}</span>}
-              <span className="lang">{lang.toUpperCase()}</span>
-            </div>
-          )}
         </div>
       </div>
       <aside className={`side side-${mode}`} aria-label={t(lang, mode)}>

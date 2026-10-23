@@ -31,8 +31,6 @@ export const SHOTS = [
   { name: '4-analyst', q: `shot&${AN}&f=1300`, wait: 3000 },
   { name: '4b-analyst-key-moment', q: `shot&${AN}&moment=demo-109-m01505-goal`, wait: 6000 },
   { name: '5-casual', q: `shot&${CAS}&f=1520`, wait: 3000 },
-  { name: '6-producer', q: 'shot&view=split&f=1520', wait: 4000 },
-  { name: '7-control-room', q: 'shot&view=control&f=1600&cr=demo-109-m01505-goal-insight', wait: 12000 },
   { name: '8-fulltime-recap', q: 'shot&view=split&f=2990', wait: 4000 },
 ]
 

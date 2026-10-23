@@ -1013,57 +1013,6 @@
 
 /* ---------------------------------------------------------------- producer view: three viewers */
 
-.app .split .screen {
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: 10px;
-  align-items: start;
-}
-.app .split .stage-col {
-  container-type: inline-size;
-  display: block;
-}
-.app .split .stage {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  --u: 1cqw;
-}
-.split .side {
-  --u: 12px;
-  gap: 8px;
-}
-.split .blk {
-  padding: 9px 11px 10px;
-}
-.split .brk {
-  left: 2%;
-  right: 2%;
-  bottom: 3%;
-  width: auto;
-  font-size: clamp(9px, 1.9cqw, 13px);
-  padding: 0.8em 0.9em;
-}
-.split .brk-claim {
-  -webkit-line-clamp: 2;
-}
-.split .brk-explain,
-.split .brk-audit,
-.split .brk-title {
-  display: none;
-}
-.split .tv-box {
-  inset: 0;
-  top: 0;
-  aspect-ratio: auto;
-}
-.split .stage .commentary {
-  font-size: 10px;
-  max-width: 80%;
-}
-.split .mood-word {
-  font-size: 26px;
-}
-
 /* casual on the picture: same scoreboard cover, the moment card above the radar */
 .app .on-tv.mode-casual .scorebug {
   transform: none;
@@ -1077,9 +1026,4 @@
 }
 
 /* control room: the screen without its sidebar next to the agent log */
-.control-layout .screen {
-  grid-template-columns: minmax(0, 1fr);
-}
-.control-layout .side {
-  display: none;
-}
+

@@ -86,12 +86,6 @@
 .me-restart:hover {
   color: var(--text);
 }
-.views button.producer {
-  color: var(--text);
-}
-.views button.producer b {
-  color: var(--gold);
-}
 
 /* ---------------------------------------------------------------- analyst HUD */
 
@@ -680,18 +674,7 @@
   width: 100%;
 }
 /* 3-up column pickers stay on one row */
-.picker.compact {
-  flex-wrap: nowrap;
-  gap: 6px;
-}
-.picker.compact .seg-ctl button {
-  padding: 4px 7px;
-}
-.picker.compact select {
-  max-width: 9.5em;
-  padding: 4px 6px;
-  font-size: 12px;
-}
+
 .pf-alert .lt-accent {
   color: #fff;
   box-shadow: inset 0 0 0 3px var(--gold);
@@ -865,72 +848,6 @@
 }
 
 /* ---------------------------------------------------------------- 3-up adjustments */
-
-.split .hud-col {
-  width: auto;
-}
-.split .hud-col .side-panel,
-.split .hud-spark {
-  display: none;
-}
-.split .hud {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: calc(var(--u) * 1.2);
-}
-.split .hud-head,
-.split .hud-foot {
-  grid-column: span 2;
-}
-.split .pc {
-  display: grid;
-  grid-template-columns: 1fr calc(var(--u) * 15);
-  grid-template-areas: 'head heat' 'speed heat' 'stats stats';
-  column-gap: calc(var(--u) * 1.2);
-  align-items: start;
-}
-.split .pc-head {
-  grid-area: head;
-}
-.split .pc-speed {
-  grid-area: speed;
-}
-.split .pc-heat {
-  grid-area: heat;
-  margin-top: 0;
-}
-.split .pc-stats {
-  grid-area: stats;
-}
-.split .sd-card {
-  top: auto;
-  bottom: calc(var(--u) * 4.4);
-}
-.split .sd-aside {
-  position: static;
-  width: auto;
-}
-.split .sd-aside .hyp {
-  padding: 0;
-  background: none;
-  border: 0;
-  box-shadow: none;
-}
-.split .hyp-row {
-  font-size: calc(var(--u) * 0.8);
-}
-.split .sd-layer.simple .sd-card {
-  left: calc(var(--u) * 2.2);
-  right: calc(var(--u) * 2.2);
-  width: auto;
-  transform: none;
-}
-.split .fan-goal-word {
-  font-size: calc(var(--u) * 10);
-}
-.split .cz-card {
-  width: calc(100% - var(--u) * 4.4);
-}
 
 /* ---------------------------------------------------------------- onboarding */
 

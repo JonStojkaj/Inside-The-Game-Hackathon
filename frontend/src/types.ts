@@ -228,19 +228,6 @@ export interface ViewerProfile {
   favourite_players: string[]
 }
 
-export interface ProductionStep {
-  segment_id: string
-  agent: string // producer | narrator | recap | scheduler
-  moment_id: string | null
-  decision: string
-  detail: Record<string, unknown>
-}
-
-export interface ProductionLog {
-  stats: Record<string, Record<string, number>>
-  steps: ProductionStep[]
-}
-
 /** audio.json: one commentator clip per segment, played when the match clock reaches start_ms. */
 export interface AudioClip {
   id: string
@@ -260,7 +247,6 @@ export interface MatchBundle {
   insights: Insight[]
   stats: StatsSnapshot[]
   overlays: OverlaysBySegment
-  production: ProductionLog | null
   audio: AudioClip[] // optional audio.json; empty = no commentary
   baseUrl: string // where match.video etc. are served from
 }
