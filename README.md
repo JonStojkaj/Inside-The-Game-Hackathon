@@ -48,8 +48,8 @@ different broadcasts. Languages: English, German, Spanish.
 key moment (e.g. 50', decisive pass)
    │
    ├─ Experiment menu (code): "had shot", "had passed to X", "had carried", "defender Y 5 m closer" …
-   ├─ Analyst (LLM): picks 1–3 hypotheses from the menu — it cannot invent physics
-   ├─ Experimenter (tool): 500 simulated futures × 3 seeds per hypothesis vs. what really happened
+   ├─ Analyst (LLM agent): may probe the simulator via tools, picks 1–3 hypotheses from the menu — it cannot invent physics
+   ├─ Experimenter (code): 500 simulated futures × 3 seeds per hypothesis vs. what really happened
    ├─ Critic (LLM): accepts or rejects; hard rules overrule it
    │     · effect ≥ 1.5 points and larger than the seed noise
    │     · football prior (tighter marking may not help the attacker)
@@ -59,6 +59,37 @@ key moment (e.g. 50', decisive pass)
 
 Goals are explained through the **assist** ("what made it possible"), solo goals from the defending side;
 turnovers are judged on the chance to **keep the ball**, attacking moments on the chance to **score**.
+
+## Agent architecture
+
+The agents run on the **Microsoft Agent Framework** (`agent-framework-core` 1.23 + `agent-framework-openai`,
+[`backend/app/agents/framework.py`](backend/app/agents/framework.py), [`workflow.py`](backend/app/agents/workflow.py)).
+
+- **Framework agents.** Analyst, Critic, Producer, Narrator and Recap are each an `agent_framework.Agent` on an
+  Azure OpenAI chat-completions client (deployment `fast` = gpt-5-mini, keyless via `DefaultAzureCredential`).
+  Every agent answers with a pydantic schema as structured output (`AnalystPlan`, `CriticReview`, `NarratorDraft` …).
+- **Function tools.** The Analyst gets two tools bound to the moment: `get_match_stats()` (score, shots, passes,
+  pressure on the player on the ball, computed by code) and `run_experiment(experiment_id)` (runs one menu
+  experiment in the rollout engine, 500 futures × 3 seeds). The tool refuses ids that are not on the remaining
+  menu and stops after 4 experiments per round. In the demo match the Analyst made 38 `run_experiment` and
+  11 `get_match_stats` calls across 9 moments.
+- **Workflow.** The explain team is a framework `Workflow` with explicit hand-offs and a retry loop:
+
+  ```
+  analyst ──> experimenter ──> critic ──(nothing claimable, round left)──> analyst
+     └──(menu used up)──> finalize <──(no hypothesis)──┘  └──(done)──> finalize ──> Insight
+  ```
+
+  `experimenter` and `finalize` are code executors. The production team (Producer → Narrator, Recap) runs the same
+  framework agents per viewer segment.
+- **Guards stay in code.** Both runtimes call the same step functions: menu restriction, `passes_rule` (effect ≥ 1.5
+  points and above the seed noise) and `plausible` (football prior) overrule the Critic, `numbers_are_ours` +
+  player-id check on every LLM text, template fallback for the claim and for Narrator/Recap texts.
+- **Offline and replayable.** `LLM_PROVIDER=fake` swaps in a deterministic fake chat client that still drives the
+  framework's tool loop (tests and offline demos need no network). A chat middleware caches every model call
+  (`LLM_CACHE=readwrite|replay|off`); on replay the tools simply run again as code. `AGENT_RUNTIME=sdk` selects
+  the original hand-written loop on the plain OpenAI SDK. Both runtimes give identical insights on the fake model
+  and share the single-turn cache entries.
 
 ## Architecture
 
@@ -82,6 +113,7 @@ flowchart LR
 
 | Technology | Role |
 |---|---|
+| **Microsoft Agent Framework** (Python) | Agents with function tools and structured outputs; explain team as a workflow with a Critic-gated retry loop |
 | **Azure OpenAI in Microsoft Foundry** (gpt-5-mini) | All agents (Analyst, Critic, Producer, Narrator, Recap) with structured outputs; **keyless** access via Microsoft Entra ID (`DefaultAzureCredential` + RBAC role), no API keys anywhere |
 | **Azure Container Apps** | Hosts the single container (API + web player + baked match data), scale 0–1 |
 | **Azure Container Registry** | Image registry, pulled with a managed identity |
@@ -98,9 +130,9 @@ cached (`data/cache/llm/`), so the demo replays deterministically without model 
 | Rollout engine | ~1,700 simulated futures per second (500 futures in ~0.3 s) |
 | Calibration vs. GRF (150 real game states, 15 s horizon) | goals per possession **0.060 vs 0.060**, tackles/15 s 0.67 vs 0.70, passes/15 s 3.6 vs 3.1, turnovers 0.88 vs 0.77 |
 | Decision sanity gate | inside 12 m, shooting beats dribbling at all 6 test spots (e.g. penalty spot 24 % vs 17 %) |
-| Explain team | ~10–20 s per key moment with gpt-5-mini, 9 key moments in the demo match |
+| Explain team | ~10–30 s per key moment with gpt-5-mini (Agent Framework workflow incl. tool calls), 9 key moments in the demo match |
 | Unverified numbers on screen | 0 — the backend validates every claim, the web player re-audits every % against the rollouts |
-| Tests | 108 backend tests (pytest), `ruff` + `mypy` clean; frontend `eslint` + `tsc` clean |
+| Tests | 116 backend tests (pytest), `ruff` + `mypy` clean; frontend `eslint` + `tsc` clean |
 
 ## Synthetic data
 
@@ -132,7 +164,8 @@ Recording new matches needs Docker (GRF, see [`CLAUDE.md`](CLAUDE.md)); deployin
   Premier League club; the demo uses two fictional clubs because only synthetic data is allowed.
 - GRF draws player names into its video that cannot be fully covered by our overlays.
 - The demo serves pre-computed (cached) agent output for reliability; the live agent path takes 10–20 s per moment,
-  which fits a broadcast replay window but not an instant reaction.
+  which fits a broadcast replay window but not an instant reaction. The Analyst's tool calls make a run slower
+  than the plain loop (53 model calls for 9 moments instead of ~27).
 
 ## Repository
 
