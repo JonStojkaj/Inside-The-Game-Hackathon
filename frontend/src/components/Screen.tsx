@@ -29,7 +29,7 @@ interface Props {
  * a player cam with live card, or the casual big-moments view.
  */
 export function Screen({ profile, tv, label }: Props) {
-  const { m, pb, forcedInsight, setForcedInsight } = useMatch()
+  const { m, pb, forcedInsight, setForcedInsight, askedQuestion } = useMatch()
   const frame = useFrame(pb)
   const { overlays, match } = m.bundle
   const { mode, language: lang } = profile
@@ -116,6 +116,7 @@ export function Screen({ profile, tv, label }: Props) {
             key={sd.key}
             doors={sd}
             overlay={forcedInsight ? undefined : sdOverlay}
+            headline={askedQuestion(forcedInsight)}
             simple={!forcedInsight && oneLine}
             lang={lang}
             onClose={forcedInsight ? () => setForcedInsight(null) : undefined}

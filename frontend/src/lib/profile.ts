@@ -1,5 +1,6 @@
 import type { EventType, Lang, OverlaysBySegment, PlayerInfo, ProfileMode, Team, ViewerProfile } from '../types'
 import { EXTRA } from './strings'
+import { ASK } from './strings-ask'
 import { UX } from './strings-ux'
 
 /** Same rule as ViewerProfile.segment_id in the backend. */
@@ -77,9 +78,9 @@ const BASE: Record<Lang, Dict> = {
 }
 
 const T: Record<Lang, Dict> = {
-  en: { ...BASE.en, ...EXTRA.en, ...UX.en },
-  de: { ...BASE.de, ...EXTRA.de, ...UX.de },
-  es: { ...BASE.es, ...EXTRA.es, ...UX.es },
+  en: { ...BASE.en, ...EXTRA.en, ...UX.en, ...ASK.en },
+  de: { ...BASE.de, ...EXTRA.de, ...UX.de, ...ASK.de },
+  es: { ...BASE.es, ...EXTRA.es, ...UX.es, ...ASK.es },
 }
 
 const EVENTS: Record<Lang, Partial<Record<EventType, string>>> = {

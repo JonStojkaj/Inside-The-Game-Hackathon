@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { AskButton, AskPanel } from './components/AskPanel'
 import { Commentator } from './components/Commentator'
 import { ControlRoom } from './components/ControlRoom'
 import { Onboarding } from './components/Onboarding'
@@ -11,7 +12,7 @@ import { resetExplainer } from './lib/explainer'
 import { indexMatch, timelineFrames } from './lib/match'
 import { createPlayback } from './lib/playback'
 import { loadProfile, presets, profileFromQuery, saveProfile, t } from './lib/profile'
-import type { MatchBundle, ViewerProfile } from './types'
+import type { Insight, MatchBundle, ViewerProfile } from './types'
 
 /** viewer = the single-viewer product (default); split / control = the producer view. */
 type View = 'viewer' | 'split' | 'control'
@@ -39,8 +40,16 @@ function initialView(q: URLSearchParams): View {
 
 function Player({ bundle }: { bundle: MatchBundle }) {
   const q = useMemo(() => new URLSearchParams(window.location.search), [])
-  const m = useMemo(() => indexMatch(bundle), [bundle])
-  const pb = useMemo(() => createPlayback(timelineFrames(bundle), bundle.match.fps), [bundle])
+  const base = useMemo(() => indexMatch(bundle), [bundle])
+  // Ask Sliding Doors answers live next to the exported insights (never replacing a key moment's own insight)
+  const [asked, setAsked] = useState<Record<string, { insight: Insight; question: string }>>({})
+  const m = useMemo(() => ({ ...base, insight: (id: string | null | undefined) => base.insight(id) ?? (id ? asked[id]?.insight : undefined) }), [base, asked])
+  const addAsked = useCallback((insight: Insight, question: string) => setAsked((a) => ({ ...a, [insight.id]: { insight, question } })), [])
+  const pb = useMemo(() => {
+    const p = createPlayback(timelineFrames(bundle), bundle.match.fps)
+    if (q.has('f')) p.seek(Number(q.get('f'))) // before any child reads the clock (e.g. ?ask_open)
+    return p
+  }, [bundle, q])
   const [forcedInsight, setForcedInsight] = useState<string | null>(null)
   const [view, setView] = useState<View>(() => initialView(q))
   const [tv, setTv] = useState(q.has('tv'))
@@ -58,7 +67,11 @@ function Player({ bundle }: { bundle: MatchBundle }) {
   const [sound, setSound] = useState(true)
   const [unlocked, setUnlocked] = useState(q.has('shot'))
   const hasAudio = bundle.audio.length > 0
-  const ctx = useMemo<MatchCtx>(() => ({ m, pb, forcedInsight, setForcedInsight }), [m, pb, forcedInsight])
+  const ctx = useMemo<MatchCtx>(
+    () => ({ m, pb, forcedInsight, setForcedInsight, addAsked, askedQuestion: (id) => (id ? asked[id]?.question : undefined) }),
+    [m, pb, forcedInsight, addAsked, asked],
+  )
+  const [askOpen, setAskOpen] = useState(q.has('ask_open'))
   const hasVideo = Boolean(bundle.match.video)
   const me = profile ?? demo[0]
   const lang = profile?.language ?? 'en'
@@ -168,6 +181,7 @@ function Player({ bundle }: { bundle: MatchBundle }) {
                 {t(lang, 'producer')}
               </button>
             )}
+            <AskButton lang={lang} open={askOpen} onToggle={() => setAskOpen(!askOpen)} />
             <button className={`tv ${tv ? 'on' : ''}`} disabled={!hasVideo} title={t(lang, hasVideo ? 'tv_title' : 'tv_none')} onClick={() => setTv(!tv)}>
               {t(lang, 'tv_view')}
             </button>
@@ -205,6 +219,7 @@ function Player({ bundle }: { bundle: MatchBundle }) {
           )}
         </main>
 
+        {askOpen && <AskPanel lang={producer ? split[0].language : lang} onClose={() => setAskOpen(false)} />}
         <Transport lang={lang} hint={hint && !onboarding} onHintDone={doneHint} />
         {hasAudio && <Commentator profile={producer ? split[0] : me} audible={sound && unlocked} lang={lang} />}
         {onboarding && (

@@ -108,6 +108,19 @@ Types in `src/types.ts` mirror `backend/app/models/__init__.py`.
   broadcast Sliding Doors `f=2129`, control room `view=control&f=2131&cr=full-34-m01663-decisive_pass-insight`,
   full-time recap `f=3090`.
 
+## Ask Sliding Doors (live agents)
+
+`components/AskPanel.tsx`, `lib/ask.ts`, strings in `lib/strings-ask.ts`. The gold **Ask Sliding Doors** button
+(top bar, every view) pauses the match and opens a panel: the moment the question is about (`GET
+/api/matches/{id}/ask?frame=N`), 2–3 suggested questions phrased in the viewer's language from that moment's
+experiment menu, and a free-text field. `POST /api/matches/{id}/ask` streams NDJSON steps (Analyst → simulations →
+Critic → number check), shown live; the verified answer is added as an insight and opens as a Sliding Doors replay
+on every screen with the fan's question as headline (ghost futures, both probabilities, `verify.ts` audit as for
+any insight). Questions nothing on the menu can test get a polite "can't test that" plus suggestions; disabled /
+busy / rate-limited / timeout get a localised message. The button is hidden when no backend answers
+`/api/features` (static demo); `?ask=<api origin>` points it at a backend, `?ask_open` opens the panel (demo takes).
+Dev: `API_PROXY=http://localhost:8000 npm run dev` with the API started with `ASK_ENABLED=true`.
+
 ## Overlay rendering
 
 At match time `t`, overlays of the segment plus `"*"` with `start_ms <= t < start_ms + duration_ms`

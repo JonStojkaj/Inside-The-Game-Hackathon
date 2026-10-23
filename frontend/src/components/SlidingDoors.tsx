@@ -28,6 +28,8 @@ function useCountUp(target: number, ms: number, delay: number): number {
 interface Props {
   doors: Doors
   overlay?: Overlay
+  /** Ask Sliding Doors: the fan's question as the headline. */
+  headline?: string
   simple?: boolean
   lang: Lang
   onClose?: () => void
@@ -41,7 +43,7 @@ interface Props {
  * DOM layer of the Sliding Doors moment; the ghost futures themselves are drawn by <Pitch>.
  * `simple` is the club fan / casual one-liner: verdict, headline and one sentence, no numbers panel.
  */
-export function SlidingDoorsCard({ doors, overlay, simple, lang, onClose, side, aside }: Props) {
+export function SlidingDoorsCard({ doors, overlay, headline: asked, simple, lang, onClose, side, aside }: Props) {
   const { m } = useMatch()
   const cmp = comparison(doors.numbers, doors.metric)
   const actual = useCountUp(cmp.actual, 1100, 600)
@@ -51,7 +53,7 @@ export function SlidingDoorsCard({ doors, overlay, simple, lang, onClose, side, 
   const scale = Math.max(cmp.actual, cmp.alt ?? 0, 0.0001)
   const futures = doors.ghost_paths.length + doors.alt_ghost_paths.length
   const metric = t(lang, cmp.metric)
-  const headline = overlay?.headline ?? t(lang, 'replay')
+  const headline = asked ?? overlay?.headline ?? t(lang, 'replay')
   const claim = overlay?.body || doors.claim
   const audit = doors.insight ? checkClaim(`${overlay?.headline ?? ''} ${claim}`, doors.insight, m, overlay?.evidence.length ? overlay.evidence : undefined) : undefined
   const altName = lang === 'en' && doors.alt_label ? doors.alt_label : t(lang, 'alternative')
