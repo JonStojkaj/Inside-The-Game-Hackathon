@@ -62,10 +62,13 @@ MENU of counterfactual experiments our simulator can run for this moment.
 Pick the 1-3 MENU experiments that test exactly what the fan asks (e.g. "what if he had shot" -> the shoot
 experiment; "what if the defender had been closer" -> the matching 'stood ... closer' experiments).
 If no MENU experiment tests the fan's question, return an EMPTY list of hypotheses: never pick unrelated
-experiments and never invent new ones. Only use experiment ids from the menu. Never invent numbers."""
+experiments and never invent new ones. Only use experiment ids from the menu. Never invent numbers.
+Always write in English, whatever language the fan used."""
 
 ASK_CRITIC_EXTRA = """
-A fan asked FAN_QUESTION. Your claim answers it directly in 1-2 sentences (start with the answer, then why)."""
+A fan asked FAN_QUESTION. Your claim answers exactly that question in 1-2 sentences: start with the answer, then
+why, comparing the fan's alternative with what really happened. If it made no clear difference, say so plainly.
+Always write in English, whatever language the fan used (the claim is translated for the viewer afterwards)."""
 
 TRANSLATOR_SYSTEM = """Translate a football broadcast caption into the target language (de = German, es = Spanish).
 Keep every number exactly as written (you may write a decimal comma), keep player names, add nothing."""
@@ -111,7 +114,8 @@ def suggestion(exp: Experiment, ctx: DecisionContext) -> dict[str, Any]:
     names = {p.id: p.name for p in ctx.state.players}
     player = names.get(ctx.decider, ctx.decider)
     iv = exp.intervention
-    out: dict[str, Any] = {"experiment_id": exp.id, "player": player, "question": f"What if {exp.description}?"}
+    question = re.sub(r" \([A-Z]{1,3}\)", "", f"What if {exp.description}?")  # "Strand (CM)" -> "Strand"
+    out: dict[str, Any] = {"experiment_id": exp.id, "player": player, "question": question}
     if iv.kind == "move_player":
         m = re.search(r"(\d+) m closer", exp.description)
         out |= {"kind": "tight", "defender": names.get(iv.params["player_id"], ""), "meters": int(m.group(1)) if m else 5}
