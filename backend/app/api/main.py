@@ -7,8 +7,12 @@
   GET /export/{id}/{file}                   the export folder as static files (frontend's static mode)
   GET /                                     the built web player (frontend/dist), if present
 
-Production contract: this API only SERVES pre-computed exports. It never calls an LLM, the
-rollout engine or the stats engine at request time, and it needs no Azure OpenAI credentials.
+  GET/POST /api/matches/{id}/ask            Ask Sliding Doors: live explain team for a fan's question (app.api.ask)
+
+Production contract: this API SERVES pre-computed exports. It never calls an LLM, the rollout engine
+or the stats engine at request time, and it needs no Azure OpenAI credentials, with ONE opt-in
+exception: Ask Sliding Doors (app.api.ask, feature flag ASK_ENABLED, default on only when
+AZURE_OPENAI_ENDPOINT is set), one run at a time and rate-limited; its agent code is imported lazily.
 Insights and overlays are produced offline (spikes/explain_demo.py, spikes/produce_demo.py, LLM
 answers cached in data/cache/llm/), written into data/export/<match_id>/ by spikes/export_demo.py,
 and that folder is baked into the container image (backend/Dockerfile, infra/README.md).
@@ -33,6 +37,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from app.api.ask import AskService, AskSettings, ask_router
 from app.api.live import ExportedMatch, live_messages
 from app.export.exporter import FILES, VIDEO_FILE
 
@@ -54,7 +59,8 @@ def _configure_monitoring() -> None:
     configure_azure_monitor()
 
 
-def create_app(export_dir: str | Path | None = None, frontend_dir: str | Path | None = None) -> FastAPI:
+def create_app(export_dir: str | Path | None = None, frontend_dir: str | Path | None = None,
+               ask: AskService | AskSettings | None = None) -> FastAPI:
     root = Path(export_dir or os.environ.get("EXPORT_DIR") or DEFAULT_EXPORT_DIR)
     dist = Path(frontend_dir or os.environ.get("FRONTEND_DIR") or DEFAULT_FRONTEND_DIR)
     cache: dict[str, tuple[float, ExportedMatch]] = {}
@@ -75,10 +81,18 @@ def create_app(export_dir: str | Path | None = None, frontend_dir: str | Path | 
             hit = cache[match_id] = (mtime, ExportedMatch.load(path))
         return hit[1]
 
+    ask_service = ask if isinstance(ask, AskService) else AskService(ask or AskSettings.from_env(), lambda m: root / m)
+    app.state.ask = ask_service
+    app.include_router(ask_router(ask_service, folder))  # before /api/matches/{id}/{file}, which would shadow it
+
     @app.get("/api/health")
     def health() -> dict[str, Any]:
         # liveness/readiness probe of the container; "matches" shows the exports were baked in
         return {"status": "ok", "matches": len(list(root.glob("*/match.json")))}
+
+    @app.get("/api/features")
+    def features() -> dict[str, Any]:
+        return {"ask": ask_service.settings.enabled}
 
     @app.get("/api/matches")
     def matches() -> list[dict[str, Any]]:
@@ -129,6 +143,10 @@ def create_app(export_dir: str | Path | None = None, frontend_dir: str | Path | 
             await websocket.close()
         except WebSocketDisconnect:
             pass
+
+    @app.get("/export/{match_id}/raw.jsonl")
+    def raw_not_served(match_id: str) -> None:
+        raise HTTPException(404, "not served")  # baked in for the live simulator only
 
     # static mounts last, so they never shadow /api
     if root.is_dir():

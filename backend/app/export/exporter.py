@@ -9,6 +9,7 @@ Layout of `data/export/<match_id>/` (contract with the frontend):
   stats.json     list[StatsSnapshot], every STATS_EVERY frames, players trimmed
   overlays.json  {segment_id: list[Overlay]}   (produced by the production team, copied in)
   video.mp4      optional TV-view backdrop (match.json "video" = {"file": "video.mp4", "fps": 10})
+  raw.jsonl      the recording (export_from_dir copies it): Ask Sliding Doors simulates from it live
 
 This folder is the whole production payload: the deployed API serves these files as they are and
 never runs the stats engine, the rollout engine or an LLM. Insights and overlays are computed
@@ -42,6 +43,7 @@ PLAYER_STAT_FIELDS = (
 )
 FILES = ("match.json", "frames.json", "events.json", "moments.json", "insights.json", "stats.json", "overlays.json")
 VIDEO_FILE = "video.mp4"
+RAW_FILE = "raw.jsonl"  # the GRF recording, only for the live simulator of Ask Sliding Doors (not served as a file)
 
 _insights = TypeAdapter(list[Insight])
 _overlays = TypeAdapter(dict[str, list[Overlay]])
@@ -195,4 +197,11 @@ def export_from_dir(
     if video_path is None and (match_dir / VIDEO_FILE).exists():
         video_path = match_dir / VIDEO_FILE
     out = Path(out_root) / match.match_id
-    return out, export_match(match, out, insights=insights, overlays=overlays, video=video_path)
+    sizes = export_match(match, out, insights=insights, overlays=overlays, video=video_path)
+    # the recording itself, for Ask Sliding Doors (the API's only live simulation; app.api.ask)
+    raw = match_dir / "raw.jsonl" if match_dir.is_dir() else match_dir
+    if raw.is_file() and not ((out / RAW_FILE).exists() and (out / RAW_FILE).samefile(raw)):
+        shutil.copyfile(raw, out / RAW_FILE)
+    if (out / RAW_FILE).exists():
+        sizes[RAW_FILE] = (out / RAW_FILE).stat().st_size
+    return out, sizes

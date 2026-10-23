@@ -134,5 +134,7 @@ def test_export_from_dir_keeps_unknown_insight_fields_and_picks_up_video(tmp_pat
     assert load(out, "insights.json")[0]["metric"] == "p_keep"
     assert load(out, "match.json")["video"] == {"file": "video.mp4", "fps": 10}
     assert sizes["video.mp4"] == 8
+    assert (out / "raw.jsonl").read_text() == (rec / "raw.jsonl").read_text()  # for Ask Sliding Doors
+    assert sizes["raw.jsonl"] > 0
     with pytest.raises(ValueError):
         export_from_dir(rec, tmp_path / "export", insights_path=bad)
