@@ -23,6 +23,10 @@ export function Radar({ focusPlayer }: { focusPlayer?: string | null }) {
       const dpr = Math.min(window.devicePixelRatio || 1, 2)
       const w = canvas.clientWidth
       const h = canvas.clientHeight
+      if (w < 24 || h < 16) {
+        raf = requestAnimationFrame(draw) // not laid out yet
+        return
+      }
       if (canvas.width !== Math.round(w * dpr)) canvas.width = Math.round(w * dpr)
       if (canvas.height !== Math.round(h * dpr)) canvas.height = Math.round(h * dpr)
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
