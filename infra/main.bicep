@@ -20,7 +20,23 @@ param webExists bool = false
 @description('0 = scale to zero when idle (no cost, ~10 s cold start); 1 = always warm (for recording the demo).')
 param minReplicas int = 0
 
+@description('Ask Sliding Doors: existing Azure OpenAI resource the container may call (empty = feature off).')
+param openAiName string = 'sllidingdoors-ai-js'
+
+@description('Resource group of that Azure OpenAI resource (may differ from resourceGroupName).')
+param openAiResourceGroup string = 'rg-j.stojkaj-6522'
+
+@description('Azure OpenAI v1 endpoint for the agents.')
+param openAiEndpoint string = 'https://sllidingdoors-ai-js.openai.azure.com/openai/v1/'
+
+@description('Chat deployment the agents use.')
+param openAiDeploymentFast string = 'fast'
+
+@description('Ask Sliding Doors on/off (needs openAiName).')
+param askEnabled bool = true
+
 var tags = { 'azd-env-name': environmentName }
+var ask = askEnabled && !empty(openAiName)
 var token = toLower(uniqueString(subscription().id, environmentName, location))
 
 resource rg 'Microsoft.Resources/resourceGroups@2024-03-01' = {
@@ -38,6 +54,19 @@ module resources 'resources.bicep' = {
     token: token
     webExists: webExists
     minReplicas: minReplicas
+    askEnabled: ask
+    openAiEndpoint: ask ? openAiEndpoint : ''
+    openAiDeploymentFast: openAiDeploymentFast
+  }
+}
+
+// cross-resource-group: the role assignment lives next to the existing OpenAI resource
+module openAiRole 'modules/openai-role.bicep' = if (ask) {
+  name: 'openai-user-role'
+  scope: resourceGroup(openAiResourceGroup)
+  params: {
+    openAiName: openAiName
+    principalId: resources.outputs.identityPrincipalId
   }
 }
 

@@ -1,10 +1,14 @@
 // Everything inside rg-slidingdoors: Log Analytics + Application Insights, Container Registry (Basic),
 // a consumption Container Apps environment and ONE container app (scale 0-1) pulling with a managed identity.
+// The same identity calls Azure OpenAI for Ask Sliding Doors (role assigned in modules/openai-role.bicep).
 param location string
 param tags object
 param token string
 param webExists bool
 param minReplicas int
+param askEnabled bool = false
+param openAiEndpoint string = ''
+param openAiDeploymentFast string = 'fast'
 
 var port = 8000 // = PORT in backend/Dockerfile
 var webName = 'ca-web-${token}'
@@ -138,14 +142,21 @@ resource web 'Microsoft.App/containerApps@2024-03-01' = {
           name: 'web'
           image: webExists ? existingWeb.outputs.containers[0].image : placeholderImage
           resources: {
-            cpu: json('0.5')
-            memory: '1Gi'
+            // 1 vCPU: an Ask Sliding Doors question runs ~4,500 rollouts next to the WebSocket replays
+            cpu: json('1.0')
+            memory: '2Gi'
           }
-          env: [
+          env: concat([
             { name: 'PORT', value: string(port) }
             { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', secretRef: 'appinsights-connection-string' }
             { name: 'OTEL_SERVICE_NAME', value: 'sliding-doors-api' }
-          ]
+            { name: 'ASK_ENABLED', value: askEnabled ? 'true' : 'false' }
+          ], askEnabled ? [
+            { name: 'LLM_PROVIDER', value: 'azure' }
+            { name: 'AZURE_OPENAI_ENDPOINT', value: openAiEndpoint }
+            { name: 'AZURE_OPENAI_DEPLOYMENT_FAST', value: openAiDeploymentFast }
+            { name: 'AZURE_CLIENT_ID', value: identity.properties.clientId } // DefaultAzureCredential -> this identity
+          ] : [])
           probes: webExists ? probes : []
         }
       ]
@@ -162,3 +173,4 @@ output registryName string = registry.name
 output webName string = web.name
 output webUri string = 'https://${web.properties.configuration.ingress.fqdn}'
 output appInsightsName string = appInsights.name
+output identityPrincipalId string = identity.properties.principalId

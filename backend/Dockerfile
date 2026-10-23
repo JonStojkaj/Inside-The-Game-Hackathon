@@ -1,6 +1,7 @@
 # One container: FastAPI (REST + WebSocket replay) + the built web player + the baked exports.
-# It only SERVES data/export/<match_id>/ (pre-computed insights/overlays): no LLM calls, no Azure OpenAI
-# credentials, no recording, no simulation at runtime.
+# It SERVES data/export/<match_id>/ (pre-computed insights/overlays). The one live exception is Ask Sliding Doors
+# (ASK_ENABLED, app/api/ask.py): the explain team on Azure OpenAI (keyless, managed identity) + the rollout engine
+# on data/export/<match_id>/raw.jsonl, one question at a time. Without the Azure env vars it stays off.
 #
 # Build context is the REPO ROOT (needs frontend/ and data/export/; see .dockerignore):
 #   docker build --platform linux/amd64 -f backend/Dockerfile --build-arg VITE_MATCH_ID=demo-<n> .
@@ -35,7 +36,8 @@ WORKDIR /app/backend
 COPY backend/pyproject.toml ./
 COPY backend/app ./app
 # azure-monitor-opentelemetry: tracing to Application Insights when APPLICATIONINSIGHTS_CONNECTION_STRING is set
-RUN pip install --no-cache-dir . "azure-monitor-opentelemetry>=1.6" && rm -rf build ./*.egg-info
+# [agents]: Microsoft Agent Framework (~11 MB) so Ask Sliding Doors runs the same framework workflow as the pipeline
+RUN pip install --no-cache-dir ".[agents]" "azure-monitor-opentelemetry>=1.6" && rm -rf build ./*.egg-info
 
 COPY data/export /app/data/export
 COPY --from=frontend /src/frontend/dist /app/frontend/dist
@@ -43,6 +45,8 @@ COPY --from=frontend /src/frontend/dist /app/frontend/dist
 ARG VITE_MATCH_ID
 RUN test -f "/app/data/export/${VITE_MATCH_ID}/match.json" \
     || { echo "data/export/${VITE_MATCH_ID}/match.json missing: run spikes/export_demo.py first" >&2; exit 1; }
+# Ask Sliding Doors writes its LLM answer cache to a temp dir (the image itself is read-only for the app user)
+ENV ASK_CACHE_DIR=/tmp/sliding-doors-llm
 
 RUN useradd --system --uid 10001 --no-create-home --shell /usr/sbin/nologin app
 USER 10001:10001

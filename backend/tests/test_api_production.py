@@ -74,3 +74,12 @@ def test_dockerfile_azure_yaml_and_bicep_agree():
     assert f"'azd-service-name': '{service.group(1)}'" in bicep
     assert "APPLICATIONINSIGHTS_CONNECTION_STRING" in bicep
     assert {"environmentName", "location"} <= set(params)
+
+    # Ask Sliding Doors: the agents run in the image, keyless on the container's identity
+    assert '".[agents]"' in dockerfile and "ASK_CACHE_DIR" in dockerfile
+    for env in ("ASK_ENABLED", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_DEPLOYMENT_FAST", "AZURE_CLIENT_ID"):
+        assert f"name: '{env}'" in bicep
+    role = (REPO / "infra" / "modules" / "openai-role.bicep").read_text()
+    assert "5e0bd9bd-7b93-4f28-af87-19fc36ad61bd" in role and "existing" in role  # Cognitive Services OpenAI User
+    assert "scope: resourceGroup(openAiResourceGroup)" in (REPO / "infra" / "main.bicep").read_text()
+    assert {"askEnabled", "openAiName", "openAiResourceGroup", "openAiEndpoint"} <= set(params)

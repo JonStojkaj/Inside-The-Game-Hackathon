@@ -16,6 +16,21 @@
     },
     "minReplicas": {
       "value": "${MIN_REPLICAS=0}"
+    },
+    "askEnabled": {
+      "value": "${ASK_ENABLED=true}"
+    },
+    "openAiName": {
+      "value": "${AZURE_OPENAI_NAME=sllidingdoors-ai-js}"
+    },
+    "openAiResourceGroup": {
+      "value": "${AZURE_OPENAI_RESOURCE_GROUP=rg-j.stojkaj-6522}"
+    },
+    "openAiEndpoint": {
+      "value": "${AZURE_OPENAI_ENDPOINT=https://sllidingdoors-ai-js.openai.azure.com/openai/v1/}"
+    },
+    "openAiDeploymentFast": {
+      "value": "${AZURE_OPENAI_DEPLOYMENT_FAST=fast}"
     }
   }
 }

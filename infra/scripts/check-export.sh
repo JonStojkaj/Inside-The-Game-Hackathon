@@ -23,6 +23,7 @@ done
 grep -q '^\[\]$' "$dir/insights.json" && echo "warning: $dir/insights.json is empty" >&2
 grep -q '^{}$' "$dir/overlays.json" && echo "warning: $dir/overlays.json is empty" >&2
 [ -f "$dir/video.mp4" ] || echo "warning: no $dir/video.mp4 (TV view disabled)" >&2
+[ -f "$dir/raw.jsonl" ] || echo "warning: no $dir/raw.jsonl (Ask Sliding Doors unavailable; re-run the export or copy spikes/grf/out/matches/$id/raw.jsonl)" >&2
 
 echo "baking into the image:"
 du -sh data/export/* 2>/dev/null || true

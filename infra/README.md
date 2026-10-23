@@ -26,6 +26,15 @@ no agent/LLM code. All agent work happens offline, before the deploy:
 | export = the production payload | dev machine | see step 3 below |
 | serve | Azure | the container image |
 
+**One live exception: Ask Sliding Doors** (`backend/app/api/ask.py`). A fan's "What if …?" runs the explain team
+on Azure OpenAI (Microsoft Agent Framework, deployment `fast`) and the rollout engine on the baked
+`data/export/<id>/raw.jsonl`, at request time (~10–15 s). Guard rails: `ASK_ENABLED` (Bicep sets it; default off
+without `AZURE_OPENAI_ENDPOINT`), one question at a time, `ASK_MAX_PER_MINUTE` (6), `ASK_TIMEOUT_S` (90), identical
+questions answered from an in-memory + LLM cache. Auth is keyless: the container's user-assigned identity gets
+**Cognitive Services OpenAI User** on the existing `sllidingdoors-ai-js` in `rg-j.stojkaj-6522`
+(`modules/openai-role.bicep`, a cross-resource-group module) and `AZURE_CLIENT_ID` points DefaultAzureCredential
+at it. The container has 1 vCPU / 2 GiB for the rollouts. Turn it off: `azd env set ASK_ENABLED false && azd provision`.
+
 Re-running the pipeline with `LLM_CACHE=replay` reproduces the same insights/overlays from the cache without
 calling Azure, so a rebuild of the payload is deterministic and free.
 
@@ -62,6 +71,9 @@ azd up
 
 # 4. check
 curl -s "$(azd env get-value SERVICE_WEB_URI)/api/health"     # {"status":"ok","matches":1}
+curl -s "$(azd env get-value SERVICE_WEB_URI)/api/features"   # {"ask":true}
+curl -sN -X POST "$(azd env get-value SERVICE_WEB_URI)/api/matches/demo-<n>/ask" -H 'content-type: application/json' \
+    -d '{"frame":1353,"question":"What if Holt had shot instead?"}'   # streamed steps, then the answer
 open "$(azd env get-value SERVICE_WEB_URI)"
 ```
 
