@@ -1,0 +1,18 @@
+{
+ "type": "chat_response",
+ "messages": [
+  {
+   "type": "message",
+   "role": "assistant",
+   "contents": [
+    {
+     "type": "text",
+     "text": "{\"hypotheses\":[{\"experiment_id\":\"carry\",\"text\":\"If Arne Dahl had carried the ball forward, the chance to keep possession would have been higher (14.4% vs actual 14.3%).\"}]}",
+     "additional_properties": {}
+    }
+   ],
+   "additional_properties": {}
+  }
+ ],
+ "finish_reason": "stop"
+}

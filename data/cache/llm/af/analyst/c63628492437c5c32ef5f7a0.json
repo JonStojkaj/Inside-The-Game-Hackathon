@@ -1,0 +1,29 @@
+{
+ "type": "chat_response",
+ "messages": [
+  {
+   "type": "message",
+   "role": "assistant",
+   "contents": [
+    {
+     "type": "function_call",
+     "call_id": "call_G89rzEfb5aLmjuhJxzFrf5X2",
+     "name": "run_experiment",
+     "arguments": "{\"experiment_id\": \"tight_A2\"}",
+     "hosted": false,
+     "additional_properties": {}
+    },
+    {
+     "type": "function_call",
+     "call_id": "call_zhnIlMGIATSNMeKo9HXYA3rb",
+     "name": "run_experiment",
+     "arguments": "{\"experiment_id\": \"tight_A5\"}",
+     "hosted": false,
+     "additional_properties": {}
+    }
+   ],
+   "additional_properties": {}
+  }
+ ],
+ "finish_reason": "tool_calls"
+}

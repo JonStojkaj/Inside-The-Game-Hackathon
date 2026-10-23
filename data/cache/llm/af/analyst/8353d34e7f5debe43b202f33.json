@@ -1,0 +1,18 @@
+{
+ "type": "chat_response",
+ "messages": [
+  {
+   "type": "message",
+   "role": "assistant",
+   "contents": [
+    {
+     "type": "text",
+     "text": "{\"hypotheses\":[{\"experiment_id\":\"tight_A5\",\"text\":\"If CB Felix Ondo had been 5 m closer to Leo Marchetti, the chance to score would have fallen from 6.7% to 5.6% (largest reduction), showing stronger central defensive pressure on the passer would most reduce the chance.\"},{\"experiment_id\":\"tight_A9\",\"text\":\"If CF Yusuf Benali had been 3 m closer to Leo Marchetti, the chance to score would have fallen from 6.7% to 6.1%, indicating nearer forward pressure on the passer slightly lowers the scoring chance.\"},{\"experiment_id\":\"tight_A8\",\"text\":\"If CM Theo Varga had been 4 m closer to Leo Marchetti, the chance to score would have fallen from 6.7% to 6.3%, so tighter midfield marking on the passer has a modest negative effect on the chance.\"}]}",
+     "additional_properties": {}
+    }
+   ],
+   "additional_properties": {}
+  }
+ ],
+ "finish_reason": "stop"
+}

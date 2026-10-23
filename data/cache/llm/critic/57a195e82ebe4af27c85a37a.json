@@ -1,0 +1,20 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "tight_A5",
+      "verdict": "rejected",
+      "note": "Not accepted in input (did not pass the rules)."
+    },
+    {
+      "experiment_id": "tight_A9",
+      "verdict": "rejected",
+      "note": "Not accepted in input (did not pass the rules)."
+    },
+    {
+      "experiment_id": "tight_A8",
+      "verdict": "rejected",
+      "note": "Not accepted in input (did not pass the rules)."
+    }
+  ],
+  "claim": "The real decision — Leo Marchetti’s pass to Emil Strand that led to the goal — was a reasonable one given the information provided."
+}

@@ -1,0 +1,20 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "carry",
+      "verdict": "rejected",
+      "note": "Experiment wasn't marked as passing the rules."
+    },
+    {
+      "experiment_id": "pass_H11",
+      "verdict": "rejected",
+      "note": "Experiment wasn't marked as passing the rules."
+    },
+    {
+      "experiment_id": "pass_H5",
+      "verdict": "rejected",
+      "note": "Experiment wasn't marked as passing the rules."
+    }
+  ],
+  "claim": "The real decision was reasonable."
+}

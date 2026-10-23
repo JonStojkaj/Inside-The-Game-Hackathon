@@ -1,0 +1,21 @@
+{
+ "type": "chat_response",
+ "messages": [
+  {
+   "type": "message",
+   "role": "assistant",
+   "contents": [
+    {
+     "type": "function_call",
+     "call_id": "call_q8uYY3anwl9IogtkkY5Jz0e5",
+     "name": "get_match_stats",
+     "arguments": "{}",
+     "hosted": false,
+     "additional_properties": {}
+    }
+   ],
+   "additional_properties": {}
+  }
+ ],
+ "finish_reason": "tool_calls"
+}

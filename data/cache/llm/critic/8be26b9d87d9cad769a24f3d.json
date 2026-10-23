@@ -1,0 +1,20 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "tight_H9",
+      "verdict": "rejected",
+      "note": "Hypothesis marked as not passing the rules."
+    },
+    {
+      "experiment_id": "tight_H2",
+      "verdict": "rejected",
+      "note": "Hypothesis marked as not passing the rules."
+    },
+    {
+      "experiment_id": "tight_H5",
+      "verdict": "rejected",
+      "note": "Hypothesis marked as not passing the rules."
+    }
+  ],
+  "claim": "The real decision to let Kai Nakamura shoot was reasonable given the data available; none of the tested defensive adjustments were accepted as meaningful, stable, and football-plausible."
+}

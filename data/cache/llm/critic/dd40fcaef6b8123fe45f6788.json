@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "carry",
+      "verdict": "accepted",
+      "note": "Carrying increases the chance substantially and is stable across seeds."
+    },
+    {
+      "experiment_id": "pass_H16",
+      "verdict": "accepted",
+      "note": "The pass to Sami Okoro also shows a meaningful and consistent improvement."
+    }
+  ],
+  "claim": "Marchetti’s shot had a 4.5% chance to score, while carrying the ball would have given a 12.1% chance to score (+7.5 points). Passing to Sami Okoro would have given a 9.2% chance to score (+4.7 points), so both alternatives appear better than the shot, with carrying offering the largest increase."
+}

@@ -1,0 +1,20 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "carry",
+      "verdict": "rejected",
+      "note": "Marked as not passing the rules in the input."
+    },
+    {
+      "experiment_id": "shoot",
+      "verdict": "accepted",
+      "note": "Passed the rules and is stable and football-plausible."
+    },
+    {
+      "experiment_id": "tight_H9",
+      "verdict": "rejected",
+      "note": "Marked as not passing the rules in the input."
+    }
+  ],
+  "claim": "Bastian Holt's pass to Callum Reyes yielded a 7.3% chance to score; if Holt had shot instead the chance would have been 1.3%, a decrease of 6.0 points, so the pass substantially raised the scoring chance compared with shooting."
+}

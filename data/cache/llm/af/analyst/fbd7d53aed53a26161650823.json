@@ -1,0 +1,18 @@
+{
+ "type": "chat_response",
+ "messages": [
+  {
+   "type": "message",
+   "role": "assistant",
+   "contents": [
+    {
+     "type": "text",
+     "text": "{\"hypotheses\":[{\"experiment_id\":\"carry\",\"text\":\"Leo Marchetti’s actual pass (6.7% chance) was better than carrying the ball forward — carrying would have reduced the chance to 6.3%, so the pass increased the chance by 0.4 percentage points.\"},{\"experiment_id\":\"pass_H11\",\"text\":\"Passing to Jonah Pike would have been worse: that option gives a 5.5% chance versus the actual 6.7%, so Marchetti’s pass was 1.2 percentage points better.\"},{\"experiment_id\":\"pass_H5\",\"text\":\"Passing back to Ruben Saldo would have been marginally worse: that option yields 6.6% versus the actual 6.7%, so Marchetti’s pass was 0.1 percentage points better.\"}]}",
+     "additional_properties": {}
+    }
+   ],
+   "additional_properties": {}
+  }
+ ],
+ "finish_reason": "stop"
+}

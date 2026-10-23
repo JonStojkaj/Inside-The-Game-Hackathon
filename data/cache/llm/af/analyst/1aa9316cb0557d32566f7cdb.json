@@ -1,0 +1,18 @@
+{
+ "type": "chat_response",
+ "messages": [
+  {
+   "type": "message",
+   "role": "assistant",
+   "contents": [
+    {
+     "type": "text",
+     "text": "{\"hypotheses\":[{\"experiment_id\":\"carry\",\"text\":\"Had Marchetti carried the ball forward instead of shooting, the chance to score would have been substantially higher (12.1% vs 4.5%), so carrying was the better decision.\"},{\"experiment_id\":\"pass_H16\",\"text\":\"Had Marchetti passed to Sami Okoro (CM), the chance to score would have increased (9.2% vs 4.5%), making that pass a clearly better option than the shot.\"}]}",
+     "additional_properties": {}
+    }
+   ],
+   "additional_properties": {}
+  }
+ ],
+ "finish_reason": "stop"
+}

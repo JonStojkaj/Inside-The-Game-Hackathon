@@ -1,0 +1,20 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "carry",
+      "verdict": "accepted",
+      "note": "Meaningful, stable across seeds, and football-plausible."
+    },
+    {
+      "experiment_id": "pass_H16",
+      "verdict": "rejected",
+      "note": "Marked as not passing the input rules."
+    },
+    {
+      "experiment_id": "shoot",
+      "verdict": "accepted",
+      "note": "Meaningful, stable across seeds, and football-plausible."
+    }
+  ],
+  "claim": "If Emil Strand had carried the ball forward the scoring chance would have risen to 10.1% (about +3.6 points vs what happened), while if he had shot it would have fallen to 1.4% (about −5.1 points vs what happened)."
+}

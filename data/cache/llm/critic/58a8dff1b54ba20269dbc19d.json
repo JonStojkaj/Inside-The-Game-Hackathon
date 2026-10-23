@@ -1,0 +1,10 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "tight_H7",
+      "verdict": "rejected",
+      "note": "Marked as not passing the rules so it cannot be accepted."
+    }
+  ],
+  "claim": "The input provides no accepted alternate scenarios, so the real decision — Kai Nakamura shooting and scoring with a 4.6% chance — was a reasonable one given the information available."
+}

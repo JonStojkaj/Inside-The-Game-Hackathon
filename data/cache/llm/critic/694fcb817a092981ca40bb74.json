@@ -1,0 +1,20 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "tight_H16",
+      "verdict": "rejected",
+      "note": "Marked in the input as not passing the rules (insufficient/unstable improvement)."
+    },
+    {
+      "experiment_id": "tight_H20",
+      "verdict": "rejected",
+      "note": "Marked in the input as not passing the rules (insufficient/unstable improvement)."
+    },
+    {
+      "experiment_id": "tight_H11",
+      "verdict": "rejected",
+      "note": "Marked in the input as not passing the rules (insufficient/unstable improvement)."
+    }
+  ],
+  "claim": "None of the tested alternatives met the acceptance criteria; the actual pass to Oscar Lindqvist had a 14.3% chance to keep the ball, so the decision was a reasonable one."
+}

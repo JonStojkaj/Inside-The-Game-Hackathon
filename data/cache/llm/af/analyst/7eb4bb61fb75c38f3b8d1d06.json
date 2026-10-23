@@ -1,0 +1,37 @@
+{
+ "type": "chat_response",
+ "messages": [
+  {
+   "type": "message",
+   "role": "assistant",
+   "contents": [
+    {
+     "type": "function_call",
+     "call_id": "call_r7VaizNmdYwyMbg9RfltmLfG",
+     "name": "get_match_stats",
+     "arguments": "{}",
+     "hosted": false,
+     "additional_properties": {}
+    },
+    {
+     "type": "function_call",
+     "call_id": "call_nOTaCOtqKHG2SWqN17rP3rOL",
+     "name": "run_experiment",
+     "arguments": "{\"experiment_id\": \"shoot\"}",
+     "hosted": false,
+     "additional_properties": {}
+    },
+    {
+     "type": "function_call",
+     "call_id": "call_fiqZTdCaoTwU9nWww591GXdh",
+     "name": "run_experiment",
+     "arguments": "{\"experiment_id\": \"carry\"}",
+     "hosted": false,
+     "additional_properties": {}
+    }
+   ],
+   "additional_properties": {}
+  }
+ ],
+ "finish_reason": "tool_calls"
+}

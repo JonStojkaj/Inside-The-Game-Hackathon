@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "carry",
+      "verdict": "rejected",
+      "note": "Predicted chance (8.8%) is lower than the actual 11.5%, so it does not improve the outcome."
+    },
+    {
+      "experiment_id": "pass_A11",
+      "verdict": "rejected",
+      "note": "Predicted chance (10.2%) is lower than the actual 11.5%, so it does not improve the outcome."
+    }
+  ],
+  "claim": "The decision to shoot was reasonable given the evaluations provided; none of the tested alternatives improved the chance to score."
+}

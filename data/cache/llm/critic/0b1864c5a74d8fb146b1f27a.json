@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "pass_A8",
+      "verdict": "rejected",
+      "note": "Did not pass the input rules so cannot be accepted."
+    },
+    {
+      "experiment_id": "pass_A2",
+      "verdict": "rejected",
+      "note": "Did not pass the input rules so cannot be accepted."
+    }
+  ],
+  "claim": "Given none of the alternative-pass hypotheses met the input rules for acceptance, the real decision for Kai Nakamura to shoot was a reasonable one."
+}
