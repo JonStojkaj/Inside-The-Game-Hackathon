@@ -19,24 +19,21 @@ const FAN = 'profile=club_fan&club=away&lang=en'
 const PF = 'profile=player_focus&player=A20&lang=es'
 const CAS = 'profile=casual&lang=en'
 
+// frames refer to the default bundle demo-109 (goal events f=415 and f=1519; analyst Sliding Doors
+// airs f=1549-1639, player focus f=1555-1645)
 export const SHOTS = [
-  { name: '0-onboarding', q: 'shot&onboarding&f=1580', wait: 2500 },
-  { name: '1-split-live', q: 'shot&view=split&f=1580', wait: 3000 },
-  { name: '2-split-sliding-doors', q: 'shot&view=split&f=1695', wait: 7000 },
-  { name: '3-analyst-sliding-doors', q: `shot&${AN}&f=1695`, wait: 7000 },
-  { name: '3b-fan-sliding-doors', q: `shot&${FAN}&f=1695`, wait: 7000 },
-  { name: '3c-player-sliding-doors', q: `shot&${PF}&f=1695`, wait: 7000 },
-  { name: '3d-casual-1695', q: `shot&${CAS}&f=1695`, wait: 7000 },
-  { name: '4-control-room', q: 'shot&view=control&f=2131&cr=full-34-m01663-decisive_pass-insight', wait: 12000 },
-  { name: '5-analyst-live', q: `shot&${AN}&f=1580`, wait: 3000 },
-  { name: '5b-fan-goal', q: `shot&${FAN}&f=1415`, wait: 3000 },
-  { name: '5c-player-live', q: `shot&${PF}&f=1580`, wait: 3000 },
-  { name: '5d-casual-goal', q: `shot&${CAS}&f=1415`, wait: 3000 },
-  { name: '6-fulltime-recap', q: 'shot&view=split&f=3090', wait: 4000 },
-  // segments the production team did not produce: derived client-side in the viewer's language
-  { name: '7-analyst-es-derived', q: 'shot&profile=analyst&lang=es&f=1695', wait: 7000 },
-  { name: '7b-fan-home-de-derived', q: 'shot&profile=club_fan&club=home&lang=de&f=1490', wait: 7000 },
-  { name: '7c-player-H20-de-recap', q: 'shot&profile=player_focus&player=H20&lang=de&f=3090', wait: 4000 },
+  { name: '0-onboarding', q: 'shot&onboarding&f=1200', wait: 2500 },
+  { name: '1-analyst-strip-hint', q: `shot&${AN}&f=1200&hint`, wait: 3000 },
+  { name: '2-analyst-sliding-doors', q: `shot&${AN}&f=1600`, wait: 7000 },
+  { name: '3-fan-live', q: `shot&${FAN}&f=1200`, wait: 3000 },
+  { name: '3b-fan-goal', q: `shot&${FAN}&f=1530`, wait: 3000 },
+  { name: '4-player-live', q: `shot&${PF}&f=1200`, wait: 3000 },
+  { name: '5-casual-live', q: `shot&${CAS}&f=1200`, wait: 3000 },
+  { name: '6-producer-key-moment', q: 'shot&view=split&f=1600', wait: 7000 },
+  { name: '7-control-room', q: 'shot&view=control&f=1600&cr=demo-109-m01505-goal-insight', wait: 12000 },
+  { name: '8-fulltime-recap', q: 'shot&view=split&f=2990', wait: 4000 },
+  // commentator caption; needs a bundle with audio.json (local stub: public/dev/audio-test, gitignored)
+  { name: '9-commentator', src: process.env.AUDIO_SRC ?? '/dev/audio-test', q: 'shot&profile=analyst&lang=en&f=1195&play&speed=1', wait: 6000 },
 ]
 
 mkdirSync(OUT, { recursive: true })

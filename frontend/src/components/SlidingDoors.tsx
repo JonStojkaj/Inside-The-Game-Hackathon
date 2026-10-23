@@ -1,8 +1,9 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useMatch } from '../lib/context'
 import { clockLabel, comparison, type Doors } from '../lib/match'
-import { fmtPct, fmtPts, t } from '../lib/profile'
+import { fmtPct, fmtPts, t, tf } from '../lib/profile'
 import { checkClaim } from '../lib/verify'
+import { replayCount, wantExplainer } from '../lib/explainer'
 import type { Lang, Overlay } from '../types'
 
 const SHOT = new URLSearchParams(window.location.search).has('shot')
@@ -54,6 +55,8 @@ export function SlidingDoorsCard({ doors, overlay, simple, lang, onClose, side, 
   const claim = overlay?.body || doors.claim
   const audit = doors.insight ? checkClaim(`${overlay?.headline ?? ''} ${claim}`, doors.insight, m, overlay?.evidence.length ? overlay.evidence : undefined) : undefined
   const altName = lang === 'en' && doors.alt_label ? doors.alt_label : t(lang, 'alternative')
+  const [explain] = useState(() => wantExplainer(doors.key))
+  const replays = replayCount(doors.insight).toLocaleString(lang === 'en' ? 'en-GB' : lang)
   const verdict = !hasAlt ? t(lang, 'no_better') : altBetter ? t(lang, 'better_existed') : t(lang, 'right_call')
 
   return (
@@ -91,6 +94,7 @@ export function SlidingDoorsCard({ doors, overlay, simple, lang, onClose, side, 
 
       <div className="sd-card">
         <div className="sd-text">
+          {explain && <div className="sd-explain">{tf(lang, 'sd_explain', { n: replays })}</div>}
           <div className="sd-kicker">
             <span className={`sd-verdict ${altBetter ? 'worse' : 'ok'}`}>{verdict}</span>
             {!simple && hasAlt && <span className={`chip ${doors.confidence}`}>{t(lang, doors.confidence)}</span>}

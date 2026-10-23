@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Commentator } from './components/Commentator'
 import { ControlRoom } from './components/ControlRoom'
 import { Onboarding } from './components/Onboarding'
 import { ProfilePicker } from './components/ProfilePicker'
@@ -6,6 +7,7 @@ import { Screen } from './components/Screen'
 import { Transport } from './components/Transport'
 import { loadMatch, resolveSource } from './data/source'
 import { MatchContext, type MatchCtx } from './lib/context'
+import { resetExplainer } from './lib/explainer'
 import { indexMatch, timelineFrames } from './lib/match'
 import { createPlayback } from './lib/playback'
 import { loadProfile, presets, profileFromQuery, saveProfile, t } from './lib/profile'
@@ -49,6 +51,13 @@ function Player({ bundle }: { bundle: MatchBundle }) {
   const [onboarding, setOnboarding] = useState(() => q.has('onboarding') || (!profile && initialView(q) === 'viewer' && !q.has('shot')))
   const [menu, setMenu] = useState(false)
   const [split, setSplit] = useState<ViewerProfile[]>(demo)
+  // first-run hint after onboarding (or ?hint for the screenshot)
+  const [hint, setHint] = useState(q.has('hint'))
+  const doneHint = useCallback(() => setHint(false), [])
+  // commentary: on by default, audible after the first user gesture (browsers block autoplay)
+  const [sound, setSound] = useState(true)
+  const [unlocked, setUnlocked] = useState(q.has('shot'))
+  const hasAudio = bundle.audio.length > 0
   const ctx = useMemo<MatchCtx>(() => ({ m, pb, forcedInsight, setForcedInsight }), [m, pb, forcedInsight])
   const hasVideo = Boolean(bundle.match.video)
   const me = profile ?? demo[0]
@@ -68,6 +77,17 @@ function Player({ bundle }: { bundle: MatchBundle }) {
     if (import.meta.env.DEV) (window as unknown as { __pb: typeof pb }).__pb = pb
     return () => pb.pause()
   }, [pb])
+
+  useEffect(() => {
+    if (unlocked) return
+    const on = () => setUnlocked(true)
+    window.addEventListener('pointerdown', on, { once: true })
+    window.addEventListener('keydown', on, { once: true })
+    return () => {
+      window.removeEventListener('pointerdown', on)
+      window.removeEventListener('keydown', on)
+    }
+  }, [unlocked])
 
   const who = me.mode === 'club_fan' && me.favourite_club ? m.club(me.favourite_club) : null
   const fav = me.mode === 'player_focus' ? m.player(me.favourite_players[0]) : undefined
@@ -124,6 +144,7 @@ function Player({ bundle }: { bundle: MatchBundle }) {
             </div>
           )}
 
+          <div className="topbar-spacer" />
           <nav className="views">
             {producer ? (
               <>
@@ -138,18 +159,30 @@ function Player({ bundle }: { bundle: MatchBundle }) {
             ) : (
               <button
                 className="producer"
+                title={t(lang, 'producer_title')}
                 onClick={() => {
                   setMenu(false)
                   setView('split')
                 }}
               >
-                <b>{t(lang, 'producer')}</b> · {t(lang, 'producer_sub')}
+                {t(lang, 'producer')}
               </button>
             )}
-            <button className={`tv ${tv ? 'on' : ''}`} disabled={!hasVideo} title={hasVideo ? 'TV picture with overlays' : 'no video in this export'} onClick={() => setTv(!tv)}>
-              TV
+            <button className={`tv ${tv ? 'on' : ''}`} disabled={!hasVideo} title={t(lang, hasVideo ? 'tv_title' : 'tv_none')} onClick={() => setTv(!tv)}>
+              {t(lang, 'tv_view')}
             </button>
           </nav>
+          {hasAudio && (
+            <button
+              className={`sound ${sound ? 'on' : ''}`}
+              onClick={() => setSound(!sound)}
+              title={t(lang, sound ? 'sound_on' : 'sound_off')}
+              aria-label={t(lang, sound ? 'sound_on' : 'sound_off')}
+              aria-pressed={sound}
+            >
+              {sound ? '🔊' : '🔇'}
+            </button>
+          )}
         </header>
 
         <main className="main" onClick={() => menu && setMenu(false)}>
@@ -172,7 +205,8 @@ function Player({ bundle }: { bundle: MatchBundle }) {
           )}
         </main>
 
-        <Transport />
+        <Transport lang={lang} hint={hint && !onboarding} onHintDone={doneHint} />
+        {hasAudio && <Commentator profile={producer ? split[0] : me} audible={sound && unlocked} lang={lang} />}
         {onboarding && (
           <Onboarding
             initial={profile}
@@ -180,6 +214,8 @@ function Player({ bundle }: { bundle: MatchBundle }) {
               choose(p)
               setOnboarding(false)
               setView('viewer')
+              resetExplainer()
+              setHint(true)
             }}
             onClose={profile ? () => setOnboarding(false) : undefined}
           />
