@@ -42,8 +42,11 @@ def is_goal_card(o: dict) -> bool:
 
 
 def spoken_text(o: dict) -> str:
-    text = " ".join(t for t in (o.get("headline", ""), o.get("body", "")) if t)
-    text = re.sub(r"Sliding Doors\s*·\s*\d+'", "", text)  # graphic label, not commentary
+    headline, body = o.get("headline", ""), o.get("body", "")
+    # graphic labels ("Sliding Doors · 13'", "What if… 13'", "Entscheidungsmoment · 13") are not commentary
+    if body and (re.search(r"\d+'?\s*$", headline) or "·" in headline):
+        headline = ""
+    text = " ".join(t for t in (headline, body) if t)
     return re.sub(r"\s+", " ", text).strip(" ·|")
 
 
@@ -77,8 +80,17 @@ def main() -> None:
                 name = re.sub(r"[^A-Za-z0-9_-]+", "_", f"{segment_id}__{o['id'].split(':')[-1]}")[:120] + ".mp3"
                 path = out_dir / name
                 if not path.exists():
-                    resp = client.post(url, headers=headers, content=ssml(text, lang, mode).encode())
-                    resp.raise_for_status()
+                    for attempt in range(4):  # F0 occasionally drops connections or answers 429
+                        try:
+                            resp = client.post(url, headers=headers, content=ssml(text, lang, mode).encode())
+                            if resp.status_code == 429:
+                                raise httpx.HTTPStatusError("rate limited", request=resp.request, response=resp)
+                            resp.raise_for_status()
+                            break
+                        except (httpx.TransportError, httpx.HTTPStatusError):
+                            if attempt == 3:
+                                raise
+                            time.sleep(5 * (attempt + 1))
                     path.write_bytes(resp.content)
                     chars += len(text)
                     calls += 1

@@ -1,0 +1,380 @@
+[
+ {
+  "id": "analyst-de:analyst-de:demo-109-m00278-decisive_pass-insight",
+  "segment_id": "analyst-de",
+  "start_ms": 34300,
+  "duration_ms": 13752,
+  "file": "audio/analyst-de__demo-109-m00278-decisive_pass-insight.mp3",
+  "lang": "de",
+  "text": "Strands Pass erzeugte eine Torchance von 6,5 %. Ein Dribbling hätte die Torchance auf 10,1 % erhöht, also um 3,6 Punkte und 1,6-mal so hoch."
+ },
+ {
+  "id": "analyst-de:analyst-de:demo-109-m00407-goal-insight",
+  "segment_id": "analyst-de",
+  "start_ms": 47500,
+  "duration_ms": 15600,
+  "file": "audio/analyst-de__demo-109-m00407-goal-insight.mp3",
+  "lang": "de",
+  "text": "Leo Marchettis Pass auf Emil Strand in Minute 13 schuf eine Torchance: 6,7 %. Da keine alternative Hypothese zum Vergleich akzeptiert wurde, war die Entscheidung, Strand anzuspielen, taktisch vertretbar."
+ },
+ {
+  "id": "analyst-de:analyst-de:demo-109-m01505-goal-insight",
+  "segment_id": "analyst-de",
+  "start_ms": 154900,
+  "duration_ms": 14976,
+  "file": "audio/analyst-de__demo-109-m01505-goal-insight.mp3",
+  "lang": "de",
+  "text": "Keine getestete Defensiv-Variante brachte eine klare oder qualifizierende Reduktion der Torchance; Torchance: 4,6 %. Damit war die Entscheidung, die zum Tor führte, ein plausibles Ergebnis."
+ },
+ {
+  "id": "analyst-de:analyst-de:demo-109-m01353-decisive_pass-insight",
+  "segment_id": "analyst-de",
+  "start_ms": 163900,
+  "duration_ms": 13104,
+  "file": "audio/analyst-de__demo-109-m01353-decisive_pass-insight.mp3",
+  "lang": "de",
+  "text": "Bastian Holts Pass zu Callum Reyes erzeugte eine Torchance von 7,3 %, ein Schuss hätte nur 1,3 % ergeben; der Pass war damit um 6,0 Prozentpunkte vorteilhafter."
+ },
+ {
+  "id": "analyst-de:analyst-de:demo-109-m02519-dangerous_turnover-insight",
+  "segment_id": "analyst-de",
+  "start_ms": 257900,
+  "duration_ms": 11208,
+  "file": "audio/analyst-de__demo-109-m02519-dangerous_turnover-insight.mp3",
+  "lang": "de",
+  "text": "Noah Fairley dribbelt und wird vom Gegner gestoppt — keine getestete Alternative war klar sicherer (Chance, den Ball zu behalten: 26,5 %)."
+ },
+ {
+  "id": "analyst-de:analyst-de:demo-109-m02436-big_chance-insight",
+  "segment_id": "analyst-de",
+  "start_ms": 266900,
+  "duration_ms": 12816,
+  "file": "audio/analyst-de__demo-109-m02436-big_chance-insight.mp3",
+  "lang": "de",
+  "text": "Die Entscheidung, Kai Nakamura schießen zu lassen, war angesichts der verfügbaren Analyse vernünftig; keine getestete Alternative wies eine klar höhere Torchance (11,5 %) auf."
+ },
+ {
+  "id": "analyst-de:analyst-de:recap-full-time",
+  "segment_id": "analyst-de",
+  "start_ms": 308100,
+  "duration_ms": 40536,
+  "file": "audio/analyst-de__recap-full-time.mp3",
+  "lang": "de",
+  "text": "Abpfiff: FC Northbridge 1-1 Harbour City Endstand 1-1. Tore: Strand 13', Nakamura 46'. Harbour City hatte mit 52 % etwas mehr Ballbesitz bei einer Passgenauigkeit von 70 %, FC Northbridge kam auf 48 % und 66 %. Entscheidende Entscheidungen: Minute 9 — der Pass erzeugte eine Torchance von 6,5 %, ein Dribbling hätte 10,1 % gebracht. Minute 41 — der Pass zu Reyes ergab 7,3 %, ein Schuss hätte nur 1,3 % erzielt."
+ },
+ {
+  "id": "analyst-en:analyst-en:demo-109-m00278-decisive_pass-insight",
+  "segment_id": "analyst-en",
+  "start_ms": 34300,
+  "duration_ms": 12264,
+  "file": "audio/analyst-en__demo-109-m00278-decisive_pass-insight.mp3",
+  "lang": "en",
+  "text": "Emil Strand’s pass to Leo Marchetti produced a 6.5% chance to score; carrying the ball on would have yielded a 10.1% chance to score, an increase of 3.6 points."
+ },
+ {
+  "id": "analyst-en:analyst-en:demo-109-00415-goal-2:card",
+  "segment_id": "analyst-en",
+  "start_ms": 41500,
+  "duration_ms": 7056,
+  "file": "audio/analyst-en__card.mp3",
+  "lang": "en",
+  "text": "GOAL! FC Northbridge Emil Strand scores · 13' · 1-0"
+ },
+ {
+  "id": "analyst-en:analyst-en:demo-109-m00407-goal-insight",
+  "segment_id": "analyst-en",
+  "start_ms": 47500,
+  "duration_ms": 10560,
+  "file": "audio/analyst-en__demo-109-m00407-goal-insight.mp3",
+  "lang": "en",
+  "text": "Leo Marchetti’s assist to Emil Strand produced a 6.7% chance to score; with no tested alternative clearly better, feeding Strand was a reasonable decision."
+ },
+ {
+  "id": "analyst-en:analyst-en:demo-109-01519-goal-7:card",
+  "segment_id": "analyst-en",
+  "start_ms": 151900,
+  "duration_ms": 7056,
+  "file": "audio/analyst-en__card.mp3",
+  "lang": "en",
+  "text": "GOAL! Harbour City Kai Nakamura scores · 46' · 1-1"
+ },
+ {
+  "id": "analyst-en:analyst-en:demo-109-m01505-goal-insight",
+  "segment_id": "analyst-en",
+  "start_ms": 154900,
+  "duration_ms": 10752,
+  "file": "audio/analyst-en__demo-109-m01505-goal-insight.mp3",
+  "lang": "en",
+  "text": "No tested defensive tweak produced a meaningful or qualifying reduction in Kai Nakamura’s 4.6% chance to score, so the goal was a statistically reasonable outcome."
+ },
+ {
+  "id": "analyst-en:analyst-en:demo-109-m01353-decisive_pass-insight",
+  "segment_id": "analyst-en",
+  "start_ms": 163900,
+  "duration_ms": 14568,
+  "file": "audio/analyst-en__demo-109-m01353-decisive_pass-insight.mp3",
+  "lang": "en",
+  "text": "At 41', Bastian Holt’s pass to Callum Reyes produced a 7.3% chance to score versus a 1.3% chance for a shot, a 6.0-point improvement that identifies the pass as the higher-value option."
+ },
+ {
+  "id": "analyst-en:analyst-en:demo-109-m02519-dangerous_turnover-insight",
+  "segment_id": "analyst-en",
+  "start_ms": 257900,
+  "duration_ms": 10248,
+  "file": "audio/analyst-en__demo-109-m02519-dangerous_turnover-insight.mp3",
+  "lang": "en",
+  "text": "Noah Fairley dribbled and was tackled; none of the tested alternatives would clearly have reduced turnover risk (chance to keep the ball: 26.5%)."
+ },
+ {
+  "id": "analyst-en:analyst-en:demo-109-m02436-big_chance-insight",
+  "segment_id": "analyst-en",
+  "start_ms": 266900,
+  "duration_ms": 7032,
+  "file": "audio/analyst-en__demo-109-m02436-big_chance-insight.mp3",
+  "lang": "en",
+  "text": "At 74 the decision to shoot was reasonable given the measured chance to score: 11.5%."
+ },
+ {
+  "id": "analyst-en:analyst-en:recap-full-time",
+  "segment_id": "analyst-en",
+  "start_ms": 308100,
+  "duration_ms": 41520,
+  "file": "audio/analyst-en__recap-full-time.mp3",
+  "lang": "en",
+  "text": "Full time: FC Northbridge 1-1 Harbour City A balanced draw ended 1-1 after goals from Strand 13' and Nakamura 46'. Possession was narrow in Harbour City's favour at 52% to FC Northbridge's 48%, and pass accuracy showed Harbour City more precise at 70% versus FC Northbridge 66%. Tactical analysis highlights a decisive moment at minute 9 when carrying the ball on would have raised the chance to score from 6.5% to 10.1%, and a clear positive decision at minute 41 where a pass produced a 7.3% chance compared with a 1.3% shot option."
+ },
+ {
+  "id": "casual-en:casual-en:demo-109-00415-goal-2:card",
+  "segment_id": "casual-en",
+  "start_ms": 41500,
+  "duration_ms": 6456,
+  "file": "audio/casual-en__card.mp3",
+  "lang": "en",
+  "text": "GOAL! FC Northbridge Emil Strand scores · 13' · 1-0"
+ },
+ {
+  "id": "casual-en:casual-en:demo-109-m00407-goal-insight",
+  "segment_id": "casual-en",
+  "start_ms": 47500,
+  "duration_ms": 6864,
+  "file": "audio/casual-en__demo-109-m00407-goal-insight.mp3",
+  "lang": "en",
+  "text": "Marchetti’s assist produced a 6.7% chance to score, and no tested alternative did clearly better."
+ },
+ {
+  "id": "casual-en:casual-en:demo-109-01519-goal-7:card",
+  "segment_id": "casual-en",
+  "start_ms": 151900,
+  "duration_ms": 6456,
+  "file": "audio/casual-en__card.mp3",
+  "lang": "en",
+  "text": "GOAL! Harbour City Kai Nakamura scores · 46' · 1-1"
+ },
+ {
+  "id": "casual-en:casual-en:demo-109-m01505-goal-insight",
+  "segment_id": "casual-en",
+  "start_ms": 157900,
+  "duration_ms": 6408,
+  "file": "audio/casual-en__demo-109-m01505-goal-insight.mp3",
+  "lang": "en",
+  "text": "No tested defensive tweak produced a meaningful reduction (chance to score: 4.6%)."
+ },
+ {
+  "id": "casual-en:casual-en:demo-109-m01203-big_chance-insight",
+  "segment_id": "casual-en",
+  "start_ms": 163900,
+  "duration_ms": 5856,
+  "file": "audio/casual-en__demo-109-m01203-big_chance-insight.mp3",
+  "lang": "en",
+  "text": "Carrying the ball would have raised the chance to score from 8.9% to 11.5%."
+ },
+ {
+  "id": "casual-en:casual-en:demo-109-m02436-big_chance-insight",
+  "segment_id": "casual-en",
+  "start_ms": 257900,
+  "duration_ms": 8039,
+  "file": "audio/casual-en__demo-109-m02436-big_chance-insight.mp3",
+  "lang": "en",
+  "text": "Kai Nakamura’s shot was a reasonable call; no tested alternative clearly beat it (chance to score: 11.5%)."
+ },
+ {
+  "id": "casual-en:casual-en:recap-full-time",
+  "segment_id": "casual-en",
+  "start_ms": 308100,
+  "duration_ms": 35472,
+  "file": "audio/casual-en__recap-full-time.mp3",
+  "lang": "en",
+  "text": "Full time: FC Northbridge 1-1 Harbour City Goals: Strand 13', Nakamura 46'. Possession was FC Northbridge 48%, Harbour City 52%. Pass accuracy was FC Northbridge 66%, Harbour City 70%. Marchetti’s assist to Strand created a chance to score 6.7% and was judged reasonable; at 37' carrying on would have raised the chance to score from 8.9% to 11.5%, and Nakamura’s goal came from a chance to score 4.6% with no tested defensive tweak clearly better."
+ },
+ {
+  "id": "club_fan-away-de:club_fan-away-de:demo-109-m00407-goal-insight",
+  "segment_id": "club_fan-away-de",
+  "start_ms": 47500,
+  "duration_ms": 5592,
+  "file": "audio/club_fan-away-de__demo-109-m00407-goal-insight.mp3",
+  "lang": "de",
+  "text": "Keine getestete Alternative war klar besser (Torchance: 6,7 %)."
+ },
+ {
+  "id": "club_fan-away-de:club_fan-away-de:demo-109-m01505-goal-insight",
+  "segment_id": "club_fan-away-de",
+  "start_ms": 154900,
+  "duration_ms": 10416,
+  "file": "audio/club_fan-away-de__demo-109-m01505-goal-insight.mp3",
+  "lang": "de",
+  "text": "Was wäre wenn… unser Moment (46) Keine getestete Defensive senkte unsere Torchance merklich – wir haben das Tor verdient (Torchance: 4,6 %)."
+ },
+ {
+  "id": "club_fan-away-de:club_fan-away-de:demo-109-m01353-decisive_pass-insight",
+  "segment_id": "club_fan-away-de",
+  "start_ms": 162500,
+  "duration_ms": 13968,
+  "file": "audio/club_fan-away-de__demo-109-m01353-decisive_pass-insight.mp3",
+  "lang": "de",
+  "text": "Was wäre wenn… unser Moment (41') Richtige Wahl: Holt passte zu Reyes und schenkte uns eine Torchance von 7,3 %. Ein Schuss hätte nur 1,3 % gebracht – also 6,0 Punkte mehr für uns."
+ },
+ {
+  "id": "club_fan-away-de:club_fan-away-de:demo-109-m02519-dangerous_turnover-insight",
+  "segment_id": "club_fan-away-de",
+  "start_ms": 257900,
+  "duration_ms": 12744,
+  "file": "audio/club_fan-away-de__demo-109-m02519-dangerous_turnover-insight.mp3",
+  "lang": "de",
+  "text": "Was wäre wenn… unser Moment (76') Wir sehen: Noah Fairley dribbelt und wird getackelt — keine getestete Alternative war klar besser (Chance, den Ball zu behalten: 26,5 %)."
+ },
+ {
+  "id": "club_fan-away-de:club_fan-away-de:demo-109-m02436-big_chance-insight",
+  "segment_id": "club_fan-away-de",
+  "start_ms": 263900,
+  "duration_ms": 9864,
+  "file": "audio/club_fan-away-de__demo-109-m02436-big_chance-insight.mp3",
+  "lang": "de",
+  "text": "Was wäre wenn… unser Moment (74') Wir haben richtig entschieden: Kai Nakamura nahm den Schuss — eine vernünftige Wahl, Torchance: 11,5 %."
+ },
+ {
+  "id": "club_fan-away-de:club_fan-away-de:recap-full-time",
+  "segment_id": "club_fan-away-de",
+  "start_ms": 308100,
+  "duration_ms": 24600,
+  "file": "audio/club_fan-away-de__recap-full-time.mp3",
+  "lang": "de",
+  "text": "Abpfiff: FC Northbridge 1-1 Harbour City Wir holen ein hart erkämpftes 1-1: Strand 13', wir antworteten durch Nakamura 46'. Unsere Entscheidungstanzung zahlte sich: Holt‑Pass in der 41' brachte eine Torchance von 7,3 % statt 1,3 %, ein Vorteil von 6,0 Punkten. Wir hatten mehr Ballbesitz und bessere Pässe, und darauf bauen wir auf."
+ },
+ {
+  "id": "club_fan-home-en:club_fan-home-en:demo-109-m00278-decisive_pass-insight",
+  "segment_id": "club_fan-home-en",
+  "start_ms": 34300,
+  "duration_ms": 11328,
+  "file": "audio/club_fan-home-en__demo-109-m00278-decisive_pass-insight.mp3",
+  "lang": "en",
+  "text": "What if… our 9' moment Emil Strand’s pass made it a 6.5% chance to score — had we carried it, the chance to score would have been 10.1%, an increase of 3.6 points."
+ },
+ {
+  "id": "club_fan-home-en:club_fan-home-en:demo-109-00415-goal-2:card",
+  "segment_id": "club_fan-home-en",
+  "start_ms": 41500,
+  "duration_ms": 7416,
+  "file": "audio/club_fan-home-en__card.mp3",
+  "lang": "en",
+  "text": "GOAL! FC Northbridge! Emil Strand scores for us · 13' · 1-0"
+ },
+ {
+  "id": "club_fan-home-en:club_fan-home-en:demo-109-m00407-goal-insight",
+  "segment_id": "club_fan-home-en",
+  "start_ms": 47500,
+  "duration_ms": 7104,
+  "file": "audio/club_fan-home-en__demo-109-m00407-goal-insight.mp3",
+  "lang": "en",
+  "text": "What if… our 13' moment No tested alternative did clearly better (chance to score: 6.7%)."
+ },
+ {
+  "id": "club_fan-home-en:club_fan-home-en:demo-109-01519-goal-7:card",
+  "segment_id": "club_fan-home-en",
+  "start_ms": 151900,
+  "duration_ms": 7416,
+  "file": "audio/club_fan-home-en__card.mp3",
+  "lang": "en",
+  "text": "Goal against Kai Nakamura scores for Harbour City · 46' · 1-1"
+ },
+ {
+  "id": "club_fan-home-en:club_fan-home-en:demo-109-m01505-goal-insight",
+  "segment_id": "club_fan-home-en",
+  "start_ms": 157900,
+  "duration_ms": 7032,
+  "file": "audio/club_fan-home-en__demo-109-m01505-goal-insight.mp3",
+  "lang": "en",
+  "text": "We hate conceding — our tweaks at 46 didn’t clearly reduce Kai Nakamura’s chance to score: 4.6%."
+ },
+ {
+  "id": "club_fan-home-en:club_fan-home-en:demo-109-m01203-big_chance-insight",
+  "segment_id": "club_fan-home-en",
+  "start_ms": 163900,
+  "duration_ms": 11640,
+  "file": "audio/club_fan-home-en__demo-109-m01203-big_chance-insight.mp3",
+  "lang": "en",
+  "text": "What if… our 37' moment If Leo Marchetti had carried the ball instead of shooting, our chance to score would have been 11.5%, a 2.6 point increase over Marchetti's 8.9% shot."
+ },
+ {
+  "id": "club_fan-home-en:club_fan-home-en:demo-109-m02519-dangerous_turnover-insight",
+  "segment_id": "club_fan-home-en",
+  "start_ms": 257900,
+  "duration_ms": 9144,
+  "file": "audio/club_fan-home-en__demo-109-m02519-dangerous_turnover-insight.mp3",
+  "lang": "en",
+  "text": "We gambled with Noah Fairley’s dribble and it backfired — none of the tested alternatives would clearly have kept the ball (chance to keep the ball: 26.5%)."
+ },
+ {
+  "id": "club_fan-home-en:club_fan-home-en:demo-109-m02436-big_chance-insight",
+  "segment_id": "club_fan-home-en",
+  "start_ms": 263900,
+  "duration_ms": 8160,
+  "file": "audio/club_fan-home-en__demo-109-m02436-big_chance-insight.mp3",
+  "lang": "en",
+  "text": "The decision to shoot was reasonable; we’re relieved—no tested alternative did clearly better (chance to score: 11.5%)."
+ },
+ {
+  "id": "club_fan-home-en:club_fan-home-en:recap-full-time",
+  "segment_id": "club_fan-home-en",
+  "start_ms": 308100,
+  "duration_ms": 29424,
+  "file": "audio/club_fan-home-en__recap-full-time.mp3",
+  "lang": "en",
+  "text": "Full time: FC Northbridge 1-1 Harbour City We fought for every inch and Sergio Strand’s goal at 13' gave us the lead that felt like ours. We were punished straight after the break by Nakamura at 46', and the draw stings because we wanted all three. We created chances — at 9 carrying on would have raised the chance to score to 10.1%, and at 37 carrying on would have raised the chance to score to 11.5%. This was us: brave, clever in parts, and just short of the finish line."
+ },
+ {
+  "id": "player_focus-A20-es:player_focus-A20-es:demo-109-m01505-goal-insight",
+  "segment_id": "player_focus-A20-es",
+  "start_ms": 155500,
+  "duration_ms": 11616,
+  "file": "audio/player_focus-A20-es__demo-109-m01505-goal-insight.mp3",
+  "lang": "es",
+  "text": "Ningún ajuste defensivo probado redujo de forma relevante la probabilidad de gol de Nakamura (probabilidad de gol: 4,6 %), así que el tanto fue el resultado razonable de su decisión."
+ },
+ {
+  "id": "player_focus-A20-es:player_focus-A20-es:demo-109-m02519-dangerous_turnover-insight",
+  "segment_id": "player_focus-A20-es",
+  "start_ms": 257900,
+  "duration_ms": 11232,
+  "file": "audio/player_focus-A20-es__demo-109-m02519-dangerous_turnover-insight.mp3",
+  "lang": "es",
+  "text": "Nakamura sufre el regate de Fairley y la pérdida; ninguna alternativa probada habría conservado el balón con más seguridad (probabilidad de conservar el balón: 26,5 %)."
+ },
+ {
+  "id": "player_focus-A20-es:player_focus-A20-es:demo-109-m02436-big_chance-insight",
+  "segment_id": "player_focus-A20-es",
+  "start_ms": 266900,
+  "duration_ms": 10464,
+  "file": "audio/player_focus-A20-es__demo-109-m02436-big_chance-insight.mp3",
+  "lang": "es",
+  "text": "Nakamura optó por tirar; desde su perspectiva fue una decisión razonable: ninguna alternativa probada fue claramente mejor (probabilidad de gol: 11,5 %)."
+ },
+ {
+  "id": "player_focus-A20-es:player_focus-A20-es:recap-full-time",
+  "segment_id": "player_focus-A20-es",
+  "start_ms": 308100,
+  "duration_ms": 41304,
+  "file": "audio/player_focus-A20-es__recap-full-time.mp3",
+  "lang": "es",
+  "text": "El partido de Nakamura Nakamura marcó el gol que dejó el 1-1 en el minuto 46 y su decisión para disparar fue razonable (probabilidad de gol: 4,6 %). Antes y después tuvo momentos de brillantez y duda: en el minuto 74 otra decisión de disparo también estaba justificada (probabilidad de gol: 11,5 %). En el minuto 76 un balón perdido tras driblar resultó peligroso, pero ninguna alternativa probada habría conservado claramente la posesión (probabilidad de conservar el balón: 26,5 %). Su lectura del juego merece elogios y críticas a partes iguales, porque eligió opciones con sentido aunque no siempre salieran bien."
+ }
+]
