@@ -1,0 +1,354 @@
+{
+ "_note": "Fictional league for the Sliding Doors demo. Every club, player and number is invented; standings are before this match (matchday 10). Only this match updates live; the other matchday-10 fixtures have not kicked off yet. season_ratings: average player rating (1-10) over the season so far, same formula as the live rating.",
+ "season": "Synthetic season",
+ "matchday": 10,
+ "clubs": [
+  {
+   "name": "Kingsmere Rovers",
+   "short": "KMR",
+   "color": "#0b7a4b",
+   "played": 9,
+   "won": 7,
+   "drawn": 1,
+   "lost": 1,
+   "gf": 21,
+   "ga": 8,
+   "form": "WWWDW",
+   "rivals": [
+    "ASV",
+    "NOR"
+   ]
+  },
+  {
+   "name": "Ashford Vale",
+   "short": "ASV",
+   "color": "#6b2fa3",
+   "played": 9,
+   "won": 6,
+   "drawn": 2,
+   "lost": 1,
+   "gf": 19,
+   "ga": 9,
+   "form": "WDWWL",
+   "rivals": [
+    "KMR",
+    "GRY"
+   ]
+  },
+  {
+   "name": "Ravenscar FC",
+   "short": "RVS",
+   "color": "#1f2937",
+   "played": 9,
+   "won": 5,
+   "drawn": 3,
+   "lost": 1,
+   "gf": 15,
+   "ga": 8,
+   "form": "DWWDW",
+   "rivals": [
+    "HCY",
+    "CGA"
+   ]
+  },
+  {
+   "name": "Castlegate Athletic",
+   "short": "CGA",
+   "color": "#8b1d3d",
+   "played": 9,
+   "won": 5,
+   "drawn": 2,
+   "lost": 2,
+   "gf": 14,
+   "ga": 10,
+   "form": "WLWWD",
+   "rivals": [
+    "RVS",
+    "THO"
+   ]
+  },
+  {
+   "name": "FC Northbridge",
+   "short": "NOR",
+   "color": "#d6262e",
+   "played": 9,
+   "won": 4,
+   "drawn": 4,
+   "lost": 1,
+   "gf": 13,
+   "ga": 9,
+   "form": "DWDWW",
+   "rivals": [
+    "HCY",
+    "KMR",
+    "SAL"
+   ]
+  },
+  {
+   "name": "Saltcombe Town",
+   "short": "SAL",
+   "color": "#e0a106",
+   "played": 9,
+   "won": 4,
+   "drawn": 4,
+   "lost": 1,
+   "gf": 12,
+   "ga": 9,
+   "form": "WDDLW",
+   "rivals": [
+    "NOR",
+    "HCY"
+   ]
+  },
+  {
+   "name": "Harbour City",
+   "short": "HCY",
+   "color": "#1f5fbf",
+   "played": 9,
+   "won": 4,
+   "drawn": 3,
+   "lost": 2,
+   "gf": 14,
+   "ga": 11,
+   "form": "LWWDW",
+   "rivals": [
+    "NOR",
+    "SAL",
+    "RVS"
+   ]
+  },
+  {
+   "name": "Thornbury Town",
+   "short": "THO",
+   "color": "#15803d",
+   "played": 9,
+   "won": 3,
+   "drawn": 3,
+   "lost": 3,
+   "gf": 12,
+   "ga": 11,
+   "form": "WLDDL",
+   "rivals": [
+    "CGA",
+    "FWP"
+   ]
+  },
+  {
+   "name": "Greyhaven SC",
+   "short": "GRY",
+   "color": "#64748b",
+   "played": 9,
+   "won": 3,
+   "drawn": 3,
+   "lost": 3,
+   "gf": 11,
+   "ga": 10,
+   "form": "DLWLD",
+   "rivals": [
+    "ASV",
+    "EWS"
+   ]
+  },
+  {
+   "name": "Eastwick Sporting",
+   "short": "EWS",
+   "color": "#0891b2",
+   "played": 9,
+   "won": 3,
+   "drawn": 3,
+   "lost": 3,
+   "gf": 10,
+   "ga": 10,
+   "form": "LWDDW",
+   "rivals": [
+    "GRY",
+    "PEN"
+   ]
+  },
+  {
+   "name": "Millbrook Athletic",
+   "short": "MLB",
+   "color": "#a16207",
+   "played": 9,
+   "won": 3,
+   "drawn": 3,
+   "lost": 3,
+   "gf": 11,
+   "ga": 12,
+   "form": "WDLLD",
+   "rivals": [
+    "OAK",
+    "LOW"
+   ]
+  },
+  {
+   "name": "Westholme FC",
+   "short": "WHO",
+   "color": "#7c3aed",
+   "played": 9,
+   "won": 2,
+   "drawn": 3,
+   "lost": 4,
+   "gf": 10,
+   "ga": 12,
+   "form": "LLDDW",
+   "rivals": [
+    "BRB",
+    "STN"
+   ]
+  },
+  {
+   "name": "Brackenford Borough",
+   "short": "BRB",
+   "color": "#be185d",
+   "played": 9,
+   "won": 2,
+   "drawn": 3,
+   "lost": 4,
+   "gf": 9,
+   "ga": 12,
+   "form": "DLLDL",
+   "rivals": [
+    "WHO",
+    "DUN"
+   ]
+  },
+  {
+   "name": "Lowmarsh Rovers",
+   "short": "LOW",
+   "color": "#0f766e",
+   "played": 9,
+   "won": 2,
+   "drawn": 3,
+   "lost": 4,
+   "gf": 9,
+   "ga": 11,
+   "form": "DLLWD",
+   "rivals": [
+    "MLB",
+    "FWP"
+   ]
+  },
+  {
+   "name": "Stonebridge Town",
+   "short": "STN",
+   "color": "#475569",
+   "played": 9,
+   "won": 2,
+   "drawn": 3,
+   "lost": 4,
+   "gf": 8,
+   "ga": 12,
+   "form": "LDWLD",
+   "rivals": [
+    "WHO",
+    "OAK"
+   ]
+  },
+  {
+   "name": "Fenwick Park",
+   "short": "FWP",
+   "color": "#65a30d",
+   "played": 9,
+   "won": 2,
+   "drawn": 3,
+   "lost": 4,
+   "gf": 9,
+   "ga": 13,
+   "form": "DLLWD",
+   "rivals": [
+    "THO",
+    "LOW"
+   ]
+  },
+  {
+   "name": "Oakhurst Athletic",
+   "short": "OAK",
+   "color": "#92400e",
+   "played": 9,
+   "won": 2,
+   "drawn": 2,
+   "lost": 5,
+   "gf": 8,
+   "ga": 14,
+   "form": "LWLDL",
+   "rivals": [
+    "MLB",
+    "STN"
+   ]
+  },
+  {
+   "name": "Penmore Harriers",
+   "short": "PEN",
+   "color": "#1e3a8a",
+   "played": 9,
+   "won": 1,
+   "drawn": 3,
+   "lost": 5,
+   "gf": 7,
+   "ga": 13,
+   "form": "DLDLL",
+   "rivals": [
+    "EWS",
+    "DUN"
+   ]
+  },
+  {
+   "name": "Duncaster Vale",
+   "short": "DUN",
+   "color": "#9f1239",
+   "played": 9,
+   "won": 1,
+   "drawn": 3,
+   "lost": 5,
+   "gf": 7,
+   "ga": 15,
+   "form": "LLDLD",
+   "rivals": [
+    "BRB",
+    "PEN"
+   ]
+  },
+  {
+   "name": "Ryecliffe FC",
+   "short": "RYE",
+   "color": "#0e7490",
+   "played": 9,
+   "won": 1,
+   "drawn": 2,
+   "lost": 6,
+   "gf": 6,
+   "ga": 16,
+   "form": "LDLLL",
+   "rivals": [
+    "DUN",
+    "PEN"
+   ]
+  }
+ ],
+ "season_ratings": {
+  "Tomas Vell": 6.7,
+  "Idris Calloway": 6.5,
+  "Mateo Brann": 7.0,
+  "Kofi Asante-Rhys": 6.4,
+  "Lukas Hagen": 6.9,
+  "Ruben Saldo": 6.7,
+  "Noah Fairley": 6.4,
+  "Emil Strand": 6.9,
+  "Sami Okoro": 6.3,
+  "Leo Marchetti": 6.8,
+  "Jonah Pike": 6.4,
+  "Arne Dahl": 6.4,
+  "Marcus Quill": 6.8,
+  "Yusuf Benali": 7.2,
+  "Dario Kesh": 6.4,
+  "Oscar Lindqvist": 6.5,
+  "Felix Ondo": 7.0,
+  "Callum Reyes": 7.3,
+  "Theo Varga": 6.9,
+  "Ilan Moreau": 6.7,
+  "Kai Nakamura": 7.4,
+  "Bastian Holt": 6.4
+ },
+ "default_rating": 6.6
+}
