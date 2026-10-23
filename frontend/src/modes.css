@@ -155,8 +155,7 @@
   color: var(--muted);
 }
 .hud-sub b,
-.hud-line b,
-.hud-foot b {
+.hud-line b {
   color: var(--text);
   font-variant-numeric: tabular-nums;
 }
@@ -203,21 +202,6 @@
 .hud-bar.diff i {
   background: linear-gradient(90deg, var(--ok), var(--gold), var(--bad));
 }
-.hud-rhythm {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: calc(var(--u) * 0.8);
-  align-items: end;
-}
-.hud-big {
-  font: 800 calc(var(--u) * 1.8) / 1 var(--cond);
-  font-variant-numeric: tabular-nums;
-}
-.hud-big small {
-  font-size: 0.5em;
-  color: var(--muted);
-  font-weight: 600;
-}
 .hud-trend {
   font: 700 calc(var(--u) * 0.8) var(--cond);
   text-transform: uppercase;
@@ -230,16 +214,6 @@
 .hud-trend.falling {
   color: #ff8a8a;
 }
-.hud-spark {
-  width: 100%;
-  height: calc(var(--u) * 2.6);
-}
-.hud-spark polyline {
-  fill: none;
-  stroke: var(--gold);
-  stroke-width: 1.6;
-  vector-effect: non-scaling-stroke;
-}
 .hud-line {
   font-size: calc(var(--u) * 0.95);
 }
@@ -249,11 +223,50 @@
 .hud-oc.bad {
   color: var(--bad);
 }
-.hud-foot {
-  margin-top: calc(var(--u) * 0.5);
-  padding-top: calc(var(--u) * 0.5);
-  border-top: 1px solid var(--line);
-  color: var(--muted);
+.hud-hint {
+  margin-top: calc(var(--u) * 0.3);
+  font-size: calc(var(--u) * 0.72);
+  line-height: 1.3;
+  color: #6f7a8b;
+}
+.hud-hero .ps-gauge {
+  height: calc(var(--u) * 0.7);
+}
+.hud-hero .hud-gauge-labels {
+  font-size: calc(var(--u) * 1);
+}
+.hud-hero .hud-sub {
+  font-size: calc(var(--u) * 1);
+}
+.hud-split {
+  display: grid;
+  grid-template-columns: calc(var(--u) * 2.6) 1fr calc(var(--u) * 2.6);
+  align-items: center;
+  gap: calc(var(--u) * 0.5);
+  font: 700 calc(var(--u) * 1.1) var(--cond);
+  font-variant-numeric: tabular-nums;
+}
+.hud-split b:last-child {
+  text-align: right;
+}
+.hud-split div {
+  display: flex;
+  height: calc(var(--u) * 0.45);
+  border-radius: 99px;
+  overflow: hidden;
+  gap: 2px;
+}
+.hud-split i {
+  display: block;
+  height: 100%;
+  transition: width 0.8s var(--ease);
+}
+.hud-line-inline {
+  margin-left: calc(var(--u) * 0.5);
+  font: 500 calc(var(--u) * 0.9) var(--sans);
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text);
 }
 
 /* analyst Sliding Doors: hypotheses panel above the card, right */
@@ -406,6 +419,11 @@
   font-size: calc(var(--u) * 1.05);
   font-weight: 600;
   opacity: 0.92;
+}
+.fan-hint {
+  margin-top: calc(var(--u) * 0.35);
+  font-size: calc(var(--u) * 0.72);
+  color: rgba(255, 255, 255, 0.55);
 }
 .fan-bar {
   display: grid;

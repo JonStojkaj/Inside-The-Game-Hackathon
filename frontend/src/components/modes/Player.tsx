@@ -36,7 +36,7 @@ export function PlayerCard({ pid, lang }: { pid: string; lang: Lang }) {
           </div>
         </div>
       </div>
-      <div className="pc-speed">
+      <div className="pc-speed" title={t(lang, 'pc_speed_hint')}>
         <div className="pc-speed-num">
           {Math.round(speed)}
           <small>km/h</small>
@@ -47,19 +47,19 @@ export function PlayerCard({ pid, lang }: { pid: string; lang: Lang }) {
         <div className="pc-speed-label">{t(lang, 'speed')}</div>
       </div>
       <div className="pc-stats">
-        <div>
+        <div title={t(lang, 'pc_top_hint')}>
           <b>{fmtNum(lang, top)}</b>
           <span>{t(lang, 'top_speed')} km/h</span>
         </div>
-        <div>
+        <div title={t(lang, 'pc_acc_hint')}>
           <b>{ps && ps.passes > 0 ? fmtPct(lang, ps.passes_completed / ps.passes, 0) : '–'}</b>
           <span>{t(lang, 'pass_acc')}</span>
         </div>
-        <div>
+        <div title={t(lang, 'pc_diff_hint')}>
           <b>{avgDiff == null ? '–' : Math.round(avgDiff)}</b>
           <span>{t(lang, 'avg_difficulty')}</span>
         </div>
-        <div>
+        <div title={t(lang, 'pc_dec_hint')}>
           <b>{rec.total ? `${rec.right}/${rec.total}` : '–'}</b>
           <span>
             {t(lang, 'decisions')} ✓

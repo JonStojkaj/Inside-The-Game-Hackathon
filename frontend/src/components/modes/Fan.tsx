@@ -16,29 +16,19 @@ export function FanMomentum({ team, lang }: { team: Team; lang: Lang }) {
   const s = statsAt(m.bundle, frame)
   const club = m.club(team)
   const opp = m.club(other(team))
-  const score = scoreAt(m, frame)
-  const mine = score[team === 'home' ? 0 : 1]
-  const theirs = score[team === 'home' ? 1 : 0]
   // our share of control (completed passes); falls back to possession
   const ct = s?.control.control_team
   const share = s ? (ct && s.control.control_share != null ? (ct === team ? s.control.control_share : 1 - s.control.control_share) : s.teams[team].possession) : 0.5
   const chaos = s?.control.chaos ?? 0
   const mood = chaos > 0.6 ? t(lang, 'fan_chaos') : share >= 0.5 ? t(lang, 'fan_on_top') : tf(lang, 'fan_pushed', { club: opp.short })
-  const state = mine > theirs ? t(lang, 'fan_lead') : mine < theirs ? t(lang, 'fan_trail') : t(lang, 'fan_level')
   return (
     <div className="fan-card">
       <div className="fan-club">
         <span className="fan-crest">{club.short}</span>
         <span className="fan-name">{club.name}</span>
       </div>
-      <div className="fan-state">
-        {state}{' '}
-        <b>
-          {mine}–{theirs}
-        </b>
-      </div>
       <div className="fan-mood">{mood}</div>
-      <div className="fan-bar">
+      <div className="fan-bar" title={t(lang, 'fan_momentum')}>
         <span>{t(lang, 'fan_us')}</span>
         <div>
           <i style={{ width: `${share * 100}%` }} />
@@ -46,6 +36,7 @@ export function FanMomentum({ team, lang }: { team: Team; lang: Lang }) {
         </div>
         <span>{opp.short}</span>
       </div>
+      <div className="fan-hint">{t(lang, 'fan_momentum')}</div>
     </div>
   )
 }
