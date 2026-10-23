@@ -40,7 +40,8 @@ REPO = Path(__file__).resolve().parents[3]
 DEFAULT_EXPORT_DIR = REPO / "data" / "export"
 DEFAULT_FRONTEND_DIR = REPO / "frontend" / "dist"
 MATCH_ID = re.compile(r"^[A-Za-z0-9_-]+$")
-SERVED = {*FILES, VIDEO_FILE}
+SERVED = {*FILES, VIDEO_FILE, "audio.json", "production_log.json"}
+AUDIO_CLIP = re.compile(r"^[A-Za-z0-9_-]+\.mp3$")  # commentator clips in <export>/audio/
 
 
 def _configure_monitoring() -> None:
@@ -96,6 +97,15 @@ def create_app(export_dir: str | Path | None = None, frontend_dir: str | Path | 
         if not path.is_file():
             raise HTTPException(404, f"{file} not exported for {match_id}")
         return FileResponse(path)
+
+    @app.get("/api/matches/{match_id}/audio/{clip}")
+    def audio_clip(match_id: str, clip: str) -> FileResponse:
+        if not AUDIO_CLIP.match(clip):
+            raise HTTPException(404, f"unknown clip {clip!r}")
+        path = folder(match_id) / "audio" / clip
+        if not path.is_file():
+            raise HTTPException(404, f"{clip} not exported for {match_id}")
+        return FileResponse(path, media_type="audio/mpeg")
 
     @app.websocket("/api/matches/{match_id}/live")
     async def live(

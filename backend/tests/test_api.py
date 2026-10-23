@@ -102,3 +102,16 @@ def test_serves_export_folder_and_built_frontend(root, tmp_path):
 
 def test_no_frontend_mount_without_build(client):
     assert client.get("/").status_code == 404
+
+
+def test_commentator_audio_is_served_safely(root, client):
+    match_dir = next(p for p in root.iterdir() if (p / "match.json").exists())
+    (match_dir / "audio").mkdir(exist_ok=True)
+    (match_dir / "audio" / "analyst-en__m1.mp3").write_bytes(b"ID3fake")
+    (match_dir / "audio.json").write_text("[]")
+    mid = match_dir.name
+    assert client.get(f"/api/matches/{mid}/audio.json").json() == []
+    resp = client.get(f"/api/matches/{mid}/audio/analyst-en__m1.mp3")
+    assert resp.status_code == 200 and resp.headers["content-type"] == "audio/mpeg"
+    assert client.get(f"/api/matches/{mid}/audio/..%2Fmatch.json").status_code == 404
+    assert client.get(f"/api/matches/{mid}/audio/notes.txt").status_code == 404
