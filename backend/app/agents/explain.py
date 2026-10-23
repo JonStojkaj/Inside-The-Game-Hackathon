@@ -67,7 +67,8 @@ You get what really happened, the question, and the simulated results of each hy
 Accept a hypothesis only if the input marks it as passing the rules (meaningful, stable across seeds and
 football-plausible). Then write the claim viewers will see: 1-2 neutral sentences answering the question,
 only about accepted findings, using only the percentages and point changes given in the input (never compute
-new numbers). Use player names, never ids. If nothing was accepted, say the real decision was a reasonable one."""
+new numbers). Use player names, never ids. If nothing was accepted, say the real decision was a reasonable one.
+Speak to viewers: never mention "the input", "rules", "criteria", hypotheses or experiments."""
 
 QUESTIONS = {
     "goal": "A goal was scored. What made it possible? If what_really_happened is the assist (the pass to the scorer), "
@@ -233,11 +234,11 @@ class ExplainTeam:
             if not self.available(ep):
                 break
             ep.round_no += 1
-            self.choose(ep, self.llm.complete(ANALYST_SYSTEM, self.analyst_prompt(ep), AnalystPlan, "analyst"))
+            self.choose(ep, self.llm.complete(self.analyst_system(), self.analyst_prompt(ep), AnalystPlan, "analyst"))
             self.experiment(ep)
             if not self.pending(ep):
                 break
-            self.judge(ep, self.llm.complete(CRITIC_SYSTEM, self.critic_prompt(ep), CriticReview, "critic"))
+            self.judge(ep, self.llm.complete(self.critic_system(), self.critic_prompt(ep), CriticReview, "critic"))
             if claimable(ep.base, ep.accepted, ep.key):
                 break
         return self.finalize(ep)
@@ -253,6 +254,12 @@ class ExplainTeam:
     def available(ep: Episode) -> dict[str, Experiment]:
         """The menu minus what was already tried: the only experiments the Analyst may pick (or run)."""
         return {k: v for k, v in ep.menu.items() if k not in ep.tried}
+
+    def analyst_system(self) -> str:
+        return ANALYST_SYSTEM
+
+    def critic_system(self) -> str:
+        return CRITIC_SYSTEM
 
     def analyst_prompt(self, ep: Episode) -> str:
         return self._analyst_prompt(ep.ctx, ep.base, self.available(ep), ep.hypotheses, ep.key)

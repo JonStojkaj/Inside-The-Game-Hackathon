@@ -27,8 +27,6 @@ from typing_extensions import Never
 
 from app.agents.experiments import ExperimentRunner
 from app.agents.explain import (
-    ANALYST_SYSTEM,
-    CRITIC_SYSTEM,
     METRIC_LABEL,
     AnalystPlan,
     CriticReview,
@@ -127,7 +125,7 @@ class AnalystExecutor(Executor):
             return
         ep.round_no += 1
         ep.path.append("analyst")
-        plan = await self.team.runtime.arun("analyst", ANALYST_SYSTEM + ANALYST_TOOLS, self.team.analyst_prompt(ep), AnalystPlan,
+        plan = await self.team.runtime.arun("analyst", self.team.analyst_system() + ANALYST_TOOLS, self.team.analyst_prompt(ep), AnalystPlan,
                                             tools=analyst_tools(self.team, ep))
         self.team.choose(ep, plan)
         await ctx.send_message(Handoff(ep, "experimenter"))
@@ -155,7 +153,7 @@ class CriticExecutor(Executor):
     async def review(self, msg: Handoff, ctx: WorkflowContext[Handoff]) -> None:
         ep = msg.ep
         ep.path.append("critic")
-        review = await self.team.runtime.arun("critic", CRITIC_SYSTEM, self.team.critic_prompt(ep), CriticReview)
+        review = await self.team.runtime.arun("critic", self.team.critic_system(), self.team.critic_prompt(ep), CriticReview)
         self.team.judge(ep, review)
         await ctx.send_message(Handoff(ep, "analyst" if self.team.wants_retry(ep) else "finalize"))
 
