@@ -1,9 +1,10 @@
 import { useEffect, useRef } from 'react'
 import { useMatch } from '../lib/context'
 import { frameAt, PITCH_L, PITCH_W } from '../lib/match'
-import type { XY } from '../types'
+import { ACTUAL_MS, ACTUAL_S, ALT_MS, LOAD_MS, phaseAt, storyElapsed, untilRestart } from '../lib/story'
+import type { MatchBundle, XY } from '../types'
 
-type Ghosts = { ghost_paths: XY[][]; alt_ghost_paths: XY[][] }
+type Ghosts = { ghost_paths: XY[][]; alt_ghost_paths: XY[][]; decision_frame: number }
 
 export interface PitchTag {
   playerId: string
@@ -14,7 +15,11 @@ export interface PitchTag {
 export interface PitchProps {
   /** Freeze on this frame (Sliding Doors) instead of following the clock. */
   frozenFrame?: number | null
-  ghosts?: { insight: Ghosts; since: number } | null
+  /**
+   * Sliding Doors story (lib/story.ts): ghost futures fan in, the real action replays, then ONE
+   * representative alternative (`alt`, the carrier runs with the ball when `carry`) plays out.
+   */
+  ghosts?: { insight: Ghosts; since: number; alt: XY[] | null; carry: boolean } | null
   tags?: PitchTag[]
   focusPlayer?: string | null
   /** Camera follows the focus player (player-focus mode) instead of showing the whole pitch. */
@@ -26,7 +31,6 @@ export interface PitchProps {
 
 const ALT = '#ffc83d'
 const REAL = '#ffffff'
-const GHOST_MS = 2600
 
 interface View {
   cx: number
@@ -36,9 +40,25 @@ interface View {
 const FULL_VIEW: View = { cx: PITCH_L / 2, cy: PITCH_W / 2, span: PITCH_L }
 const views = new WeakMap<Ghosts, View>()
 
-/** Frame the ghost futures (plus margin), keeping the lower part of the screen free for the card. */
-function ghostView(ins: Ghosts): View {
-  const pts = [...ins.ghost_paths, ...ins.alt_ghost_paths].flat()
+/** The real ball path replayed in the "what happened" phase. */
+const realCache = new WeakMap<Ghosts, XY[]>()
+function realPath(bundle: MatchBundle, ins: Ghosts): XY[] {
+  const hit = realCache.get(ins)
+  if (hit) return hit
+  const out: XY[] = []
+  const n = ACTUAL_S * bundle.match.fps
+  for (let k = 0; k <= n; k++) {
+    const b = frameAt(bundle, ins.decision_frame + k).ball
+    if (k > 0 && Math.hypot(b[0] - out[out.length - 1][0], b[1] - out[out.length - 1][1]) > 15) break // restart
+    out.push([b[0], b[1]])
+  }
+  realCache.set(ins, out)
+  return out
+}
+
+/** Frame the ghost futures and the real path (plus margin), keeping the lower part free for the card. */
+function ghostView(ins: Ghosts, real: XY[]): View {
+  const pts = [...ins.ghost_paths.map(untilRestart), ...ins.alt_ghost_paths.map(untilRestart)].flat().concat(real, real)
   if (!pts.length) return FULL_VIEW
   // 5-95 % of the points: a few stray futures must not zoom the camera out
   const q = (v: number[], p: number) => v.sort((a, b) => a - b)[Math.floor(p * (v.length - 1))]
@@ -59,6 +79,19 @@ function followView([x, y]: XY): View {
 }
 
 const easeOut = (t: number) => 1 - Math.pow(1 - Math.min(Math.max(t, 0), 1), 3)
+const easeInOut = (t: number) => {
+  const x = Math.min(Math.max(t, 0), 1)
+  return x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2
+}
+
+/** The point at fraction k along a path (by sample index, interpolated). */
+function along(path: XY[], k: number): XY {
+  const u = Math.min(Math.max(k, 0), 1) * (path.length - 1)
+  const i = Math.floor(u)
+  const j = Math.min(i + 1, path.length - 1)
+  const f = u - i
+  return [path[i][0] + (path[j][0] - path[i][0]) * f, path[i][1] + (path[j][1] - path[i][1]) * f]
+}
 
 function shade(hex: string, k: number): string {
   const n = parseInt(hex.slice(1), 16)
@@ -108,7 +141,7 @@ export function Pitch(props: PitchProps) {
       // focus player
       const fi = p.follow && p.focusPlayer ? m.playerIdx.get(p.focusPlayer) : undefined
       const target = p.ghosts
-        ? (views.get(p.ghosts.insight) ?? views.set(p.ghosts.insight, ghostView(p.ghosts.insight)).get(p.ghosts.insight)!)
+        ? (views.get(p.ghosts.insight) ?? views.set(p.ghosts.insight, ghostView(p.ghosts.insight, realPath(bundle, p.ghosts.insight))).get(p.ghosts.insight)!)
         : fi != null
           ? followView(frameAt(bundle, p.frozenFrame ?? pb.frame).players[fi])
           : FULL_VIEW
@@ -128,12 +161,32 @@ export function Pitch(props: PitchProps) {
 
       if (!p.transparent) drawPitch(ctx, w, h, s, X, Y)
 
-      const frozen = p.frozenFrame != null
-      const f = frozen ? p.frozenFrame! : pb.frame
+      let frozen = p.frozenFrame != null
+      let f = frozen ? p.frozenFrame! : pb.frame
+      // Sliding Doors story: which phase, and how far into it
+      const g = p.ghosts
+      const el = g ? storyElapsed(g.since, Boolean(g.alt), now) : 0
+      const phase = g ? phaseAt(el, Boolean(g.alt)) : null
+      const kActual = easeInOut((el - LOAD_MS) / ACTUAL_MS)
+      const kAlt = easeInOut((el - LOAD_MS - ACTUAL_MS) / ALT_MS)
+      const real = g ? realPath(bundle, g.insight) : []
+      if (g && phase === 'actual') {
+        f = g.insight.decision_frame + kActual * (real.length - 1)
+        frozen = false
+      }
       const fv = frameAt(bundle, f)
+      let altBall: XY | null = null
+      if (g && g.alt && phase === 'alt') {
+        altBall = along(g.alt, kAlt)
+        // a dribble: the player on the ball at the decision runs with it
+        if (g.carry && fv.owner >= 0) {
+          const d: XY = [altBall[0] - g.alt[0][0], altBall[1] - g.alt[0][1]]
+          fv.players = fv.players.map((q, i) => (i === fv.owner ? [q[0] + d[0], q[1] + d[1]] : q))
+        }
+      }
 
       // ball trail (last second)
-      if (!frozen) {
+      if (!frozen && !g) {
         ctx.lineCap = 'round'
         for (let k = 1; k <= 10; k++) {
           const a = frameAt(bundle, Math.max(0, f - k)).ball
@@ -172,11 +225,14 @@ export function Pitch(props: PitchProps) {
         ctx.setLineDash([])
       }
 
-      // ghosts: real futures first, then the alternative fanning out on top
-      if (p.ghosts) {
-        const el = now - p.ghosts.since
-        drawGhosts(ctx, p.ghosts.insight.ghost_paths, REAL, 0.2, easeOut(el / GHOST_MS), X, Y, s)
-        drawGhosts(ctx, p.ghosts.insight.alt_ghost_paths, ALT, 0.6, easeOut((el - GHOST_MS * 0.55) / GHOST_MS), X, Y, s)
+      // ghosts: the simulated futures fan in while "simulating", then stay faint behind the story
+      if (g) {
+        const loading = phase === 'loading'
+        drawGhosts(ctx, g.insight.ghost_paths, REAL, loading ? 0.22 : 0.07, easeOut(el / (LOAD_MS * 0.8)), X, Y, s)
+        drawGhosts(ctx, g.insight.alt_ghost_paths, ALT, loading ? 0.4 : 0.1, easeOut((el - LOAD_MS * 0.3) / (LOAD_MS * 0.7)), X, Y, s)
+        const realK = phase === 'loading' ? 0 : phase === 'actual' ? kActual : 1
+        drawStoryPath(ctx, real, REAL, phase === 'alt' || phase === 'result' ? 0.55 : 0.95, realK, X, Y, s)
+        if (g.alt) drawStoryPath(ctx, g.alt, ALT, 1, phase === 'alt' ? kAlt : phase === 'result' ? 1 : 0, X, Y, s)
       }
 
       // players
@@ -239,7 +295,7 @@ export function Pitch(props: PitchProps) {
       }
 
       // ball: lifts and grows with height, shadow stays on the ground
-      const [bx, by, bz] = fv.ball
+      const [bx, by, bz] = altBall ? [altBall[0], altBall[1], 0] : fv.ball
       const br = Math.max(3.5, s * 0.55) * (1 + Math.min(bz, 8) * 0.06)
       ctx.fillStyle = 'rgba(0,0,0,0.45)'
       ctx.beginPath()
@@ -255,7 +311,7 @@ export function Pitch(props: PitchProps) {
       ctx.strokeStyle = 'rgba(0,0,0,0.5)'
       ctx.lineWidth = 1
       ctx.stroke()
-      if (p.ghosts) drawDecision(ctx, X(bx), Y(by) - bz * s * 0.3, br * 2.2, now)
+      if (g && (phase === 'loading' || phase === 'result')) drawDecision(ctx, X(bx), Y(by) - bz * s * 0.3, br * 2.2, now)
 
       raf = requestAnimationFrame(draw)
     }
@@ -382,28 +438,6 @@ function drawGhosts(
   ctx.globalAlpha = 1
 }
 
-const restartCache = new WeakMap<XY[], XY[]>()
-/**
- * A rollout keeps running after a goal or the ball going out, and the restart teleports the ball
- * (e.g. 25 m -> goal line -> centre spot). Draw each future only up to that teleport.
- */
-function untilRestart(path: XY[]): XY[] {
-  const hit = restartCache.get(path)
-  if (hit) return hit
-  let n = path.length
-  for (let k = 1; k < path.length; k++) {
-    const d = Math.hypot(path[k][0] - path[k - 1][0], path[k][1] - path[k - 1][1])
-    // > 22 m in one sample: a restart (the first step may be the shot or pass itself)
-    if (d > 22 && k > 1) {
-      n = k
-      break
-    }
-  }
-  const out = path.slice(0, n)
-  restartCache.set(path, out)
-  return out
-}
-
 /** Pulsing ring where the decision was taken (the frozen ball). */
 function drawDecision(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, now: number) {
   const k = (now % 1600) / 1600
@@ -442,4 +476,48 @@ function drawTag(ctx: CanvasRenderingContext2D, label: string, x: number, y: num
   ctx.textBaseline = 'middle'
   ctx.fillText(label, x + 1.5, y - ph / 2 + 1)
   ctx.globalAlpha = 1
+}
+
+/** One story path (the real ball path, or the chosen alternative): bold, glowing, with an arrow head. */
+function drawStoryPath(
+  ctx: CanvasRenderingContext2D,
+  path: XY[],
+  color: string,
+  alpha: number,
+  k: number,
+  X: (x: number) => number,
+  Y: (y: number) => number,
+  s: number,
+) {
+  if (k <= 0 || path.length < 2) return
+  const upto = k * (path.length - 1)
+  const pts: XY[] = path.slice(0, Math.floor(upto) + 1)
+  if (upto < path.length - 1) pts.push(along(path, k))
+  ctx.save()
+  ctx.globalAlpha = alpha
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  ctx.strokeStyle = color
+  ctx.shadowColor = color
+  ctx.shadowBlur = 12
+  ctx.lineWidth = Math.max(3, Math.min(s * 0.6, 6))
+  ctx.setLineDash([])
+  ctx.beginPath()
+  ctx.moveTo(X(pts[0][0]), Y(pts[0][1]))
+  for (const q of pts.slice(1)) ctx.lineTo(X(q[0]), Y(q[1]))
+  ctx.stroke()
+  // arrow head at the tip
+  const a = pts[pts.length - 1]
+  let b = pts[Math.max(0, pts.length - 2)]
+  for (let i = pts.length - 2; i >= 0 && Math.hypot(a[0] - pts[i][0], a[1] - pts[i][1]) < 1; i--) b = pts[i]
+  const ang = Math.atan2(Y(a[1]) - Y(b[1]), X(a[0]) - X(b[0]))
+  const L = Math.max(10, s * 1.6)
+  ctx.fillStyle = color
+  ctx.beginPath()
+  ctx.moveTo(X(a[0]), Y(a[1]))
+  ctx.lineTo(X(a[0]) - L * Math.cos(ang - 0.45), Y(a[1]) - L * Math.sin(ang - 0.45))
+  ctx.lineTo(X(a[0]) - L * Math.cos(ang + 0.45), Y(a[1]) - L * Math.sin(ang + 0.45))
+  ctx.closePath()
+  ctx.fill()
+  ctx.restore()
 }

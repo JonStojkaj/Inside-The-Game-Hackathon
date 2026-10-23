@@ -9,6 +9,7 @@ import '@fontsource-variable/inter'
 import './index.css'
 import './modes.css'
 import './layout.css'
+import './polish.css'
 import App from './App.tsx'
 
 createRoot(document.getElementById('root')!).render(

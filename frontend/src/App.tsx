@@ -9,7 +9,6 @@ import { Transport } from './components/Transport'
 import { loadMatch, resolveSource } from './data/source'
 import { unlockAudio } from './lib/audio'
 import { MatchContext, type DoorsBreak, type MatchCtx } from './lib/context'
-import { resetExplainer } from './lib/explainer'
 import { indexMatch, timelineFrames } from './lib/match'
 import { doorsForMoment, doorsOverlays, overlayList } from './lib/overlays'
 import { createPlayback } from './lib/playback'
@@ -21,10 +20,16 @@ export default function App() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    // one bundle per mount: a second load (StrictMode runs effects twice in dev) would rebuild the
+    // clock under demo takes that already seeked it (?moment, ?f)
+    let live = true
     const src = resolveSource()
     loadMatch(src)
-      .then(setBundle)
-      .catch((e: unknown) => setError(`${src.kind} ${src.base}: ${e instanceof Error ? e.message : String(e)}`))
+      .then((b) => live && setBundle(b))
+      .catch((e: unknown) => live && setError(`${src.kind} ${src.base}: ${e instanceof Error ? e.message : String(e)}`))
+    return () => {
+      live = false
+    }
   }, [])
 
   if (error) return <div className="splash error">Could not load match data · {error}</div>
@@ -269,7 +274,6 @@ function Player({ bundle }: { bundle: MatchBundle }) {
             onDone={(p) => {
               choose(p)
               setOnboarding(false)
-              resetExplainer()
               // the answer was a click: audio is unlocked, so the match can start right away
               if (!q.has('shot')) pb.play()
             }}
