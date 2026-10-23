@@ -1,5 +1,6 @@
 import type { EventType, Lang, OverlaysBySegment, PlayerInfo, ProfileMode, Team, ViewerProfile } from '../types'
 import { EXTRA } from './strings'
+import { UX } from './strings-ux'
 
 /** Same rule as ViewerProfile.segment_id in the backend. */
 export function segmentId(p: ViewerProfile): string {
@@ -76,9 +77,9 @@ const BASE: Record<Lang, Dict> = {
 }
 
 const T: Record<Lang, Dict> = {
-  en: { ...BASE.en, ...EXTRA.en },
-  de: { ...BASE.de, ...EXTRA.de },
-  es: { ...BASE.es, ...EXTRA.es },
+  en: { ...BASE.en, ...EXTRA.en, ...UX.en },
+  de: { ...BASE.de, ...EXTRA.de, ...UX.de },
+  es: { ...BASE.es, ...EXTRA.es, ...UX.es },
 }
 
 const EVENTS: Record<Lang, Partial<Record<EventType, string>>> = {

@@ -75,11 +75,34 @@ Types in `src/types.ts` mirror `backend/app/models/__init__.py`.
   During Sliding Doors the picture cross-fades to the pitch. Without video, or if the browser cannot
   decode it (needs H.264, yuv420p), the pitch is shown. Test bundle: `public/dev/` (gitignored), built
   with `sync-export.mjs` from a GRF render; `?syncdebug` prints data frame vs video frame.
+- **Match story strip** (bottom, shared by every view incl. the producer view, `MatchStory.tsx`): the
+  scrubber is a momentum chart: home share of control above the line, away below (from
+  `stats.json` `control`, smoothed), chaos as the gold band underneath, goals as gold lines. Key moments
+  (`moments.json`) sit above it as chips with icon + minute; hover = one line on why it mattered (score
+  change for goals, "would have made it 1–1" for big chances, the insight verdict otherwise); click =
+  that moment's Sliding Doors on every screen (or a jump 4 s before it when there is no insight).
 - Transport: space play/pause, ←/→ ±5 s, `1`/`5`/`0` speed 1×/5×/10×, Esc closes a manual Sliding Doors.
-  Diamonds on the timeline are moments (click = jump 4 s before); `SD1..n` opens an insight's
-  Sliding Doors on every screen.
-- Demo takes: `?view=split&f=1695&speed=1&play` starts at a frame (`scripts/shots.mjs` lists all takes,
-  including each single-viewer mode at f=1695). `?tv` starts in TV mode,
+- **First-time clarity**: after onboarding a dismissible hint above the play button ("Press play ...",
+  `?hint` forces it); the first Sliding Doors card a viewer sees says "We replayed this moment 1,500
+  times ..." (rollouts per seed × seeds: `insight.numbers.n_rollouts` / `n_seeds` if present, else
+  500 × the seeds in the rollout evidence ids). Top bar: profile left; Producer view, TV view and the
+  commentary toggle right.
+- **Stats per mode**: one hero element each, every number with a plain-language line/tooltip. Analyst:
+  control-vs-chaos gauge (+ tempo), pressing, xG flow (cumulative xG from shot events), last pass
+  difficulty. Club fan: only the us-vs-them momentum bar. Player focus: the player card. Casual: the
+  score (plus goal / big-chance cards).
+- **Commentator** (`Commentator.tsx`): optional `audio.json` next to the other files,
+  `[{id, segment_id, start_ms, duration_ms, file: "audio/<name>.mp3", lang, text}]`. Clips of the
+  viewer's exact segment (or `"*"`) start when the clock crosses `start_ms`, only while playing at 1×;
+  pause, seek or another speed stops them. Caption "🎙 Commentator" + text while a clip runs (also when
+  muted). Toggle in the top bar (only shown when the export has audio); on by default, audible after the
+  first click/key (autoplay policy). Producer view: only the first column speaks. Local stub:
+  `public/dev/audio-test/` (gitignored: symlinks to demo-109 + `audio.json` + a `say` mp3), shot
+  `9-commentator` (`AUDIO_SRC=...` to point elsewhere; headless virtual time barely advances the clock,
+  so check playback in a real browser).
+- Demo takes: `?view=split&f=1600&speed=1&play` starts at a frame (`scripts/shots.mjs` lists all takes
+  on demo-109: onboarding, analyst + strip + hint, analyst Sliding Doors, fan, player, casual, producer
+  view at the 46' Sliding Doors, control room, recap). `?tv` starts in TV mode,
   `?cr=<insight id>` picks the control-room log, `?shot` skips enter animations (screenshots).
   §16 shots on full-34: 3-up live `f=1580`, 3-up Sliding Doors (all three screens) `f=1695`,
   broadcast Sliding Doors `f=2129`, control room `view=control&f=2131&cr=full-34-m01663-decisive_pass-insight`,
@@ -141,3 +164,6 @@ of the same replay. Ghost paths are cut at the first restart teleport.
 - player_focus-A20-es gets `player_tag` overlays for H20 (Marchetti) instead of A20 (Nakamura).
 - Ghost paths continue through restarts (shot, then ball teleported to the centre spot).
 - `stats.json`: `teams.*.xg` for the club-fan widget (falls back to shots on target).
+- `insight.numbers.n_rollouts` (and `n_seeds`) so the "replayed N times" line is read, not assumed (500).
+- `audio.json` segment ids must equal `ViewerProfile.segment_id` (`analyst-de`, `club_fan-away-en`, ...);
+  clips for segments nobody watches are never played.

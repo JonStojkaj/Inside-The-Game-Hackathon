@@ -241,6 +241,17 @@ export interface ProductionLog {
   steps: ProductionStep[]
 }
 
+/** audio.json: one commentator clip per segment, played when the match clock reaches start_ms. */
+export interface AudioClip {
+  id: string
+  segment_id: string // "*" = every segment
+  start_ms: number
+  duration_ms: number
+  file: string // relative to the export folder, e.g. "audio/<name>.mp3"
+  lang: string
+  text: string
+}
+
 export interface MatchBundle {
   match: MatchInfo
   frames: Frames
@@ -250,5 +261,6 @@ export interface MatchBundle {
   stats: StatsSnapshot[]
   overlays: OverlaysBySegment
   production: ProductionLog | null
+  audio: AudioClip[] // optional audio.json; empty = no commentary
   baseUrl: string // where match.video etc. are served from
 }

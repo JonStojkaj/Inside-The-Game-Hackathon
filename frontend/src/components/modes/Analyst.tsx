@@ -11,35 +11,35 @@ function lastEvent(events: MatchEvent[], frame: number, pick: (e: MatchEvent) =>
   return undefined
 }
 
-function Spark({ values }: { values: number[] }) {
-  if (values.length < 2) return null
-  const lo = Math.min(...values)
-  const hi = Math.max(...values, lo + 1)
-  const pts = values.map((v, i) => `${(i / (values.length - 1)) * 100},${28 - ((v - lo) / (hi - lo)) * 26}`).join(' ')
-  return (
-    <svg className="hud-spark" viewBox="0 0 100 30" preserveAspectRatio="none">
-      <polyline points={pts} />
-    </svg>
-  )
+/** Cumulative xG per team from the shot events up to `frame`. */
+function xgSoFar(events: MatchEvent[], frame: number): Record<'home' | 'away', number> {
+  const out = { home: 0, away: 0 }
+  for (const e of events) {
+    if (e.frame > frame) break
+    if (e.type === 'shot' && e.team && e.meta.xg != null) out[e.team] += Number(e.meta.xg)
+  }
+  return out
 }
 
-/** The analyst's always-on data HUD: control vs chaos, pressing, rhythm, last pass, last shot. */
+/**
+ * The analyst's always-on data HUD, one glanceable number per row and one plain-language line
+ * under each: control vs chaos (hero), pressing, xG flow, last pass difficulty.
+ */
 export function AnalystHud({ lang }: { lang: Lang }) {
   const { m, pb } = useMatch()
   const frame = useFrame(pb)
   const s = statsAt(m.bundle, frame)
   if (!s) return null
   const { home, away } = m.bundle.match
-  const stats = m.bundle.stats
-  const i = stats.indexOf(s)
-  const rhythm = stats.slice(Math.max(0, i - 60), i + 1).map((x) => x.rhythm.actions_per_min ?? 0)
   const chaos = s.control.chaos ?? 0
   const ct = s.control.control_team
   const pass = lastEvent(m.bundle.events, frame, (e) => e.type === 'pass')
-  const shot = lastEvent(m.bundle.events, frame, (e) => e.type === 'shot')
   const trend = s.rhythm.trend ?? 'steady'
   const name = (id: string | null) => surname(m.player(id)?.name ?? '–')
   const diff = Number(pass?.meta.difficulty ?? 0)
+  const xg = xgSoFar(m.bundle.events, frame)
+  const xgTotal = xg.home + xg.away
+  const pressMax = Math.max(1, s.pressing.home ?? 0, s.pressing.away ?? 0)
 
   return (
     <div className="hud">
@@ -48,7 +48,7 @@ export function AnalystHud({ lang }: { lang: Lang }) {
         {t(lang, 'hud')}
       </div>
 
-      <div className="hud-row">
+      <div className="hud-row hud-hero" title={t(lang, 'hud_control_hint')}>
         <div className="hud-gauge-labels">
           <span>{t(lang, 'control')}</span>
           <span>{t(lang, 'chaos')}</span>
@@ -59,17 +59,19 @@ export function AnalystHud({ lang }: { lang: Lang }) {
         <div className="hud-sub">
           {ct ? (
             <>
-              <b style={{ color: m.club(ct).color }}>{m.club(ct).short}</b> {t(lang, 'in_control')} <b>{s.control.control_share == null ? '–' : fmtPct(lang, s.control.control_share, 0)}</b>
+              <b style={{ color: m.club(ct).color }}>{m.club(ct).short}</b> {t(lang, 'in_control')}
             </>
           ) : (
-            '–'
+            t(lang, 'chaos')
           )}
           <span className="hud-sep">·</span>
-          {t(lang, 'chaos')} <b>{fmtNum(lang, chaos, 2)}</b>
+          {t(lang, 'hud_tempo')} <b>{fmtNum(lang, s.rhythm.actions_per_min ?? 0)}</b>/min{' '}
+          <span className={`hud-trend ${trend}`}>{trend === 'rising' ? '▲' : trend === 'falling' ? '▼' : '■'}</span>
         </div>
+        <div className="hud-hint">{t(lang, 'hud_control_hint')}</div>
       </div>
 
-      <div className="hud-row">
+      <div className="hud-row" title={t(lang, 'hud_pressing_hint')}>
         <div className="hud-label">{t(lang, 'pressing')}</div>
         {[home, away].map((c) => {
           const v = s.pressing[c.key] ?? 0
@@ -77,34 +79,35 @@ export function AnalystHud({ lang }: { lang: Lang }) {
             <div key={c.key} className="hud-bar">
               <span>{c.short}</span>
               <div>
-                <i style={{ width: `${Math.min(1, v) * 100}%`, background: c.color }} />
+                <i style={{ width: `${(v / pressMax) * 100}%`, background: c.color }} />
               </div>
-              <b>{fmtNum(lang, v, 2)}</b>
+              <b>{fmtNum(lang, v, 1)}</b>
             </div>
           )
         })}
+        <div className="hud-hint">{t(lang, 'hud_pressing_hint')}</div>
       </div>
 
-      <div className="hud-row hud-rhythm">
-        <div>
-          <div className="hud-label">{t(lang, 'rhythm')}</div>
-          <div className="hud-big">
-            {fmtNum(lang, s.rhythm.actions_per_min ?? 0)} <small>{t(lang, 'per_min')}</small>
+      <div className="hud-row" title={t(lang, 'hud_xg_hint')}>
+        <div className="hud-label">{t(lang, 'hud_xg')}</div>
+        <div className="hud-split">
+          <b style={{ color: home.color }}>{fmtNum(lang, xg.home, 2)}</b>
+          <div>
+            <i style={{ width: `${xgTotal ? (xg.home / xgTotal) * 100 : 50}%`, background: home.color }} />
+            <i style={{ width: `${xgTotal ? (xg.away / xgTotal) * 100 : 50}%`, background: away.color }} />
           </div>
-          <div className={`hud-trend ${trend}`}>
-            {trend === 'rising' ? '▲' : trend === 'falling' ? '▼' : '■'} {t(lang, trend)}
-          </div>
+          <b style={{ color: away.color }}>{fmtNum(lang, xg.away, 2)}</b>
         </div>
-        <Spark values={rhythm} />
+        <div className="hud-hint">{t(lang, 'hud_xg_hint')}</div>
       </div>
 
       {pass && (
-        <div className="hud-row">
+        <div className="hud-row" title={t(lang, 'hud_pass_hint')}>
           <div className="hud-label">
             {t(lang, 'last_pass')} <span className={`hud-oc ${pass.outcome === 'complete' ? 'ok' : 'bad'}`}>{pass.outcome === 'complete' ? '✓' : '✗'}</span>
-          </div>
-          <div className="hud-line">
-            {name(pass.player_id)} → {name(pass.target_id)}
+            <span className="hud-line-inline">
+              {name(pass.player_id)} → {name(pass.target_id)}
+            </span>
           </div>
           <div className="hud-bar diff">
             <span>{t(lang, 'difficulty')}</span>
@@ -113,29 +116,9 @@ export function AnalystHud({ lang }: { lang: Lang }) {
             </div>
             <b>{Math.round(diff)}/100</b>
           </div>
+          <div className="hud-hint">{t(lang, 'hud_pass_hint')}</div>
         </div>
       )}
-
-      {shot && (
-        <div className="hud-row">
-          <div className="hud-label">{t(lang, 'last_shot')}</div>
-          <div className="hud-line">
-            {name(shot.player_id)}
-            {shot.meta.xg != null && (
-              <>
-                {' '}
-                · xG <b>{fmtNum(lang, Number(shot.meta.xg), 2)}</b>
-              </>
-            )}
-            {shot.meta.distance_m != null && <> · {fmtNum(lang, Number(shot.meta.distance_m))} m</>}
-            {shot.outcome && <span className={`hud-oc ${shot.outcome === 'goal' ? 'ok' : ''}`}> · {shot.outcome === 'goal' ? t(lang, 'al_goal') : t(lang, shot.outcome)}</span>}
-          </div>
-        </div>
-      )}
-
-      <div className="hud-foot">
-        {t(lang, 'pressure')} <b>{fmtNum(lang, s.pressure_on_ball, 2)}</b>
-      </div>
     </div>
   )
 }
