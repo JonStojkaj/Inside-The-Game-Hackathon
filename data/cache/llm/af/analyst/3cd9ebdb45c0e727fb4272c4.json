@@ -1,0 +1,18 @@
+{
+ "type": "chat_response",
+ "messages": [
+  {
+   "type": "message",
+   "role": "assistant",
+   "contents": [
+    {
+     "type": "text",
+     "text": "{\n  \"hypotheses\": [\n    {\n      \"experiment_id\": \"pass_A8\",\n      \"text\": \"Passing to Theo Varga (pass_A8) would have reduced the chance to score to 10.5% (−1.0 percentage points vs the actual 11.5%), so shooting was the better decision than that pass.\"\n    },\n    {\n      \"experiment_id\": \"pass_A2\",\n      \"text\": \"Passing to Callum Reyes (pass_A2) would have reduced the chance to score to 10.8% (−0.7 percentage points vs the actual 11.5%), so shooting was the better decision than that pass.\"\n    }\n  ]\n}",
+     "additional_properties": {}
+    }
+   ],
+   "additional_properties": {}
+  }
+ ],
+ "finish_reason": "stop"
+}

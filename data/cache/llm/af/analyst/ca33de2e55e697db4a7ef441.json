@@ -1,0 +1,18 @@
+{
+ "type": "chat_response",
+ "messages": [
+  {
+   "type": "message",
+   "role": "assistant",
+   "contents": [
+    {
+     "type": "text",
+     "text": "{\"hypotheses\":[{\"experiment_id\":\"carry\",\"text\":\"If Holt had carried the ball forward instead of passing, his chance to score would have been higher than what happened (carry > 7.3%).\"},{\"experiment_id\":\"shoot\",\"text\":\"If Holt had shot instead of passing, his chance to score would have been much lower than what happened (shoot < 7.3%).\"},{\"experiment_id\":\"tight_H9\",\"text\":\"If defender Mateo Brann had been 5 m closer to Holt, the scoring chance from Holt’s decision would have decreased (tight_H9 < 7.3%).\"}]}",
+     "additional_properties": {}
+    }
+   ],
+   "additional_properties": {}
+  }
+ ],
+ "finish_reason": "stop"
+}

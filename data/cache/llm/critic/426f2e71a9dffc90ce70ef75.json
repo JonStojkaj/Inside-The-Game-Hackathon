@@ -1,0 +1,15 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "carry",
+      "verdict": "accepted",
+      "note": "Meaningful, stable across seeds and football-plausible increase in scoring chance."
+    },
+    {
+      "experiment_id": "pass_H9",
+      "verdict": "rejected",
+      "note": "Marked as not passing the rules in the input."
+    }
+  ],
+  "claim": "Leo Marchetti’s shot had an 8.9% chance to score, while carrying the ball forward would have raised that to 11.5% (+2.6 points), so carrying would have been the option with the higher chance to score."
+}

@@ -1,0 +1,18 @@
+{
+ "type": "chat_response",
+ "messages": [
+  {
+   "type": "message",
+   "role": "assistant",
+   "contents": [
+    {
+     "type": "text",
+     "text": "{\"hypotheses\":[{\"experiment_id\":\"pass_H20\",\"text\":\"Passing to Leo Marchetti (pass_H20) would NOT have kept the ball safer — it lowers the chance to keep possession (16.0% vs actual 26.5%).\"},{\"experiment_id\":\"pass_H16\",\"text\":\"Passing to Sami Okoro (pass_H16) would NOT have kept the ball safer — it lowers the chance to keep possession (16.7% vs actual 26.5%).\"},{\"experiment_id\":\"pass_H11\",\"text\":\"Passing to Jonah Pike (pass_H11) would NOT have kept the ball safer — it lowers the chance to keep possession (17.2% vs actual 26.5%).\"}]}",
+     "additional_properties": {}
+    }
+   ],
+   "additional_properties": {}
+  }
+ ],
+ "finish_reason": "stop"
+}

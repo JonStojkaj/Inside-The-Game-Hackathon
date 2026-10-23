@@ -13,7 +13,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "httpx>=0.27", "ruff>=0.6", "mypy>=1.11"]
+# Microsoft Agent Framework (agents + workflow, AGENT_RUNTIME=framework). Not needed by the API container,
+# which only serves pre-computed exports; without it the agents fall back to AGENT_RUNTIME=sdk.
+agents = ["agent-framework-core==1.23.0", "agent-framework-openai==1.17.0"]
+dev = ["pytest>=8", "httpx>=0.27", "ruff>=0.6", "mypy>=1.11", "agent-framework-core==1.23.0", "agent-framework-openai==1.17.0"]
 
 [tool.ruff]
 line-length = 160

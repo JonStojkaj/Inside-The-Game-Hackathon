@@ -1,0 +1,21 @@
+{
+ "type": "chat_response",
+ "messages": [
+  {
+   "type": "message",
+   "role": "assistant",
+   "contents": [
+    {
+     "type": "function_call",
+     "call_id": "call_l03W61WEqEdColMuJOsOzg86",
+     "name": "run_experiment",
+     "arguments": "{\"experiment_id\":\"pass_A11\"}",
+     "hosted": false,
+     "additional_properties": {}
+    }
+   ],
+   "additional_properties": {}
+  }
+ ],
+ "finish_reason": "tool_calls"
+}

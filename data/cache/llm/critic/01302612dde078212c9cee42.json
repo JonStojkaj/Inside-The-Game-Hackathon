@@ -1,0 +1,20 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "pass_H20",
+      "verdict": "rejected",
+      "note": "Passing to Leo Marchetti lowered the chance to keep the ball to 16.0% (-10.5 points)."
+    },
+    {
+      "experiment_id": "pass_H16",
+      "verdict": "rejected",
+      "note": "Passing to Sami Okoro lowered the chance to keep the ball to 16.7% (-9.8 points)."
+    },
+    {
+      "experiment_id": "pass_H11",
+      "verdict": "rejected",
+      "note": "Passing to Jonah Pike lowered the chance to keep the ball to 17.2% (-9.3 points)."
+    }
+  ],
+  "claim": "No tested alternative would have increased the chance to keep the ball: the actual dribble had a 26.5% chance, while passes to Leo Marchetti (16.0%, -10.5), Sami Okoro (16.7%, -9.8), and Jonah Pike (17.2%, -9.3) were all lower, so the real decision was reasonable."
+}

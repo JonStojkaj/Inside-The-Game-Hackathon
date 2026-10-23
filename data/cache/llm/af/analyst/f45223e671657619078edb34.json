@@ -1,0 +1,18 @@
+{
+ "type": "chat_response",
+ "messages": [
+  {
+   "type": "message",
+   "role": "assistant",
+   "contents": [
+    {
+     "type": "text",
+     "text": "{\"hypotheses\":[{\"experiment_id\":\"carry\",\"text\":\"If Kai Nakamura had carried the ball forward instead of shooting, his chance to score would have increased (carrying creates a better shooting opportunity).\"},{\"experiment_id\":\"pass_A11\",\"text\":\"If Kai Nakamura had passed to Bastian Holt (LM) instead of shooting, the chance to score would have been higher (the LM would have had a better-angle/less-pressured chance).\"}]}",
+     "additional_properties": {}
+    }
+   ],
+   "additional_properties": {}
+  }
+ ],
+ "finish_reason": "stop"
+}

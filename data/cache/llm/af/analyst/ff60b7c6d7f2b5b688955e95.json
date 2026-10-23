@@ -1,0 +1,18 @@
+{
+ "type": "chat_response",
+ "messages": [
+  {
+   "type": "message",
+   "role": "assistant",
+   "contents": [
+    {
+     "type": "text",
+     "text": "{\"hypotheses\":[{\"experiment_id\":\"tight_H7\",\"text\":\"If Idris Calloway had stood 2 m closer to Kai Nakamura, the chance to score would have fallen slightly (from 4.6% to 4.5%), so Calloway’s tighter marking would only have marginally reduced the chance.\"}]}",
+     "additional_properties": {}
+    }
+   ],
+   "additional_properties": {}
+  }
+ ],
+ "finish_reason": "stop"
+}

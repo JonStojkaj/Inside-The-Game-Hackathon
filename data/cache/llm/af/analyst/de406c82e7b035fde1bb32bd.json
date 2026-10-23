@@ -1,0 +1,18 @@
+{
+ "type": "chat_response",
+ "messages": [
+  {
+   "type": "message",
+   "role": "assistant",
+   "contents": [
+    {
+     "type": "text",
+     "text": "{\"hypotheses\":[{\"experiment_id\":\"carry\",\"text\":\"Carrying the ball forward would have been better — it would raise the scoring chance to 10.1% (about +3.6 points vs what happened).\"},{\"experiment_id\":\"pass_H16\",\"text\":\"Passing to Sami Okoro (CM) would also have been better — it would raise the scoring chance to 9.4% (about +2.9 points vs what happened).\"},{\"experiment_id\":\"shoot\",\"text\":\"Shooting from Emil Strand's position would have been worse — it would reduce the scoring chance to 1.4% (about −5.1 points vs what happened).\"}]}",
+     "additional_properties": {}
+    }
+   ],
+   "additional_properties": {}
+  }
+ ],
+ "finish_reason": "stop"
+}

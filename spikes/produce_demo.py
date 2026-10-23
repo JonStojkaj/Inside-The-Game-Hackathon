@@ -24,8 +24,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
 
-from app.agents.explain import ExplainTeam, fake_explain_llm  # noqa: E402
-from app.agents.llm import CachedLLM, FakeLLM, llm_from_env  # noqa: E402
+from app.agents.explain import ExplainTeam, explain_team_from_env, fake_explain_llm  # noqa: E402
+from app.agents.llm import FakeLLM, llm_from_env  # noqa: E402
 from app.agents.production import fake_production_llm  # noqa: E402
 from app.models import Insight  # noqa: E402
 from app.overlay.cues import context_from_grf  # noqa: E402
@@ -73,7 +73,10 @@ def main() -> None:
         insights = [Insight.model_validate(i) for i in json.loads(raw)]
         (out / "insights.json").write_text(raw)
     else:
-        team = ExplainTeam(llm_from_env(fake_explain_llm()) if args.fake_explain else llm)
+        if args.fake_explain:
+            team = ExplainTeam(fake_explain_llm())
+        else:  # AGENT_RUNTIME=framework: Agent Framework workflow; sdk: hand-written loop
+            team = explain_team_from_env(fake)
         insights = [team.explain(match, m, events) for m in moments]
         (out / "insights.json").write_text(json.dumps([i.model_dump(mode="json") for i in insights], ensure_ascii=False))
     print(f"explain: {len(insights)} insights in {time.time() - t0:.1f}s")
@@ -89,8 +92,8 @@ def main() -> None:
     (out / "production_log.json").write_text(json.dumps(
         {"stats": result.stats, "steps": [s.model_dump(mode="json") for s in result.log]}, ensure_ascii=False, indent=1))
     print(f"production: {len(segments)} segments in {time.time() - t1:.1f}s -> {out}")
-    if isinstance(llm, CachedLLM):
-        print(f"LLM cache: {llm.hits} hits, {llm.misses} calls")
+    if hasattr(llm, "hits"):
+        print(f"LLM cache: {llm.hits} hits, {llm.misses} calls")  # type: ignore[attr-defined]
     print(f"\n{'segment':28s} {'shown':>5s} {'dropped':>7s} {'insights':>8s} {'llm':>4s}")
     for sid, s in result.stats.items():
         if sid != "*":

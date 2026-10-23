@@ -1,0 +1,10 @@
+{
+  "verdicts": [
+    {
+      "experiment_id": "carry",
+      "verdict": "rejected",
+      "note": "Not meaningfully better (+0.1 points) and did not pass the rules."
+    }
+  ],
+  "claim": "The real decision to pass to Oscar Lindqvist (which was intercepted) was reasonable given that no alternative meaningfully increased the chance to keep the ball."
+}

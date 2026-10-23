@@ -1,0 +1,18 @@
+{
+ "type": "chat_response",
+ "messages": [
+  {
+   "type": "message",
+   "role": "assistant",
+   "contents": [
+    {
+     "type": "text",
+     "text": "{\"hypotheses\":[{\"experiment_id\":\"tight_H16\",\"text\":\"If Sami Okoro (CM) had stood 5 m closer to Arne Dahl, the chance to keep the ball would have been higher (16.0%) and thus more likely to keep possession.\"},{\"experiment_id\":\"tight_H20\",\"text\":\"If Leo Marchetti (CM) had stood 1 m closer to Arne Dahl, the chance to keep the ball would have been higher (14.8%) and thus slightly more likely to avoid the turnover.\"},{\"experiment_id\":\"tight_H11\",\"text\":\"If Jonah Pike (LM) had stood 5 m closer to Arne Dahl, the chance to keep the ball would have been marginally higher (14.4%) and therefore a marginally safer option.\"}]}",
+     "additional_properties": {}
+    }
+   ],
+   "additional_properties": {}
+  }
+ ],
+ "finish_reason": "stop"
+}

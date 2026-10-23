@@ -4,6 +4,7 @@ All agent calls return pydantic models (structured outputs), never free text, so
 evidence can be validated by code before anything reaches the screen.
 
 LLM_PROVIDER = azure | fake     LLM_CACHE = readwrite (default) | replay (cache only) | off
+AGENT_RUNTIME = framework (Microsoft Agent Framework agents + workflow, default when installed) | sdk (this module)
 """
 
 from __future__ import annotations
@@ -68,6 +69,12 @@ class FakeLLM:
         return schema.model_validate(self.handlers[agent](user).model_dump())
 
 
+def cache_path(cache_dir: Path, model: str, agent: str, schema: type[BaseModel], system: str, user: str) -> Path:
+    """Where a single-turn answer lives; shared by CachedLLM and the Agent Framework cache middleware."""
+    digest = hashlib.sha256("\x1f".join([model, agent, schema.__name__, system, user]).encode()).hexdigest()[:24]
+    return cache_dir / agent / f"{digest}.json"
+
+
 class CachedLLM:
     """Read-through cache keyed by (model, agent, prompts, schema). 'replay' never calls the model."""
 
@@ -80,9 +87,7 @@ class CachedLLM:
         self.misses = 0
 
     def _key(self, system: str, user: str, schema: type[BaseModel], agent: str) -> Path:
-        model = self.inner.name if self.inner else "any"
-        digest = hashlib.sha256("\x1f".join([model, agent, schema.__name__, system, user]).encode()).hexdigest()[:24]
-        return self.cache_dir / agent / f"{digest}.json"
+        return cache_path(self.cache_dir, self.inner.name if self.inner else "any", agent, schema, system, user)
 
     def complete(self, system: str, user: str, schema: type[T], agent: str) -> T:
         path = self._key(system, user, schema, agent)
@@ -99,7 +104,22 @@ class CachedLLM:
         return result
 
 
+def agent_runtime() -> str:
+    """AGENT_RUNTIME, defaulting to the Microsoft Agent Framework when the package is installed."""
+    if runtime := os.environ.get("AGENT_RUNTIME"):
+        return runtime
+    try:
+        import agent_framework  # noqa: F401
+    except ImportError:
+        return "sdk"
+    return "framework"
+
+
 def llm_from_env(fake: FakeLLM | None = None) -> LLMClient:
+    if agent_runtime() == "framework":
+        from app.agents.framework import framework_llm_from_env
+
+        return framework_llm_from_env(fake)
     provider = os.environ.get("LLM_PROVIDER", "fake")
     mode = os.environ.get("LLM_CACHE", "readwrite")
     inner: LLMClient = AzureLLM() if provider == "azure" else (fake or FakeLLM())
