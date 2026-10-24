@@ -9,6 +9,9 @@ param minReplicas int
 param askEnabled bool = false
 param openAiEndpoint string = ''
 param openAiDeploymentFast string = 'fast'
+@secure()
+param speechKey string = ''
+param speechRegion string = 'swedencentral'
 
 var port = 8000 // = PORT in backend/Dockerfile
 var webName = 'ca-web-${token}'
@@ -129,12 +132,17 @@ resource web 'Microsoft.App/containerApps@2024-03-01' = {
           identity: identity.id
         }
       ]
-      secrets: [
+      secrets: concat([
         {
           name: 'appinsights-connection-string'
           value: appInsights.properties.ConnectionString
         }
-      ]
+      ], empty(speechKey) ? [] : [
+        {
+          name: 'azure-speech-key'
+          value: speechKey
+        }
+      ])
     }
     template: {
       containers: [
@@ -156,7 +164,10 @@ resource web 'Microsoft.App/containerApps@2024-03-01' = {
             { name: 'AZURE_OPENAI_ENDPOINT', value: openAiEndpoint }
             { name: 'AZURE_OPENAI_DEPLOYMENT_FAST', value: openAiDeploymentFast }
             { name: 'AZURE_CLIENT_ID', value: identity.properties.clientId } // DefaultAzureCredential -> this identity
-          ] : [])
+          ] : [], empty(speechKey) ? [] : [
+            { name: 'AZURE_SPEECH_KEY', secretRef: 'azure-speech-key' }
+            { name: 'AZURE_SPEECH_REGION', value: speechRegion }
+          ])
           probes: webExists ? probes : []
         }
       ]

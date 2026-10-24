@@ -31,6 +31,12 @@
     },
     "openAiDeploymentFast": {
       "value": "${AZURE_OPENAI_DEPLOYMENT_FAST=fast}"
+    },
+    "speechKey": {
+      "value": "${AZURE_SPEECH_KEY=}"
+    },
+    "speechRegion": {
+      "value": "${AZURE_SPEECH_REGION=swedencentral}"
     }
   }
 }

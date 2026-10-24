@@ -71,7 +71,7 @@ def test_disabled_by_default_without_azure(tmp_path, sim, monkeypatch):
     assert AskSettings.from_env().enabled is False
 
     client, _ = app_with(tmp_path, sim, AskSettings(enabled=False))
-    assert client.get("/api/features").json() == {"ask": False}
+    assert client.get("/api/features").json()["ask"] is False
     assert client.get("/api/matches/ask-test/ask?frame=30").json() == {"enabled": False}
     res = client.post("/api/matches/ask-test/ask", json={"frame": 30, "question": "What if he had shot?"})
     assert res.status_code == 503 and res.json()["error"] == "disabled"
