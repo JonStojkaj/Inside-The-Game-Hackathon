@@ -6,12 +6,11 @@ import { useFrame } from '../../lib/playback'
 import { t } from '../../lib/profile'
 import type { Insight, Lang } from '../../types'
 import { Hypotheses } from '../modes/Analyst'
-import type { Cat } from '../../lib/analystCats'
-import { AnalystColumn } from './AnalystBoard'
+import { StatBoard } from './AnalystBoard'
 import { Block } from './Block'
 
-/** Analyst right column: every hypothesis during a break, then the odd-numbered picked categories. */
-export function AnalystSide({ lang, cats, breakInsight }: { lang: Lang; cats: Cat[]; breakInsight?: Insight }) {
+/** Analyst board: every hypothesis during a break, then the searchable stat board. */
+export function AnalystSide({ lang, breakInsight }: { lang: Lang; breakInsight?: Insight }) {
   return (
     <>
       {breakInsight && (
@@ -19,7 +18,7 @@ export function AnalystSide({ lang, cats, breakInsight }: { lang: Lang; cats: Ca
           <Hypotheses ins={breakInsight} lang={lang} />
         </Block>
       )}
-      <AnalystColumn lang={lang} cats={cats} side={1} />
+      <StatBoard lang={lang} />
     </>
   )
 }

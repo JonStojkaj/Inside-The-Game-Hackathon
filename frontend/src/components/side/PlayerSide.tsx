@@ -7,6 +7,7 @@ import { useFrame } from '../../lib/playback'
 import { eventLabel, fmtNum, fmtPct, surname, t, tf } from '../../lib/profile'
 import type { Insight, Lang } from '../../types'
 import { DecisionRecordView } from '../modes/Player'
+import { PlayerSheet } from './AnalystBoard'
 import { Block } from './Block'
 
 const PARTS: RatingPart[] = ['passing', 'shooting', 'defending', 'pressing']
@@ -25,6 +26,7 @@ export function PlayerSide({ pid, lang, breakInsight }: { pid: string; lang: Lan
       <RatingBlock pid={pid} lang={lang} />
       <DuelBlock pid={pid} lang={lang} />
       <DecisionsBlock pid={pid} lang={lang} />
+      <PlayerSheet pid={pid} lang={lang} />
     </>
   )
 }

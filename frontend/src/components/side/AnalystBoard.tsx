@@ -1,198 +1,228 @@
-import type { ReactNode } from 'react'
-import { CATS, type Cat } from '../../lib/analystCats'
+import { useMemo, useState } from 'react'
 import { useMatch } from '../../lib/context'
-import { frameAt, statsAt, type MatchIndex } from '../../lib/match'
+import { statsAt, type MatchIndex } from '../../lib/match'
 import { useFrame } from '../../lib/playback'
-import { fmtNum, fmtPct, surname, t } from '../../lib/profile'
-import type { Lang, MatchEvent, StatsSnapshot, Team } from '../../types'
+import { surname, t } from '../../lib/profile'
+import { groupLabel, searchStats, statCatalog, type StatRow } from '../../lib/statCatalog'
+import type { Lang } from '../../types'
 
 /**
- * The analyst's dashboard: two data columns (left and right of the stage) with the categories the
- * viewer picks. Only rates, shares, maxima and the xG flow: never totals that depend on how long
- * the (5-minute GRF) match has run.
+ * The analyst's board: one big panel. A search box over every live stat (team vs team, each of
+ * the 22 players, the match), a standard panel underneath, and stats the viewer pins (★) from the
+ * search into that panel. Everything updates with the match clock.
  */
-export function CatPicker({ lang, cats, onToggle }: { lang: Lang; cats: Cat[]; onToggle: (c: Cat) => void }) {
-  return (
-    <div className="cat-pick" role="group" aria-label={t(lang, 'cat_pick')}>
-      {CATS.map((c) => (
-        <button key={c} className={cats.includes(c) ? 'on' : ''} aria-pressed={cats.includes(c)} onClick={() => onToggle(c)}>
-          {t(lang, `cat_${c}`)}
-        </button>
-      ))}
-    </div>
-  )
-}
+const STANDARD = ['team.possession', 'team.xg', 'team.shots', 'team.on_target', 'team.pass_acc', 'team.key_passes', 'team.ball_wins', 'team.press_now', 'team.work_rate', 'team.line_height', 'team.win_prob']
+const LIVE = ['match.control', 'match.tempo', 'match.changes', 'match.ball_speed']
+const PIN_KEY = 'sliding-doors.analyst-pins.v1'
 
-function lastEvent(events: MatchEvent[], frame: number, pick: (e: MatchEvent) => boolean): MatchEvent | undefined {
-  for (let i = events.length - 1; i >= 0; i--) if (events[i].frame <= frame && pick(events[i])) return events[i]
-  return undefined
-}
-
-function xgSoFar(events: MatchEvent[], frame: number): Record<Team, number> {
-  const out = { home: 0, away: 0 }
-  for (const e of events) {
-    if (e.frame > frame) break
-    if (e.type === 'shot' && e.team && e.meta.xg != null) out[e.team] += Number(e.meta.xg)
-  }
-  return out
-}
-
-/** Big home vs away numbers with a split bar under them. */
-function Versus({ m, a, b, fmt, label }: { m: MatchIndex; a: number; b: number; fmt: (v: number) => string; label: string }) {
-  const { home, away } = m.bundle.match
-  const sum = a + b
-  return (
-    <div className="vs">
-      <div className="vs-nums">
-        <b style={{ color: home.color }}>{fmt(a)}</b>
-        <span>{label}</span>
-        <b style={{ color: away.color }}>{fmt(b)}</b>
-      </div>
-      <div className="vs-bar">
-        <i style={{ width: `${sum ? (a / sum) * 100 : 50}%`, background: home.color }} />
-        <i style={{ width: `${sum ? (b / sum) * 100 : 50}%`, background: away.color }} />
-      </div>
-    </div>
-  )
-}
-
-function Row({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) {
-  return (
-    <div className="an-row" title={hint}>
-      <span>{label}</span>
-      <b>{children}</b>
-    </div>
-  )
-}
-
-function teamPair(m: MatchIndex, a: string, b: string) {
-  const { home, away } = m.bundle.match
-  return (
-    <>
-      <em style={{ color: home.color }}>{a}</em> · <em style={{ color: away.color }}>{b}</em>
-    </>
-  )
-}
-
-function Card({ cat, s, frame, lang }: { cat: Cat; s: StatsSnapshot; frame: number; lang: Lang }) {
-  const { m } = useMatch()
-  const ev = m.bundle.events
-  const name = (id: string | null | undefined) => surname(m.player(id)?.name ?? '–')
-  const pct = (v: number) => fmtPct(lang, v, 0)
-  let body: ReactNode = null
-  if (cat === 'control') {
-    const ct = s.control.control_team
-    const chaos = s.control.chaos ?? 0
-    body = (
-      <>
-        <Versus m={m} a={s.teams.home.possession} b={s.teams.away.possession} fmt={pct} label={t(lang, 'k_possession')} />
-        <div className="an-gauge" title={t(lang, 'hud_control_hint')}>
-          <div className="ps-gauge">
-            <i style={{ left: `${chaos * 100}%` }} />
-          </div>
-          <span>{ct ? <b style={{ color: m.club(ct).color }}>{`${m.club(ct).short} ${t(lang, 'in_control_short')}`}</b> : t(lang, 'open_game')}</span>
-        </div>
-        <Row label={t(lang, 'k_tempo')}>{fmtNum(lang, s.rhythm.actions_per_min ?? 0)}</Row>
-      </>
-    )
-  } else if (cat === 'pressing') {
-    body = (
-      <>
-        <Versus m={m} a={s.pressing.home ?? 0} b={s.pressing.away ?? 0} fmt={(v) => fmtNum(lang, v, 2)} label={t(lang, 'k_press_now')} />
-        <Row label={t(lang, 'k_pressure')} hint={t(lang, 'hud_pressing_hint')}>
-          {fmtNum(lang, s.pressure_on_ball, 1)}
-        </Row>
-        <Row label={t(lang, 'k_changes')}>{fmtNum(lang, s.control.possession_changes_per_min ?? 0)}</Row>
-      </>
-    )
-  } else if (cat === 'passing') {
-    const pass = lastEvent(ev, frame, (e) => e.type === 'pass')
-    const diff = Number(pass?.meta.difficulty ?? 0)
-    body = (
-      <>
-        <Versus m={m} a={s.teams.home.pass_accuracy ?? 0} b={s.teams.away.pass_accuracy ?? 0} fmt={pct} label={t(lang, 'k_pass_acc')} />
-        <Row label={t(lang, 'k_pass_len')}>{teamPair(m, `${fmtNum(lang, s.teams.home.avg_pass_distance_m ?? 0, 0)} m`, `${fmtNum(lang, s.teams.away.avg_pass_distance_m ?? 0, 0)} m`)}</Row>
-        {pass && (
-          <Row label={t(lang, 'k_last_pass')} hint={`${name(pass.player_id)} → ${name(pass.target_id)}`}>
-            <span className={pass.outcome === 'complete' ? 'ok' : 'bad'}>{pass.outcome === 'complete' ? '✓' : '✗'}</span> {Math.round(diff)}/100
-          </Row>
-        )}
-      </>
-    )
-  } else if (cat === 'shooting') {
-    const xg = xgSoFar(ev, frame)
-    const shot = lastEvent(ev, frame, (e) => e.type === 'shot')
-    body = (
-      <>
-        <Versus m={m} a={xg.home} b={xg.away} fmt={(v) => fmtNum(lang, v, 2)} label={t(lang, 'k_xg')} />
-        <Row label={t(lang, 'k_shot_speed')}>{teamPair(m, `${Math.round(s.teams.home.max_shot_speed_kmh)}`, `${Math.round(s.teams.away.max_shot_speed_kmh)} km/h`)}</Row>
-        {shot && <Row label={`${t(lang, 'last_shot')} · ${name(shot.player_id)}`}>xG {fmtNum(lang, Number(shot.meta.xg ?? 0), 2)}</Row>}
-      </>
-    )
-  } else if (cat === 'physical') {
-    const avg = (team: Team) => {
-      const ps = Object.values(s.players).filter((p) => p.team === team && p.position !== 'GK')
-      return ps.length ? ps.reduce((a, p) => a + p.speed_kmh, 0) / ps.length : 0
+function usePins(): [string[], (id: string) => void] {
+  const [pins, setPins] = useState<string[]>(() => {
+    try {
+      const v = JSON.parse(localStorage.getItem(PIN_KEY) ?? '[]') as unknown
+      return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []
+    } catch {
+      return []
     }
-    const fastest = Object.values(s.players).sort((a, b) => b.top_speed_kmh - a.top_speed_kmh)[0]
-    body = (
-      <>
-        <div className="an-hero">
-          <b>{Math.round(s.ball_speed_kmh)}</b>
-          <span>km/h · {t(lang, 'k_ball_speed')}</span>
-        </div>
-        <Row label={t(lang, 'k_top_speed')}>{fastest ? `${surname(fastest.name)} ${fmtNum(lang, fastest.top_speed_kmh)} km/h` : '–'}</Row>
-        <Row label={t(lang, 'k_avg_speed')}>{teamPair(m, fmtNum(lang, avg('home')), fmtNum(lang, avg('away')))}</Row>
-      </>
-    )
-  } else {
-    const fv = frameAt(m.bundle, frame)
-    const carrier = fv.owner >= 0 ? m.bundle.match.players[fv.owner] : undefined
-    const ps = carrier ? s.players[carrier.id] : undefined
-    const top = Object.values(s.players)
-      .sort((a, b) => b.top_speed_kmh - a.top_speed_kmh)
-      .slice(0, 3)
-    body = (
-      <>
-        <div className="an-hero">
-          <b style={{ color: carrier ? m.club(carrier.team).color : undefined }}>{carrier ? `#${carrier.number}` : '–'}</b>
-          <span>{carrier ? `${surname(carrier.name)} · ${t(lang, 'k_on_ball')}` : t(lang, 'k_ball_carrier')}</span>
-        </div>
-        {ps && <Row label={t(lang, 'k_top_speed')}>{fmtNum(lang, ps.top_speed_kmh)} km/h</Row>}
-        <div className="an-list">
-          {top.map((p) => (
-            <span key={p.id}>
-              <i style={{ background: m.club(p.team as Team).color }} />
-              {surname(p.name)} <b>{fmtNum(lang, p.top_speed_kmh)}</b>
-            </span>
+  })
+  const toggle = (id: string) => {
+    const next = pins.includes(id) ? pins.filter((x) => x !== id) : [...pins, id]
+    setPins(next)
+    try {
+      localStorage.setItem(PIN_KEY, JSON.stringify(next))
+    } catch {
+      // no storage
+    }
+  }
+  return [pins, toggle]
+}
+
+function Pin({ id, pins, onPin, lang }: { id: string; pins: string[]; onPin: (id: string) => void; lang: Lang }) {
+  const on = pins.includes(id)
+  return (
+    <button className={`stb-pin ${on ? 'on' : ''}`} aria-pressed={on} title={t(lang, on ? 'sb_unpin' : 'sb_pin')} onClick={() => onPin(id)}>
+      {on ? '★' : '☆'}
+    </button>
+  )
+}
+
+/** Team stat: home value · label · away value, split bar underneath. */
+function TeamRow({ m, r, pin }: { m: MatchIndex; r: StatRow; pin?: React.ReactNode }) {
+  const { home, away } = m.bundle.match
+  const a = r.home ?? 0
+  const b = r.away ?? 0
+  const sum = Math.abs(a) + Math.abs(b)
+  const lead = a === b ? 0 : (a > b) !== Boolean(r.low) ? -1 : 1
+  return (
+    <div className="stb-team">
+      <div className="stb-team-n">
+        <b className={lead < 0 ? 'lead' : ''} style={{ color: home.color }}>
+          {r.fmt(a)}
+        </b>
+        <span>{r.label}</span>
+        <b className={lead > 0 ? 'lead' : ''} style={{ color: away.color }}>
+          {r.fmt(b)}
+        </b>
+        {pin}
+      </div>
+      <div className="stb-bar">
+        <i style={{ width: `${sum ? (Math.abs(a) / sum) * 100 : 50}%`, background: home.color }} />
+        <i style={{ width: `${sum ? (Math.abs(b) / sum) * 100 : 50}%`, background: away.color }} />
+      </div>
+    </div>
+  )
+}
+
+function PlayerRow({ m, r, pin, withName = true }: { m: MatchIndex; r: StatRow; pin?: React.ReactNode; withName?: boolean }) {
+  const p = r.player!
+  return (
+    <div className="stb-row">
+      <i className="stb-dot" style={{ background: m.club(p.team).color }} />
+      <span className="stb-l">
+        {withName && (
+          <em>
+            #{p.number} {surname(p.name)}
+          </em>
+        )}
+        {r.label}
+      </span>
+      <b>{r.fmt(r.value ?? 0)}</b>
+      {r.rank != null && (r.value ?? 0) !== 0 && <small className={r.rank <= 3 ? 'top' : ''}>{`${r.rank}/${r.of}`}</small>}
+      {pin}
+    </div>
+  )
+}
+
+function MatchRow({ r, pin }: { r: StatRow; pin?: React.ReactNode }) {
+  return (
+    <div className="stb-row">
+      <span className="stb-l">{r.label}</span>
+      <b>{r.text ?? r.fmt(r.value ?? 0)}</b>
+      {pin}
+    </div>
+  )
+}
+
+function AnyRow({ m, r, pins, onPin, lang, withName }: { m: MatchIndex; r: StatRow; pins: string[]; onPin: (id: string) => void; lang: Lang; withName?: boolean }) {
+  const pin = <Pin id={r.id} pins={pins} onPin={onPin} lang={lang} />
+  if (r.scope === 'team') return <TeamRow m={m} r={r} pin={pin} />
+  if (r.scope === 'player') return <PlayerRow m={m} r={r} pin={pin} withName={withName} />
+  return <MatchRow r={r} pin={pin} />
+}
+
+export function StatBoard({ lang }: { lang: Lang }) {
+  const { m, pb } = useMatch()
+  const frame = useFrame(pb)
+  const [q, setQ] = useState('')
+  const [pins, togglePin] = usePins()
+  const s = statsAt(m.bundle, frame)
+  const rows = useMemo(() => statCatalog(m, frame, s, lang), [m, frame, s, lang])
+  const byId = useMemo(() => new Map(rows.map((r) => [r.id, r])), [rows])
+  const hits = useMemo(() => searchStats(rows, q), [rows, q])
+  const top = rows.filter((r) => r.stat === 'player.rating').sort((a, b) => (a.rank ?? 99) - (b.rank ?? 99)).slice(0, 3)
+  const examples = [t(lang, 'sb_ex_xg'), t(lang, 'sb_ex_speed'), top[0] ? surname(top[0].player!.name) : '', t(lang, 'sb_ex_press')].filter(Boolean)
+  const onePlayer = hits.length > 1 && hits.every((r) => r.player && r.player.id === hits[0].player?.id) ? hits[0].player : undefined
+
+  return (
+    <section className="blk stb">
+      <div className="stb-search">
+        <span aria-hidden>⌕</span>
+        <input
+          type="search"
+          value={q}
+          placeholder={t(lang, 'sb_placeholder')}
+          aria-label={t(lang, 'sb_placeholder')}
+          onChange={(e) => setQ(e.target.value)}
+          onKeyDown={(e) => e.key === 'Escape' && setQ('')}
+        />
+        {q && (
+          <button className="stb-clear" onClick={() => setQ('')} aria-label="clear">
+            ×
+          </button>
+        )}
+      </div>
+
+      {q ? (
+        <div className="stb-results">
+          {onePlayer && (
+            <div className="stb-player-h" style={{ borderColor: m.club(onePlayer.team).color }}>
+              <b>#{onePlayer.number}</b> {onePlayer.name} <span>{m.club(onePlayer.team).short} · {onePlayer.position}</span>
+            </div>
+          )}
+          {hits.length === 0 && <p className="stb-empty">{t(lang, 'sb_none')}</p>}
+          {hits.map((r) => (
+            <AnyRow key={r.id} m={m} r={r} pins={pins} onPin={togglePin} lang={lang} withName={!onePlayer} />
           ))}
         </div>
-      </>
-    )
-  }
-  return (
-    <section className={`blk an-card an-${cat}`}>
-      <header className="blk-h">
-        <span>{t(lang, `cat_${cat}`)}</span>
-      </header>
-      {body}
+      ) : (
+        <>
+          <div className="stb-examples">
+            {examples.map((x) => (
+              <button key={x} onClick={() => setQ(x)}>
+                {x}
+              </button>
+            ))}
+          </div>
+          {pins.length > 0 && (
+            <div className="stb-sec">
+              <h4>★ {t(lang, 'sb_pinned')}</h4>
+              {pins.map((id) => byId.get(id)).filter((r): r is StatRow => Boolean(r)).map((r) => (
+                <AnyRow key={r.id} m={m} r={r} pins={pins} onPin={togglePin} lang={lang} />
+              ))}
+            </div>
+          )}
+          <div className="stb-sec">
+            <h4>{groupLabel('match', lang)}</h4>
+            {STANDARD.map((id) => byId.get(id)).filter((r): r is StatRow => Boolean(r)).map((r) => (
+              <TeamRow key={r.id} m={m} r={r} pin={<Pin id={r.id} pins={pins} onPin={togglePin} lang={lang} />} />
+            ))}
+          </div>
+          <div className="stb-sec stb-live">
+            {LIVE.map((id) => byId.get(id)).filter((r): r is StatRow => Boolean(r)).map((r) => (
+              <div key={r.id} className="stb-chip">
+                <b>{r.text ?? r.fmt(r.value ?? 0)}</b>
+                <span>{r.label}</span>
+              </div>
+            ))}
+          </div>
+          {top.length > 0 && (
+            <div className="stb-sec">
+              <h4>{t(lang, 'sb_top')}</h4>
+              {top.map((r) => (
+                <button key={r.id} className="stb-top" onClick={() => setQ(surname(r.player!.name))}>
+                  <PlayerRow m={m} r={r} />
+                </button>
+              ))}
+            </div>
+          )}
+        </>
+      )}
     </section>
   )
 }
 
-/** One column of the analyst dashboard: the picked categories at even (left) or odd (right) positions. */
-export function AnalystColumn({ lang, cats, side }: { lang: Lang; cats: Cat[]; side: 0 | 1 }) {
+/** Every stat of one player with his rank among all 22 (player focus). */
+export function PlayerSheet({ pid, lang }: { pid: string; lang: Lang }) {
   const { m, pb } = useMatch()
   const frame = useFrame(pb)
   const s = statsAt(m.bundle, frame)
-  if (!s) return null
+  const rows = useMemo(() => statCatalog(m, frame, s, lang).filter((r) => r.player?.id === pid && r.stat !== 'player.rating'), [m, frame, s, lang, pid])
+  const groups = [...new Set(rows.map((r) => r.group))]
   return (
-    <>
-      {cats
-        .filter((_, i) => i % 2 === side)
-        .map((c) => (
-          <Card key={c} cat={c} s={s} frame={frame} lang={lang} />
-        ))}
-    </>
+    <section className="blk stb stb-sheet">
+      <header className="blk-h">
+        <span>{t(lang, 'sb_all_stats')}</span>
+        <small>{t(lang, 'sb_rank_note')}</small>
+      </header>
+      {groups.map((g) => (
+        <div key={g} className="stb-sec">
+          <h4>{groupLabel(g, lang)}</h4>
+          {rows
+            .filter((r) => r.group === g)
+            .map((r) => (
+              <PlayerRow key={r.id} m={m} r={r} withName={false} />
+            ))}
+        </div>
+      ))}
+    </section>
   )
 }
