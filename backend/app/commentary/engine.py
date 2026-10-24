@@ -302,8 +302,9 @@ class _Builder:
         for s in starts:
             if s + dur > limit_ms:
                 break
-            # never talk about an earlier event after the goal line of a later one
-            if any(ln.priority == 5 and ln.event_ms > c.event_ms and ln.start_ms < s and ln.kind == "goal" for ln in self.lines):
+            # never talk about an earlier event after the goal line of a later one (Sliding Doors looks back by design)
+            if not c.kind.startswith("sd_") and any(ln.priority == 5 and ln.event_ms > c.event_ms and ln.start_ms < s
+                                                    and ln.kind == "goal" for ln in self.lines):
                 continue
             if self.free(s, dur):
                 return self.add(Line(f"{c.kind}-{s}", s, dur, text, c.kind, c.prio, tone, template, c.event_ms, rate, pitch))
@@ -445,11 +446,11 @@ def event_candidates(b: _Builder) -> list[Candidate]:
                 out.append(Candidate(t, prio, "carry", f, team=e.team, involves=involved, max_delay=2000, event_ms=e.known_ms))
         elif e.type == "set_piece":
             mode = str(e.meta.get("mode", ""))
-            kind = {"corner": "corner", "free_kick": "free_kick", "penalty": "penalty"}.get(mode)
-            team = next((x.team for x in md.events[i + 1:] if x.team and x.type != "set_piece" and x.known_ms - e.known_ms <= 6000), None)
-            if kind and team:
-                out.append(Candidate(e.known_ms + 400, 4 if kind == "penalty" else 2, kind, {"team": b.team_name(team)},
-                                     team=team, max_delay=2500, event_ms=e.known_ms))
+            sp = {"corner": "corner", "free_kick": "free_kick", "penalty": "penalty"}.get(mode)
+            taker = next((x.team for x in md.events[i + 1:] if x.team and x.type != "set_piece" and x.known_ms - e.known_ms <= 6000), None)
+            if sp and taker:
+                out.append(Candidate(e.known_ms + 400, 4 if sp == "penalty" else 2, sp, {"team": b.team_name(taker)},
+                                     team=taker, max_delay=2500, event_ms=e.known_ms))
     return out
 
 
@@ -675,11 +676,11 @@ def filler(b: _Builder, kind: str, t_ms: int) -> Candidate | None:
             return None
         ph, pa = float(teams["home"]["possession"]), float(teams["away"]["possession"])
         lead = "home" if ph >= pa else "away"
-        mine = ph if club == "home" else pa
+        own = ph if club == "home" else pa
         f = {"home": home, "away": away, "ph": pct(ph, lang), "pa": pct(pa, lang), "team": b.team_name(lead)}
         if fan:
-            f["p"] = pct(mine if mine >= 0.5 else 1 - mine, lang)
-            return cand(f, tones=["us" if mine >= 0.5 else "them", "n"])
+            f["p"] = pct(own if own >= 0.5 else 1 - own, lang)
+            return cand(f, tones=["us" if own >= 0.5 else "them", "n"])
         return cand(f, team=lead)
     if kind == "passing":
         team = club if fan else ("home" if (t_ms // 1000) % 2 == 0 else "away")
@@ -703,9 +704,9 @@ def filler(b: _Builder, kind: str, t_ms: int) -> Candidate | None:
             return None
         f = {"home": home, "away": away, "xh": num(xg["home"], lang, 2), "xa": num(xg["away"], lang, 2)}
         if fan:
-            us, them = (xg["home"], xg["away"]) if club == "home" else (xg["away"], xg["home"])
-            f["xh"], f["xa"] = num(us, lang, 2), num(them, lang, 2)
-            return cand(f, tones=["us" if us >= them else "them"])
+            xu, xt = (xg["home"], xg["away"]) if club == "home" else (xg["away"], xg["home"])
+            f["xh"], f["xa"] = num(xu, lang, 2), num(xt, lang, 2)
+            return cand(f, tones=["us" if xu >= xt else "them"])
         return cand(f)
     if kind == "top_speed":
         players = s.get("players", {})

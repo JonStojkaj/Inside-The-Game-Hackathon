@@ -730,7 +730,8 @@ PHRASES: dict[str, Pool] = {"en": EN, "de": DE, "es": ES}
 # Sliding Doors alternatives, per language: (verb phrase for "had he ...", noun phrase for "a ... would give")
 ACTIONS: dict[str, dict[str, tuple[str, str]]] = {
     "en": {"carry": ("carried it forward", "carrying on"), "shoot": ("shot", "a shot"), "pass": ("passed to {target}", "a pass to {target}")},
-    "de": {"carry": ("den Ball weitergetragen", "ein Dribbling"), "shoot": ("geschossen", "ein Schuss"), "pass": ("zu {target} gepasst", "ein Pass zu {target}")},
+    "de": {"carry": ("den Ball weitergetragen", "ein Dribbling"), "shoot": ("geschossen", "ein Schuss"),
+           "pass": ("zu {target} gepasst", "ein Pass zu {target}")},
     "es": {"carry": ("conducido", "conducir"), "shoot": ("disparado", "un disparo"), "pass": ("pasado a {target}", "un pase a {target}")},
 }
 
