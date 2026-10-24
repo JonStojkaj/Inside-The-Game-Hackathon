@@ -3,6 +3,7 @@ import type { Dict } from './strings'
 
 export const POLISH: Record<'en' | 'de' | 'es', Dict> = {
   en: {
+    cut_highlights: 'Highlights', cut_extended: 'Extended', cut_full: 'Full match', cut_goal: 'Goal', cut_chance: 'Chance', cut_moment: 'Key moment',
     last_shot: 'Last shot',
     k_avg_speed: 'Avg speed now',
     simulating: 'Simulating {n} scenarios…',
@@ -51,6 +52,7 @@ export const POLISH: Record<'en' | 'de' | 'es', Dict> = {
     rating: 'Rating',
   },
   de: {
+    cut_highlights: 'Highlights', cut_extended: 'Erweitert', cut_full: 'Ganzes Spiel', cut_goal: 'Tor', cut_chance: 'Chance', cut_moment: 'Schlüsselszene',
     last_shot: 'Letzter Schuss',
     k_avg_speed: 'Ø Tempo jetzt',
     simulating: 'Simuliere {n} Szenarien…',
@@ -99,6 +101,7 @@ export const POLISH: Record<'en' | 'de' | 'es', Dict> = {
     rating: 'Note',
   },
   es: {
+    cut_highlights: 'Resumen', cut_extended: 'Ampliado', cut_full: 'Partido completo', cut_goal: 'Gol', cut_chance: 'Ocasión', cut_moment: 'Momento clave',
     last_shot: 'Último tiro',
     k_avg_speed: 'Velocidad media',
     simulating: 'Simulando {n} escenarios…',

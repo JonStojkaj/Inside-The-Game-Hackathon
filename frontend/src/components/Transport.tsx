@@ -1,9 +1,10 @@
 import { useEffect } from 'react'
+import { CUTS, useCutPlayer } from '../lib/highlights'
 import { useMatch } from '../lib/context'
-import { clockLabel } from '../lib/match'
+import { clockLabel, minuteLabel } from '../lib/match'
 import { useFrame, usePlaybackState } from '../lib/playback'
 import { t } from '../lib/profile'
-import type { Lang } from '../types'
+import type { Lang, ProfileMode } from '../types'
 import { MatchStory } from './MatchStory'
 
 const SPEEDS = [1, 5, 10]
@@ -13,13 +14,16 @@ interface Props {
   /** First-run hint above the play button ("Press play ..."); dismissed by play or "Got it". */
   hint?: boolean
   onHintDone?: () => void
+  /** Big moments (casual) plays as a cut highlights package. */
+  mode?: ProfileMode
 }
 
 /** Play/pause, the match-story strip (scrubber + key moments) and speed. */
-export function Transport({ lang, hint, onHintDone }: Props) {
+export function Transport({ lang, hint, onHintDone, mode }: Props) {
   const { m, pb, closeDoors } = useMatch()
   const frame = useFrame(pb)
   const { playing, speed } = usePlaybackState(pb)
+  const hl = useCutPlayer(m, pb, mode === 'casual')
 
   useEffect(() => {
     if (hint && playing) onHintDone?.()
@@ -58,6 +62,24 @@ export function Transport({ lang, hint, onHintDone }: Props) {
       </button>
       <div className="tp-clock">{clockLabel(m.bundle, frame)}</div>
       <MatchStory lang={lang} />
+      {mode === 'casual' && (
+        <div className="tp-cuts" role="group">
+          {CUTS.map((c) => (
+            <button key={c} className={c === hl.cut ? 'on' : ''} aria-pressed={c === hl.cut} onClick={() => hl.setCut(c)}>
+              {t(lang, `cut_${c}`)}
+            </button>
+          ))}
+        </div>
+      )}
+      {hl.clip && (
+        <div key={hl.cuts} className={`cut-label cut-${hl.clip.kind}`} role="status">
+          <b>{t(lang, `cut_${hl.clip.kind}`)}</b> {minuteLabel(m.bundle, hl.clip.at)}
+          <span>
+            {hl.index + 1}/{hl.clips.length}
+          </span>
+        </div>
+      )}
+      {hl.cuts > 0 && <div key={`flash-${hl.cuts}`} className="cut-flash" aria-hidden />}
       <div className="tp-speeds">
         {SPEEDS.map((s) => (
           <button key={s} className={s === speed ? 'on' : ''} onClick={() => pb.setSpeed(s)}>

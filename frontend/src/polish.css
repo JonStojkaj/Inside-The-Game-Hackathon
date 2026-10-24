@@ -459,3 +459,70 @@
     display: none;
   }
 }
+
+/* ---------------------------------------------------------------- big moments: cut highlights package */
+
+.tp-cuts {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+}
+.tp-cuts button {
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font: 700 13px var(--cond);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.tp-cuts button.on {
+  background: var(--gold);
+  color: #0a0d12;
+}
+.cut-label {
+  position: absolute;
+  left: 20px;
+  bottom: calc(100% + 12px);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 7px 12px;
+  border-left: 4px solid var(--gold);
+  border-radius: 4px;
+  background: rgba(6, 8, 11, 0.88);
+  font: 700 15px var(--cond);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  pointer-events: none;
+  animation: fade-up 0.35s var(--ease) both;
+}
+.cut-label.cut-goal {
+  border-left-color: var(--ok);
+}
+.cut-label span {
+  color: var(--muted);
+  font-size: 12px;
+}
+/* a TV cut: a short dip to black over the whole picture */
+.cut-flash {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: #000;
+  pointer-events: none;
+  animation: cut-dip 0.45s ease-out both;
+}
+@keyframes cut-dip {
+  from {
+    opacity: 0.85;
+  }
+  to {
+    opacity: 0;
+  }
+}

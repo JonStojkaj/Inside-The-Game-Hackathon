@@ -97,7 +97,7 @@ export function Screen({ profile, primary, onAsk, holdBreak }: Props) {
         <div className="stage">
           {hasVideo && view === 'video' && (
             <div className={`tv-box ${showVideo ? '' : 'hidden'}`} aria-hidden={!showVideo}>
-              <TvVideo hidden={false} onFail={() => setVideoFailed(true)} />
+              <TvVideo hidden={!showVideo} onFail={() => setVideoFailed(true)} />
               <Radar focusPlayer={pid ?? null} />
             </div>
           )}

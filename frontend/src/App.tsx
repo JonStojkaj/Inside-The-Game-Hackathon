@@ -263,7 +263,7 @@ function Player({ bundle }: { bundle: MatchBundle }) {
         </main>
 
         {askOpen && <AskPanel lang={lang} onClose={() => setAskOpen(false)} />}
-        <Transport lang={lang} />
+        <Transport lang={lang} mode={me.mode} />
         {!onboarding && <Commentator profile={primary} audible={sound} />}
         {onboarding && (
           <Onboarding

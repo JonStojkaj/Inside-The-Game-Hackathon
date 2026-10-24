@@ -20,6 +20,13 @@ export interface Playback {
   /** Hold the clock without pausing (e.g. while the TV picture buffers), so data and video never drift apart. */
   hold(reason: string, on: boolean): void
   readonly held: boolean
+  /**
+   * Master clock while playing: the visible TV picture hands in its own position (in data frames), so
+   * the picture plays untouched at its native rate and everything else follows it. null = wall clock.
+   */
+  follow(source: (() => number) | null): void
+  /** Bumped on every seek, so a followed source knows to jump too. */
+  readonly seeks: number
 }
 
 export function createPlayback(nFrames: number, fps: number): Playback {
@@ -28,6 +35,8 @@ export function createPlayback(nFrames: number, fps: number): Playback {
   let timer = 0
   let last = 0
   const holds = new Set<string>()
+  let source: (() => number) | null = null
+  let seeks = 0
   const emit = () => listeners.forEach((fn) => fn())
 
   const tick = (now: number) => {
@@ -35,7 +44,10 @@ export function createPlayback(nFrames: number, fps: number): Playback {
     // clock down against the video; longer gaps (background tab) are not caught up
     const dt = Math.min(now - last, 500)
     last = now
-    if (!holds.size) pb.frame = Math.min(pb.frame + (dt / 1000) * fps * pb.speed, nFrames - 1)
+    if (source) {
+      const f = source()
+      if (Number.isFinite(f)) pb.frame = Math.min(Math.max(0, f), nFrames - 1)
+    } else if (!holds.size) pb.frame = Math.min(pb.frame + (dt / 1000) * fps * pb.speed, nFrames - 1)
     if (pb.frame >= nFrames - 1) pb.playing = false
     emit()
     cancelAnimationFrame(raf)
@@ -60,6 +72,7 @@ export function createPlayback(nFrames: number, fps: number): Playback {
     },
     seek(frame) {
       pb.frame = Math.max(0, Math.min(frame, nFrames - 1))
+      seeks++
       emit()
     },
     play() {
@@ -92,6 +105,12 @@ export function createPlayback(nFrames: number, fps: number): Playback {
     },
     get held() {
       return holds.size > 0
+    },
+    follow(fn) {
+      source = fn
+    },
+    get seeks() {
+      return seeks
     },
   }
   return pb
