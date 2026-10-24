@@ -235,3 +235,6 @@ data/production/
 
 # azd environment (local values, never commit)
 .azure/
+
+# local listening samples of the commentator voices
+data/voice-samples/
