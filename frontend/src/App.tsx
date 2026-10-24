@@ -62,7 +62,6 @@ function Player({ bundle }: { bundle: MatchBundle }) {
   const lastProfile = useMemo(() => loadProfile(players), [players])
   const [menu, setMenu] = useState(false)
   const [sound, setSound] = useState(true)
-  const hasAudio = bundle.audio.length > 0
   const [askOpen, setAskOpen] = useState(q.has('ask_open'))
   const askOk = useAskAvailable()
   const me = profile ?? demo[0]
@@ -247,18 +246,16 @@ function Player({ bundle }: { bundle: MatchBundle }) {
           <nav className="views">
             <AskButton lang={lang} open={askOpen} onToggle={() => setAskOpen(!askOpen)} />
           </nav>
-          {hasAudio && (
-            <button
-              className={`sound ${sound ? 'on' : ''}`}
-              onClick={() => setSound(!sound)}
-              title={t(lang, sound ? 'sound_on' : 'sound_off')}
-              aria-label={t(lang, sound ? 'sound_on' : 'sound_off')}
-              aria-pressed={sound}
-            >
-              <span aria-hidden>{sound ? '🔊' : '🔇'}</span>
-              <small>{t(lang, sound ? 'sound_on' : 'sound_off')}</small>
-            </button>
-          )}
+          <button
+            className={`sound ${sound ? 'on' : ''}`}
+            onClick={() => setSound(!sound)}
+            title={t(lang, sound ? 'sound_on' : 'sound_off')}
+            aria-label={t(lang, sound ? 'sound_on' : 'sound_off')}
+            aria-pressed={sound}
+          >
+            <span aria-hidden>{sound ? '🔊' : '🔇'}</span>
+            <small>{t(lang, sound ? 'sound_on' : 'sound_off')}</small>
+          </button>
         </header>
 
         <main className="main" onClick={() => menu && setMenu(false)}>
@@ -267,7 +264,7 @@ function Player({ bundle }: { bundle: MatchBundle }) {
 
         {askOpen && <AskPanel lang={lang} onClose={() => setAskOpen(false)} />}
         <Transport lang={lang} />
-        {hasAudio && !onboarding && <Commentator profile={primary} audible={sound} />}
+        {!onboarding && <Commentator profile={primary} audible={sound} />}
         {onboarding && (
           <Onboarding
             initial={profile ?? lastProfile}
