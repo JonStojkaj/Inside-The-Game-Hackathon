@@ -3,6 +3,8 @@ import type { Dict } from './strings'
 
 export const POLISH: Record<'en' | 'de' | 'es', Dict> = {
   en: {
+    last_shot: 'Last shot',
+    k_avg_speed: 'Avg speed now',
     simulating: 'Simulating {n} scenarios…',
     sim_actual: 'Replaying what happened',
     sim_alts: 'Testing the alternatives',
@@ -47,9 +49,10 @@ export const POLISH: Record<'en' | 'de' | 'es', Dict> = {
     in_control_short: 'in control',
     open_game: 'Open game',
     rating: 'Rating',
-    season_avg: 'season {v}',
   },
   de: {
+    last_shot: 'Letzter Schuss',
+    k_avg_speed: 'Ø Tempo jetzt',
     simulating: 'Simuliere {n} Szenarien…',
     sim_actual: 'Spiele ab, was passiert ist',
     sim_alts: 'Teste die Alternativen',
@@ -94,9 +97,10 @@ export const POLISH: Record<'en' | 'de' | 'es', Dict> = {
     in_control_short: 'kontrolliert',
     open_game: 'Offenes Spiel',
     rating: 'Note',
-    season_avg: 'Saison {v}',
   },
   es: {
+    last_shot: 'Último tiro',
+    k_avg_speed: 'Velocidad media',
     simulating: 'Simulando {n} escenarios…',
     sim_actual: 'Repitiendo lo que pasó',
     sim_alts: 'Probando las alternativas',
@@ -141,6 +145,5 @@ export const POLISH: Record<'en' | 'de' | 'es', Dict> = {
     in_control_short: 'controla',
     open_game: 'Partido abierto',
     rating: 'Nota',
-    season_avg: 'temporada {v}',
   },
 }

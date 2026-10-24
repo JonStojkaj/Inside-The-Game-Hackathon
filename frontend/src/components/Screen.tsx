@@ -17,6 +17,8 @@ import { Pitch, type PitchTag } from './Pitch'
 import { Radar } from './Radar'
 import { Scorebug } from './Scorebug'
 import { FanSide } from './side/FanSide'
+import { useAnalystCats } from '../lib/analystCats'
+import { AnalystColumn, CatPicker } from './side/AnalystBoard'
 import { AnalystSide, CasualSide } from './side/OtherSides'
 import { PlayerSide } from './side/PlayerSide'
 import { TvVideo } from './TvVideo'
@@ -75,6 +77,7 @@ export function Screen({ profile, primary, onAsk, holdBreak }: Props) {
   const [videoFailed, setVideoFailed] = useState(false)
   const hasVideo = Boolean(match.video && !videoFailed)
   const [view, setView] = useStageView(mode)
+  const [cats, toggleCat] = useAnalystCats()
   const showVideo = hasVideo && !sd && view === 'video'
   const quiet = Boolean(sd || fullscreen)
   const breakInsight = sd?.insight
@@ -84,6 +87,12 @@ export function Screen({ profile, primary, onAsk, holdBreak }: Props) {
       className={`screen mode-${mode} ${showVideo ? 'on-tv' : ''} ${sd ? 'in-doors' : ''}`}
       style={club ? ({ '--club': club.color } as React.CSSProperties) : undefined}
     >
+      {mode === 'analyst' && (
+        <aside className="side side-left" aria-label={t(lang, 'cat_pick')}>
+          <CatPicker lang={lang} cats={cats} onToggle={toggleCat} />
+          <AnalystColumn lang={lang} cats={cats} side={0} />
+        </aside>
+      )}
       <div className="stage-col">
         <div className="stage">
           {hasVideo && view === 'video' && (
@@ -144,7 +153,7 @@ export function Screen({ profile, primary, onAsk, holdBreak }: Props) {
       <aside className={`side side-${mode}`} aria-label={t(lang, mode)}>
         {mode === 'club_fan' && club && <FanSide team={club.key} lang={lang} />}
         {mode === 'player_focus' && pid && <PlayerSide pid={pid} lang={lang} breakInsight={breakInsight} />}
-        {mode === 'analyst' && <AnalystSide lang={lang} panel={active.side_panel} breakInsight={breakInsight} />}
+        {mode === 'analyst' && <AnalystSide lang={lang} cats={cats} breakInsight={breakInsight} />}
         {mode === 'casual' && <CasualSide lang={lang} />}
       </aside>
     </div>

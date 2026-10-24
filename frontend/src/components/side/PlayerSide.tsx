@@ -50,10 +50,9 @@ function RatingBlock({ pid, lang }: { pid: string; lang: Lang }) {
   const parts = ratingParts(acts)
   const best = bestAction(acts)
   const avg = league && leagueClub(league, club) ? (league.season_ratings[p.name] ?? league.default_rating) : null
-  const maxPart = Math.max(0.4, ...PARTS.map((k) => Math.abs(parts[k])))
   return (
     <Block title={t(lang, 'blk_rating')} accent={club.color} className="rating-blk">
-      <div className="rt-head" title={t(lang, 'rating_hint')}>
+      <div className="rt-head" title={`${t(lang, 'rating_hint')}\n${PARTS.map((k) => `${t(lang, `part_${k}`)} ${parts[k] >= 0 ? '+' : '−'}${fmtNum(lang, Math.abs(parts[k]), 1)}`).join(' · ')}`}>
         <div className="rt-num" style={{ '--r': (r - 1) / 9 } as React.CSSProperties}>
           {fmtNum(lang, r, 1)}
         </div>
@@ -61,26 +60,12 @@ function RatingBlock({ pid, lang }: { pid: string; lang: Lang }) {
           <b>
             #{p.number} {p.name}
           </b>
-          <span>
-            {p.position} · {club.name}
-          </span>
           {avg != null && (
             <span className={`rt-avg ${r >= avg ? 'up' : 'down'}`}>
               {r >= avg ? '▲' : '▼'} {tf(lang, 'season_avg', { r: fmtNum(lang, avg, 1) })}
             </span>
           )}
         </div>
-      </div>
-      <div className="rt-parts">
-        {PARTS.map((k) => (
-          <div key={k} className="rt-part">
-            <span>{t(lang, `part_${k}`)}</span>
-            <div className={parts[k] < 0 ? 'neg' : ''}>
-              <i style={{ width: `${(Math.abs(parts[k]) / maxPart) * 100}%` }} />
-            </div>
-            <b>{parts[k] === 0 ? '–' : `${parts[k] > 0 ? '+' : '−'}${fmtNum(lang, Math.abs(parts[k]), 1)}`}</b>
-          </div>
-        ))}
       </div>
       {best && best.value > 0 && (
         <button
@@ -97,7 +82,6 @@ function RatingBlock({ pid, lang }: { pid: string; lang: Lang }) {
           <span className="rt-best-go">{t(lang, 'watch')}</span>
         </button>
       )}
-      <div className="blk-note">ⓘ {t(lang, 'rating_hint')}</div>
     </Block>
   )
 }
@@ -119,7 +103,6 @@ function DuelBlock({ pid, lang }: { pid: string; lang: Lang }) {
   const rows: { k: string; a: number | null; b: number | null; fmt: (v: number) => string; max: number }[] = [
     { k: 'duel_rating', a: stats.a.r, b: stats.b.r, fmt: (v) => fmtNum(lang, v, 1), max: 10 },
     { k: 'duel_acc', a: stats.a.acc, b: stats.b.acc, fmt: (v) => fmtPct(lang, v, 0), max: 1 },
-    { k: 'duel_diff', a: stats.a.diff, b: stats.b.diff, fmt: (v) => `${Math.round(v)}`, max: 100 },
   ]
   return (
     <Block title={t(lang, 'blk_duel')} className="duel-blk">

@@ -4,14 +4,14 @@ import { chanceInfo, goalEvents, whyGoal } from '../../lib/derive'
 import { clockLabel, minuteLabel } from '../../lib/match'
 import { useFrame } from '../../lib/playback'
 import { t } from '../../lib/profile'
-import type { Insight, Lang, Overlay } from '../../types'
-import { AnalystHud, Hypotheses } from '../modes/Analyst'
-import { SidePanel } from '../Overlays'
-import { Block, Latest } from './Block'
-import { important } from './important'
+import type { Insight, Lang } from '../../types'
+import { Hypotheses } from '../modes/Analyst'
+import type { Cat } from '../../lib/analystCats'
+import { AnalystColumn } from './AnalystBoard'
+import { Block } from './Block'
 
-/** Analyst sidebar: the data HUD, the production's stat card when one is on air, every hypothesis during a break. */
-export function AnalystSide({ lang, panel, breakInsight }: { lang: Lang; panel?: Overlay; breakInsight?: Insight }) {
+/** Analyst right column: every hypothesis during a break, then the odd-numbered picked categories. */
+export function AnalystSide({ lang, cats, breakInsight }: { lang: Lang; cats: Cat[]; breakInsight?: Insight }) {
   return (
     <>
       {breakInsight && (
@@ -19,15 +19,7 @@ export function AnalystSide({ lang, panel, breakInsight }: { lang: Lang; panel?:
           <Hypotheses ins={breakInsight} lang={lang} />
         </Block>
       )}
-      <Block title={t(lang, 'blk_data')} className="hud-blk">
-        <AnalystHud lang={lang} />
-      </Block>
-      {panel && !breakInsight && (
-        <div className="blk blk-panel">
-          <SidePanel overlay={panel} lang={lang} />
-        </div>
-      )}
-      <Latest lang={lang} filter={important} n={4} />
+      <AnalystColumn lang={lang} cats={cats} side={1} />
     </>
   )
 }
@@ -77,6 +69,7 @@ export function CasualSide({ lang }: { lang: Lang }) {
           {past.map((x) => (
             <li key={x.id} className={x.goal ? 'goal' : 'chance'} style={{ '--team': m.club(x.team).color } as React.CSSProperties}>
               <button
+                title={x.why}
                 onClick={() => {
                   if (x.moment) openMoment(x.moment)
                   else {
@@ -88,7 +81,6 @@ export function CasualSide({ lang }: { lang: Lang }) {
                 <span className="czm-head">
                   <b>{x.goal ? '⚽' : '◎'}</b> {minuteLabel(m.bundle, x.frame)} · {x.goal ? t(lang, 'k_goal') : t(lang, 'big_chance')} · {x.who}
                 </span>
-                <span className="czm-why">{x.why}</span>
               </button>
             </li>
           ))}
