@@ -327,3 +327,135 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* ---------------------------------------------------------------- analyst dashboard (two data columns) */
+
+.screen.mode-analyst {
+  grid-template-columns: clamp(250px, 19vw, 320px) minmax(0, 1fr) clamp(250px, 19vw, 320px);
+}
+.cat-pick {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.cat-pick button {
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #0c1118;
+  color: var(--muted);
+  font: 700 12px var(--cond);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s var(--ease), color 0.2s var(--ease);
+}
+.cat-pick button.on {
+  background: var(--text);
+  border-color: var(--text);
+  color: var(--bg);
+}
+.an-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.vs-nums {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: baseline;
+  gap: 8px;
+}
+.vs-nums b {
+  font: 800 30px/1 var(--cond);
+}
+.vs-nums b:last-child {
+  text-align: right;
+}
+.vs-nums span {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+}
+.vs-bar {
+  display: flex;
+  height: 6px;
+  margin-top: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--line);
+}
+.vs-bar i {
+  transition: width 0.6s var(--ease);
+}
+.an-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.an-row b {
+  font-weight: 600;
+  color: var(--text);
+  text-align: right;
+  white-space: nowrap;
+}
+.an-row em {
+  font-style: normal;
+}
+.an-row .ok {
+  color: var(--ok);
+}
+.an-row .bad {
+  color: var(--bad);
+}
+.an-gauge {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.an-hero {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.an-hero b {
+  font: 800 38px/1 var(--cond);
+}
+.an-hero span {
+  font-size: 12px;
+  color: var(--muted);
+}
+.an-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+.an-list span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.an-list i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.an-list b {
+  margin-left: auto;
+  font-weight: 600;
+}
+@media (max-width: 1100px) {
+  .screen.mode-analyst {
+    grid-template-columns: minmax(0, 1fr) clamp(250px, 30vw, 320px);
+  }
+  .screen.mode-analyst .side-left {
+    display: none;
+  }
+}
