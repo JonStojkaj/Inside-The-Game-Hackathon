@@ -179,8 +179,7 @@ code {
 }
 .views button,
 .seg-ctl button,
-.tp-speeds button,
-.cr-tabs button {
+.tp-speeds button {
   border: 0;
   background: transparent;
   padding: 6px 12px;
@@ -200,8 +199,7 @@ code {
 }
 .views button.on,
 .seg-ctl button.on,
-.tp-speeds button.on,
-.cr-tabs button.on {
+.tp-speeds button.on {
   background: #fff;
   color: #0a0d12;
 }
@@ -235,13 +233,7 @@ code {
   padding: 6px 8px;
   font: 600 13px var(--sans);
 }
-.picker.compact {
-  justify-content: center;
-}
-.picker.compact .seg-ctl button {
-  padding: 4px 9px;
-  font-size: 12px;
-}
+
 .seg-id {
   font-size: 12px;
   color: var(--muted);
@@ -262,27 +254,6 @@ code {
   display: flex;
   padding: 14px 20px;
 }
-.split {
-  flex: 1;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  min-width: 0;
-}
-.split-col {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-width: 0;
-  min-height: 0;
-}
-.control-layout {
-  flex: 1;
-  display: grid;
-  grid-template-columns: minmax(0, 1.55fr) minmax(360px, 1fr);
-  gap: 14px;
-  min-height: 0;
-}
 
 /* ---------------------------------------------------------------- screen / stage */
 
@@ -295,9 +266,7 @@ code {
   justify-content: center;
   container-type: size;
 }
-.split .screen {
-  align-items: flex-start;
-}
+
 .stage {
   position: relative;
   width: min(100cqw, calc(100cqh * 16 / 9));
@@ -310,9 +279,7 @@ code {
   --u: 1cqw;
   font-family: var(--sans);
 }
-.split .stage {
-  --u: 1.32cqw; /* graphics a bit larger in the small 3-up screens so they stay readable */
-}
+
 .pitch-wrap,
 .pitch-canvas,
 .tv-video {
@@ -331,33 +298,6 @@ code {
 }
 .tv-video {
   object-fit: cover;
-}
-.screen-label {
-  position: absolute;
-  top: calc(var(--u) * 1.4);
-  right: calc(var(--u) * 1.4);
-  display: flex;
-  gap: calc(var(--u) * 0.5);
-  align-items: center;
-  font: 700 calc(var(--u) * 1.25) / 1 var(--cond);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  z-index: 6;
-}
-.screen-label b {
-  background: #fff;
-  color: #0a0d12;
-  padding: calc(var(--u) * 0.35) calc(var(--u) * 0.6);
-  border-radius: 3px;
-}
-.screen-label span {
-  background: rgba(0, 0, 0, 0.6);
-  padding: calc(var(--u) * 0.35) calc(var(--u) * 0.5);
-  border-radius: 3px;
-}
-.screen-label .lang {
-  background: var(--gold);
-  color: #0a0d12;
 }
 
 /* ---------------------------------------------------------------- scorebug */
@@ -1398,153 +1338,6 @@ code {
 
 /* ---------------------------------------------------------------- control room */
 
-.control-room {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  background: #0a0e14;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  overflow: hidden;
-}
-.cr-head {
-  padding: 14px 16px 10px;
-  border-bottom: 1px solid var(--line);
-}
-.cr-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font: 800 20px var(--cond);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-.cr-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--ok);
-  box-shadow: 0 0 10px var(--ok);
-  animation: blink 1.6s infinite;
-}
-.cr-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 10px;
-}
-.cr-tabs button {
-  background: rgba(255, 255, 255, 0.05);
-  text-transform: capitalize;
-  font-size: 12px;
-}
-.cr-tabs .k {
-  width: 8px;
-  height: 8px;
-  transform: rotate(45deg);
-  background: #9aa6b8;
-}
-.cr-tabs .k-goal {
-  background: var(--gold);
-}
-.cr-tabs .k-big_chance {
-  background: #ff8a3d;
-}
-.cr-tabs .k-dangerous_turnover {
-  background: var(--bad);
-}
-.cr-log {
-  flex: 1;
-  overflow-y: auto;
-  padding: 12px 16px;
-  font: 13px/1.5 ui-monospace, 'SF Mono', Menlo, monospace;
-}
-.cr-line {
-  display: grid;
-  grid-template-columns: 132px 1fr;
-  gap: 10px;
-  padding: 6px 0;
-  border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
-  animation: fade-up 0.35s var(--ease) both;
-}
-.cr-agent {
-  font: 700 13px var(--cond);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--muted);
-  padding-top: 1px;
-}
-.a-analyst .cr-agent {
-  color: #7cc4ff;
-}
-.a-experimenter .cr-agent {
-  color: #c39bff;
-}
-.a-critic .cr-agent {
-  color: var(--gold);
-}
-.a-explain .cr-agent,
-.a-production .cr-agent {
-  color: #fff;
-}
-.cr-line.ok .cr-text {
-  color: var(--ok);
-}
-.cr-line.bad .cr-text {
-  color: var(--bad);
-}
-.cr-line.dim .cr-text {
-  color: var(--muted);
-}
-.cr-line.a-production .cr-text {
-  color: #cdd4de;
-}
-.cr-dots {
-  display: inline-flex;
-  gap: 4px;
-  align-items: center;
-}
-.cr-dots i {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--muted);
-  animation: blink 1s infinite;
-}
-.cr-dots i:nth-child(2) {
-  animation-delay: 0.2s;
-}
-.cr-dots i:nth-child(3) {
-  animation-delay: 0.4s;
-}
-.cr-foot {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  border-top: 1px solid var(--line);
-}
-.cr-foot > div {
-  padding: 10px 12px;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--muted);
-  border-right: 1px solid var(--line);
-}
-.cr-foot b {
-  display: block;
-  font: 800 26px var(--cond);
-  color: var(--text);
-}
-.cr-foot .ok b {
-  color: var(--ok);
-}
-.cr-foot .bad b {
-  color: var(--bad);
-}
-.cr-foot .zero b {
-  color: var(--gold);
-}
-
 /* ---------------------------------------------------------------- keyframes */
 
 @keyframes blink {
@@ -1702,21 +1495,6 @@ code {
 
 /* ---------------------------------------------------------------- 3-up: tall "second screen" stages */
 
-.split .stage {
-  width: min(100cqw, calc(100cqh * 3 / 4));
-  aspect-ratio: 3 / 4;
-  --u: 1.55cqw;
-}
-.split .fs-headline {
-  font-size: calc(var(--u) * 14);
-}
-.split .tk-items .tk-item:nth-child(n + 3) {
-  display: none;
-}
-.cr-empty {
-  color: var(--muted);
-  padding: 24px 0;
-}
 .seg-none {
   color: var(--gold);
 }
@@ -1730,59 +1508,6 @@ code {
 
 /* 3-up: tall "second screen" stages. Pitch on top, then the segment's cards stacked under it, so
    nothing overlaps whatever is on screen. */
-.split .stage {
-  width: min(100cqw, calc(100cqh * 3 / 4));
-  aspect-ratio: 3 / 4;
-  --u: 1.55cqw;
-}
-.split .feed {
-  position: absolute;
-  z-index: 4;
-  top: 61%;
-  bottom: calc(var(--u) * 4.2);
-  left: calc(var(--u) * 2.2);
-  right: calc(var(--u) * 2.2);
-  display: flex;
-  flex-direction: column;
-  gap: calc(var(--u) * 1);
-}
-.split .feed > * {
-  position: relative;
-  inset: auto;
-  width: auto;
-  max-width: none;
-  min-width: 0;
-}
-.split .feed .lower-third {
-  margin-top: auto;
-}
-.split .sd-legend {
-  top: 57.5%;
-}
-.split .sd-card {
-  grid-template-columns: 1fr;
-  gap: calc(var(--u) * 1);
-  left: calc(var(--u) * 2.2);
-  right: calc(var(--u) * 2.2);
-  top: 63%;
-  bottom: auto;
-  padding: calc(var(--u) * 1.1) calc(var(--u) * 1.3);
-}
-.split .sd-badge {
-  top: calc(var(--u) * 6.6);
-}
-.split .sd-sub {
-  display: none;
-}
-.split .fs-headline {
-  font-size: calc(var(--u) * 9);
-}
-.split .tk-items .tk-item:nth-child(n + 3) {
-  display: none;
-}
-.split .screen-label {
-  top: calc(var(--u) * 1.8);
-}
 
 /* ---------------------------------------------------------------- TV view */
 
@@ -1796,11 +1521,7 @@ code {
 .tv-box.hidden {
   opacity: 0;
 }
-.split .tv-box {
-  inset: auto 0 auto 0;
-  top: 12%;
-  aspect-ratio: 16 / 9;
-}
+
 .tv-cover {
   position: absolute;
   background: var(--panel-solid);
@@ -1839,14 +1560,14 @@ code {
   display: block;
 }
 /* full-size stage: our scorebug lands on the engine's scoreboard */
-.app:not(.view-split) .on-tv .scorebug {
+.on-tv .scorebug {
   left: 15.6%;
   top: 1.2%;
 }
-.app:not(.view-split) .on-tv .sb-main {
+.on-tv .sb-main {
   min-width: 32.2cqw;
 }
-.app:not(.view-split) .on-tv .sb-clock {
+.on-tv .sb-clock {
   margin-left: auto;
 }
 
@@ -1959,9 +1680,6 @@ code {
 .fs-bullets li {
   animation: fade-up 0.5s var(--ease) both;
 }
-.screen-label .lang.fallback {
-  background: #9aa6b8;
-}
 
 @keyframes grow-x {
   from {
@@ -1979,59 +1697,6 @@ code {
 }
 
 /* ---------------------------------------------------------------- control room extras */
-
-.cr-sub {
-  margin-left: auto;
-  font: 500 12px var(--sans);
-  text-transform: none;
-  letter-spacing: 0;
-  color: var(--muted);
-}
-.cr-agent small {
-  display: block;
-  font: 500 11px ui-monospace, 'SF Mono', Menlo, monospace;
-  text-transform: none;
-  letter-spacing: 0;
-  color: #6f7a8a;
-  margin-top: 2px;
-}
-.a-producer .cr-agent,
-.a-narrator .cr-agent {
-  color: #7fe0c4;
-}
-.cr-tag {
-  display: inline-block;
-  margin-right: 8px;
-  padding: 0 6px;
-  border-radius: 3px;
-  font: 800 12px/18px var(--cond);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text);
-  vertical-align: 1px;
-}
-.cr-tag.t-accepted,
-.cr-tag.t-verified {
-  background: var(--ok);
-  color: #04130c;
-}
-.cr-tag.t-rejected,
-.cr-tag.t-blocked,
-.cr-tag.t-untraced {
-  background: var(--bad);
-  color: #1a0505;
-}
-.cr-tag.t-refuted {
-  background: #ff9f43;
-  color: #1a0d02;
-}
-.cr-line.warn .cr-text {
-  color: #ffb36b;
-}
-.cr-foot .warn b {
-  color: #ff9f43;
-}
 
 /* ---------------------------------------------------------------- full-time recap card */
 
@@ -2067,12 +1732,7 @@ code {
   font-size: calc(var(--u) * 1.15);
   line-height: 1.6;
 }
-.split .fullscreen.recap .fs-headline {
-  font-size: calc(var(--u) * 4.6);
-}
-.split .fullscreen.recap .fs-card {
-  max-width: 88%;
-}
+
 .tv-sync {
   position: absolute;
   z-index: 20;

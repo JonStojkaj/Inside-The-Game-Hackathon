@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AskButton, AskPanel } from './components/AskPanel'
 import { useAskAvailable } from './lib/ask'
 import { Commentator } from './components/Commentator'
-import { ControlRoom } from './components/ControlRoom'
 import { Onboarding } from './components/Onboarding'
 import { ProfilePicker } from './components/ProfilePicker'
 import { Screen } from './components/Screen'
@@ -10,35 +9,32 @@ import { Transport } from './components/Transport'
 import { loadMatch, resolveSource } from './data/source'
 import { unlockAudio } from './lib/audio'
 import { MatchContext, type DoorsBreak, type MatchCtx } from './lib/context'
-import { resetExplainer } from './lib/explainer'
 import { indexMatch, timelineFrames } from './lib/match'
 import { doorsForMoment, doorsOverlays, overlayList } from './lib/overlays'
 import { createPlayback } from './lib/playback'
 import { loadProfile, presets, profileFromQuery, saveProfile, t } from './lib/profile'
 import type { Insight, MatchBundle, Moment, ViewerProfile } from './types'
 
-/** viewer = the single-viewer product (default); split / control = the producer view. */
-type View = 'viewer' | 'split' | 'control'
-
 export default function App() {
   const [bundle, setBundle] = useState<MatchBundle | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    // one bundle per mount: a second load (StrictMode runs effects twice in dev) would rebuild the
+    // clock under demo takes that already seeked it (?moment, ?f)
+    let live = true
     const src = resolveSource()
     loadMatch(src)
-      .then(setBundle)
-      .catch((e: unknown) => setError(`${src.kind} ${src.base}: ${e instanceof Error ? e.message : String(e)}`))
+      .then((b) => live && setBundle(b))
+      .catch((e: unknown) => live && setError(`${src.kind} ${src.base}: ${e instanceof Error ? e.message : String(e)}`))
+    return () => {
+      live = false
+    }
   }, [])
 
   if (error) return <div className="splash error">Could not load match data · {error}</div>
   if (!bundle) return <div className="splash">Loading match…</div>
   return <Player bundle={bundle} />
-}
-
-function initialView(q: URLSearchParams): View {
-  const v = q.get('view')
-  return v === 'split' || v === 'control' ? v : 'viewer'
 }
 
 let breakSeq = 0
@@ -55,26 +51,22 @@ function Player({ bundle }: { bundle: MatchBundle }) {
     if (q.has('f')) p.seek(Number(q.get('f'))) // before any child reads the clock (e.g. ?ask_open)
     return p
   }, [bundle, q])
-  const [view, setView] = useState<View>(() => initialView(q))
   const demo = useMemo(() => presets(bundle.overlays, bundle.match.players), [bundle])
   const players = bundle.match.players
   // demo takes put the profile in the URL; everyone else answers the questions first (the last
   // answer is pre-selected, never auto-applied)
   const urlProfile = useMemo(() => profileFromQuery(players), [players])
-  const skipOnboarding = Boolean(urlProfile) || initialView(q) !== 'viewer' || q.has('shot')
+  const skipOnboarding = Boolean(urlProfile) || q.has('shot')
   const [profile, setProfile] = useState<ViewerProfile | null>(() => urlProfile ?? (skipOnboarding ? loadProfile(players) : null))
   const [onboarding, setOnboarding] = useState(() => q.has('onboarding') || !skipOnboarding)
   const lastProfile = useMemo(() => loadProfile(players), [players])
   const [menu, setMenu] = useState(false)
-  const [split, setSplit] = useState<ViewerProfile[]>(demo)
   const [sound, setSound] = useState(true)
-  const hasAudio = bundle.audio.length > 0
   const [askOpen, setAskOpen] = useState(q.has('ask_open'))
   const askOk = useAskAvailable()
   const me = profile ?? demo[0]
   const lang = profile?.language ?? 'en'
-  const producer = view !== 'viewer'
-  const primary = producer ? split[0] : me
+  const primary = me
 
   // ---------------------------------------------------------------- Sliding Doors breaks
   const [doorsBreak, setBreak] = useState<DoorsBreak | null>(null)
@@ -201,7 +193,7 @@ function Player({ bundle }: { bundle: MatchBundle }) {
 
   return (
     <MatchContext.Provider value={ctx}>
-      <div className={`app view-${view} ${q.has('shot') ? 'shot' : ''}`}>
+      <div className={`app ${q.has('shot') ? 'shot' : ''}`}>
         <header className="topbar">
           <div className="brand">
             <span className="brand-mark">
@@ -211,8 +203,7 @@ function Player({ bundle }: { bundle: MatchBundle }) {
             <span className="brand-name">Sliding Doors</span>
           </div>
 
-          {!producer && (
-            <div className="me">
+          <div className="me">
               <button className={`me-chip ${menu ? 'open' : ''}`} onClick={() => setMenu(!menu)} aria-expanded={menu}>
                 <span className="me-label">{t(lang, 'watching_as')}</span>
                 <b className={`me-mode m-${me.mode}`}>{t(lang, me.mode)}</b>
@@ -245,7 +236,6 @@ function Player({ bundle }: { bundle: MatchBundle }) {
                 </div>
               )}
             </div>
-          )}
 
           <span className="topbar-match">
             <i style={{ background: bundle.match.home.color }} />
@@ -254,75 +244,33 @@ function Player({ bundle }: { bundle: MatchBundle }) {
           </span>
           <div className="topbar-spacer" />
           <nav className="views">
-            {producer ? (
-              <>
-                <button onClick={() => setView('viewer')}>← {t(lang, 'back_to_mine')}</button>
-                <button className={view === 'split' ? 'on' : ''} onClick={() => setView('split')}>
-                  {t(lang, 'three_viewers')}
-                </button>
-                <button className={view === 'control' ? 'on' : ''} onClick={() => setView('control')}>
-                  {t(lang, 'control_room')}
-                </button>
-              </>
-            ) : (
-              <button
-                className="producer"
-                title={t(lang, 'producer_title')}
-                onClick={() => {
-                  setMenu(false)
-                  setView('split')
-                }}
-              >
-                {t(lang, 'producer')}
-              </button>
-            )}
             <AskButton lang={lang} open={askOpen} onToggle={() => setAskOpen(!askOpen)} />
           </nav>
-          {hasAudio && (
-            <button
-              className={`sound ${sound ? 'on' : ''}`}
-              onClick={() => setSound(!sound)}
-              title={t(lang, sound ? 'sound_on' : 'sound_off')}
-              aria-label={t(lang, sound ? 'sound_on' : 'sound_off')}
-              aria-pressed={sound}
-            >
-              <span aria-hidden>{sound ? '🔊' : '🔇'}</span>
-              <small>{t(lang, sound ? 'sound_on' : 'sound_off')}</small>
-            </button>
-          )}
+          <button
+            className={`sound ${sound ? 'on' : ''}`}
+            onClick={() => setSound(!sound)}
+            title={t(lang, sound ? 'sound_on' : 'sound_off')}
+            aria-label={t(lang, sound ? 'sound_on' : 'sound_off')}
+            aria-pressed={sound}
+          >
+            <span aria-hidden>{sound ? '🔊' : '🔇'}</span>
+            <small>{t(lang, sound ? 'sound_on' : 'sound_off')}</small>
+          </button>
         </header>
 
         <main className="main" onClick={() => menu && setMenu(false)}>
-          {view === 'viewer' && <Screen profile={me} primary onAsk={ask} holdBreak={askOpen} />}
-          {view === 'split' && (
-            <div className="split">
-              {split.map((p, i) => (
-                <div key={i} className="split-col">
-                  <ProfilePicker compact profile={p} onChange={(np) => setSplit(split.map((x, k) => (k === i ? np : x)))} />
-                  <Screen profile={p} label primary={i === 0} onAsk={i === 0 ? ask : undefined} holdBreak={askOpen} />
-                </div>
-              ))}
-            </div>
-          )}
-          {view === 'control' && (
-            <div className="control-layout">
-              <Screen profile={split[0]} primary onAsk={ask} holdBreak={askOpen} />
-              <ControlRoom />
-            </div>
-          )}
+          <Screen profile={me} primary onAsk={ask} holdBreak={askOpen} />
         </main>
 
-        {askOpen && <AskPanel lang={producer ? split[0].language : lang} onClose={() => setAskOpen(false)} />}
+        {askOpen && <AskPanel lang={lang} onClose={() => setAskOpen(false)} />}
         <Transport lang={lang} />
-        {hasAudio && !onboarding && <Commentator profile={primary} audible={sound} />}
+        {!onboarding && <Commentator profile={primary} audible={sound} />}
         {onboarding && (
           <Onboarding
             initial={profile ?? lastProfile}
             onDone={(p) => {
               choose(p)
               setOnboarding(false)
-              setView('viewer')
-              resetExplainer()
               // the answer was a click: audio is unlocked, so the match can start right away
               if (!q.has('shot')) pb.play()
             }}

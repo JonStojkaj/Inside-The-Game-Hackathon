@@ -8,7 +8,6 @@ import type {
   Moment,
   Overlay,
   OverlaysBySegment,
-  ProductionLog,
   StatsSnapshot,
 } from '../types'
 
@@ -58,7 +57,7 @@ async function getJson<T>(cfg: SourceConfig, file: string, fallback?: T): Promis
 export async function loadMatch(cfg: SourceConfig = resolveSource()): Promise<MatchBundle> {
   // match + frames are required; everything the pipeline adds later is optional so the player
   // still works on a partial export.
-  const [match, frames, events, moments, insights, stats, overlays, production, audio] = await Promise.all([
+  const [match, frames, events, moments, insights, stats, overlays, audio] = await Promise.all([
     getJson<MatchInfo>(cfg, 'match.json'),
     getJson<Frames>(cfg, 'frames.json'),
     getJson<MatchEvent[]>(cfg, 'events.json', []),
@@ -66,11 +65,10 @@ export async function loadMatch(cfg: SourceConfig = resolveSource()): Promise<Ma
     getJson<Insight[]>(cfg, 'insights.json', []),
     getJson<StatsSnapshot[]>(cfg, 'stats.json', []),
     getJson<OverlaysBySegment | Overlay[]>(cfg, 'overlays.json', {}),
-    getJson<ProductionLog | null>(cfg, 'production_log.json', null),
     getJson<AudioClip[]>(cfg, 'audio.json', []),
   ])
   events.sort((a, b) => a.t_ms - b.t_ms)
-  return { match, frames, events, moments, insights, stats, overlays: bySegment(overlays), production, audio: Array.isArray(audio) ? audio : [], baseUrl: fileUrl(cfg, '').replace(/\/$/, '') }
+  return { match, frames, events, moments, insights, stats, overlays: bySegment(overlays), audio: Array.isArray(audio) ? audio : [], baseUrl: fileUrl(cfg, '').replace(/\/$/, '') }
 }
 
 /** overlays.json may be {segment: Overlay[]} or a flat list. */

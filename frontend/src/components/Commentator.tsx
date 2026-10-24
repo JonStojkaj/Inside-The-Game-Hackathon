@@ -1,69 +1,93 @@
-import { useEffect, useMemo, useRef } from 'react'
-import { audioEl, breakClip, caption, clipSrc, preloadClip, speaking } from '../lib/audio'
+import { useEffect, useRef, useState } from 'react'
+import { audioEl, caption, clipSrc, preloadClip, speaking } from '../lib/audio'
+import { fallbackLines, fetchCommentary, type CommentaryLine } from '../lib/commentary'
 import { useMatch } from '../lib/context'
-import { segmentId } from '../lib/profile'
-import type { AudioClip, ViewerProfile } from '../types'
+import { oneSentence } from '../lib/story'
+import type { ViewerProfile } from '../types'
 
 interface Props {
-  /** The viewer whose segment speaks (producer view: the first column). */
   profile: ViewerProfile
   /** Sound on (user setting); captions run either way. */
   audible: boolean
 }
 
-/** A clip may still start this long after its start_ms (after a seek, a pause, a slow frame). */
-const LATE_MS = 1500
-const PRELOAD_MS = 25000
+/** A line more than this late (after a seek, a pause, a long previous line) is dropped. */
+const LATE_MS = 3000
+const PREFETCH = 3
+const BREAK_CAPTION_MS = 9000
+
+type Cur = { line: CommentaryLine; mode: 'live' | 'free'; endAt: number; audio: boolean }
 
 /**
- * Commentator clips of audio.json for one segment. A clip plays when the clock reaches its
- * start_ms (or within LATE_MS after, e.g. after a seek), pauses and resumes with the match, and a
- * Sliding Doors break plays the moment's clip during the pause (and lets it finish after Continue).
- * The caption is shown on the primary screen, so muted viewers still get the words.
+ * The commentator: a queue of lines played when the match clock crosses their start_ms, one at a
+ * time (never overlapping), late ones dropped, the next three audio files prefetched. It pauses and
+ * resumes with the match and speaks only at 1x. During a Sliding Doors break it explains the what-if
+ * (the line that falls into the break, else the insight's claim as a caption) and may finish after
+ * Continue. The caption shows on the stage, also when muted.
  */
 export function Commentator({ profile, audible }: Props) {
   const { m, pb, doorsBreak } = useMatch()
-  const seg = segmentId(profile)
-  const clips = useMemo(
-    () => m.bundle.audio.filter((c) => c.segment_id === seg || c.segment_id === '*').sort((a, b) => a.start_ms - b.start_ms),
-    [m, seg],
-  )
+  const [lines, setLines] = useState<CommentaryLine[]>([])
+  const linesRef = useRef(lines)
+  linesRef.current = lines
   const audibleRef = useRef(audible)
   const breakRef = useRef(doorsBreak)
   breakRef.current = doorsBreak
-  // 'live' follows the clock; 'free' (a break's clip) plays to its end regardless of the clock
-  const cur = useRef<{ clip: AudioClip; mode: 'live' | 'free' } | null>(null)
-  const played = useRef(new Set<string>())
-  const url = (c: AudioClip) => `${m.bundle.baseUrl}/${c.file}`
+  const cur = useRef<Cur | null>(null)
+  const done = useRef(new Set<string>())
+  const ms = () => (pb.frame / pb.fps) * 1000
 
-  const stop = () => {
+  // backend lines for exactly this viewer, else the recorded clips that fit best
+  const { mode, language, favourite_club, favourite_players } = profile
+  const fav = favourite_players[0] ?? ''
+  useEffect(() => {
+    let live = true
+    const p: ViewerProfile = { mode, language, favourite_club, favourite_players: fav ? [fav] : [] }
+    const fallback = fallbackLines(m.bundle, p)
+    setLines(fallback)
+    void fetchCommentary(m.bundle.match.match_id, p).then((api) => {
+      if (live && api && api.length) setLines(api)
+    })
+    return () => {
+      live = false
+    }
+  }, [m, mode, language, favourite_club, fav])
+
+  const finish = () => {
     const el = audioEl()
+    el.onended = null
+    el.onerror = null
     el.pause()
     cur.current = null
     speaking.until = 0
     caption.set(null)
   }
 
-  const start = (c: AudioClip, offsetMs: number, mode: 'live' | 'free') => {
+  const start = (line: CommentaryLine, mode: 'live' | 'free') => {
+    done.current.add(line.id)
     const el = audioEl()
-    el.onended = () => {
-      if (cur.current?.clip === c) stop()
+    el.onended = null
+    el.onerror = null
+    const c: Cur = { line, mode, endAt: mode === 'live' ? ms() + line.duration_ms : performance.now() + line.duration_ms, audio: Boolean(line.audio) }
+    cur.current = c
+    caption.set({ id: line.id, text: line.text })
+    if (line.audio) {
+      el.onended = () => cur.current === c && finish()
+      // missing or undecodable file: keep the caption for the line's duration
+      el.onerror = () => {
+        if (cur.current === c) c.audio = false
+      }
+      el.src = clipSrc(line.audio)
+      el.muted = !audibleRef.current
+      el.currentTime = 0
+      el.play().catch(() => {
+        if (cur.current === c) c.audio = false
+      })
+      speaking.until = audibleRef.current ? performance.now() + line.duration_ms : 0
+    } else {
+      el.pause()
+      speaking.until = 0
     }
-    el.src = clipSrc(url(c))
-    el.muted = !audibleRef.current
-    const off = Math.max(0, offsetMs) / 1000
-    if (off > 0.2) el.addEventListener('loadedmetadata', () => (el.currentTime = off), { once: true })
-    el.play().catch(() => {
-      // blocked or missing file: the caption still runs for the clip's duration
-    })
-    cur.current = { clip: c, mode }
-    played.current.add(c.id)
-    speaking.until = audibleRef.current ? performance.now() + c.duration_ms - offsetMs : 0
-    caption.set(c)
-    // caption fallback when the file never plays (no 'ended' event)
-    window.setTimeout(() => {
-      if (cur.current?.clip === c && audioEl().paused && (mode === 'free' || pb.playing)) stop()
-    }, c.duration_ms - offsetMs + 1500)
   }
 
   useEffect(() => {
@@ -72,65 +96,105 @@ export function Commentator({ profile, audible }: Props) {
     if (!audible) speaking.until = 0
   }, [audible])
 
-  // the clock drives live clips
+  // the match clock drives the queue
   useEffect(() => {
-    if (!clips.length) return
-    const ms = () => (pb.frame / pb.fps) * 1000
+    let last = ms()
     const onTick = () => {
       const now = ms()
-      // clips ahead of the clock may play again (rewind)
-      for (const c of clips) if (c.start_ms > now + 200) played.current.delete(c.id)
-      for (const c of clips) if (c.start_ms > now && c.start_ms < now + PRELOAD_MS) preloadClip(url(c))
-      if (breakRef.current || cur.current?.mode === 'free') return
+      const step = now - last
+      last = now
+      const all = linesRef.current
+      // a seek: forget what lies ahead, drop what is already too late
+      const maxStep = pb.playing ? 700 * Math.max(1, pb.speed) : 50
+      if (step < -250 || step > maxStep) {
+        if (cur.current?.mode === 'live') finish()
+        for (const l of all) {
+          if (l.start_ms > now) done.current.delete(l.id)
+          else if (now - l.start_ms > LATE_MS) done.current.add(l.id)
+        }
+      }
+      // prefetch the next few audio files
+      let n = 0
+      for (const l of all) {
+        if (n >= PREFETCH) break
+        if (l.start_ms > now - 500 && !done.current.has(l.id) && l.audio) {
+          preloadClip(l.audio)
+          n++
+        }
+      }
+      const c = cur.current
+      if (c?.mode === 'free') {
+        if (!c.audio && performance.now() > c.endAt) finish()
+        return
+      }
+      if (breakRef.current) return
       const el = audioEl()
       if (!pb.playing || pb.speed !== 1) {
-        if (cur.current) {
-          if (pb.playing) stop()
+        if (c) {
+          if (pb.playing) finish() // fast-forward: the commentator stays quiet
           else if (!el.paused) el.pause()
         }
         return
       }
-      if (cur.current) {
-        const off = now - cur.current.clip.start_ms
-        if (off < -300 || off > cur.current.clip.duration_ms + 300) stop()
-        else {
-          if (el.paused) {
-            if (Math.abs(el.currentTime * 1000 - off) > 500) el.currentTime = off / 1000
-            void el.play().catch(() => undefined)
-          }
+      if (c) {
+        if (c.audio) {
+          if (el.paused && !el.ended) void el.play().catch(() => (c.audio = false))
           return
         }
+        if (now < c.endAt) return
+        finish()
       }
-      const c = clips.find((x) => !played.current.has(x.id) && x.start_ms <= now && now - x.start_ms < LATE_MS)
-      if (c) start(c, now - c.start_ms, 'live')
+      // next due line; the ones more than LATE_MS late are dropped
+      for (const l of all) {
+        if (done.current.has(l.id) || l.start_ms > now) continue
+        if (now - l.start_ms > LATE_MS) {
+          done.current.add(l.id)
+          continue
+        }
+        start(l, 'live')
+        break
+      }
     }
     const unsub = pb.subscribe(onTick)
     onTick()
     return () => {
       unsub()
-      stop()
+      finish()
     }
-  }, [m, pb, clips]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [pb, lines]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // a Sliding Doors break plays the moment's clip during the pause
+  // a Sliding Doors break: the commentator explains the what-if during the pause
   const breakKey = doorsBreak?.key
   useEffect(() => {
     const br = breakRef.current
-    if (!br || !clips.length) return
-    const c = breakClip(m, clips, br.insightId, br.overlay)
-    if (!c) {
-      if (cur.current?.mode === 'live') stop()
+    if (!br) return
+    const all = linesRef.current
+    const p = br.overlay?.payload
+    const ins = m.insight(br.insightId ?? (p?.insight_id as string | undefined)) ?? (p?.moment_id ? m.insightForMoment(String(p.moment_id)) : undefined)
+    const t = br.overlay?.start_ms ?? ms()
+    const lo = t - 1500
+    const hi = br.overlay ? br.overlay.start_ms + br.overlay.duration_ms : t + 12000
+    const inside = all.filter((l) => l.start_ms >= lo && l.start_ms <= hi)
+    const line =
+      (ins ? all.find((l) => l.id.endsWith(ins.id)) : undefined) ??
+      inside.filter((l) => /doors|insight|what/i.test(l.kind)).sort((a, b) => b.priority - a.priority)[0] ??
+      inside.sort((a, b) => b.priority - a.priority || Math.abs(a.start_ms - t) - Math.abs(b.start_ms - t))[0]
+    if (line) {
+      if (line.audio) preloadClip(line.audio)
+      const c = cur.current
+      if (c?.line.id === line.id) {
+        c.mode = 'free'
+        c.endAt = performance.now() + line.duration_ms
+        const el = audioEl()
+        if (c.audio && el.paused && !el.ended) void el.play().catch(() => (c.audio = false))
+        return
+      }
+      start(line, 'free')
       return
     }
-    preloadClip(url(c))
-    if (cur.current?.clip.id === c.id) {
-      cur.current.mode = 'free'
-      const el = audioEl()
-      if (el.paused) void el.play().catch(() => undefined)
-      return
-    }
-    start(c, 0, 'free')
-  }, [breakKey, m, clips]) // eslint-disable-line react-hooks/exhaustive-deps
+    if (cur.current?.mode === 'live') finish()
+    if (ins?.claim) start({ id: `brk-${br.key}`, start_ms: t, duration_ms: BREAK_CAPTION_MS, text: oneSentence(ins.claim), kind: 'insight', priority: 0, audio: null }, 'free')
+  }, [breakKey, m]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return null
 }

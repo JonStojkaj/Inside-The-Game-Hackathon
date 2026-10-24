@@ -39,31 +39,19 @@ function MoodBlock({ team, lang }: { team: Team; lang: Lang }) {
   const pts = series.filter((p) => p.frame <= frame)
   const path = pts.map((p, i) => `${i ? 'L' : 'M'}${((p.frame / n) * 100).toFixed(1)},${(30 - p.win * 30).toFixed(1)}`).join(' ')
 
+  const wdl = tf(lang, 'wdl', { w: fmtPct(lang, wp.win, 0), d: fmtPct(lang, wp.draw, 0), l: fmtPct(lang, wp.loss, 0) })
   return (
-    <Block title={t(lang, 'blk_mood')} accent={club.color} className="fan-mood-blk">
-      <div className="mood-row">
-        <span className="mood-word">{t(lang, moodKey)}</span>
-        <span className="mood-score">{tf(lang, line, { s: `${us}–${them}` })}</span>
+    <Block title={t(lang, 'blk_winprob')} accent={club.color} className="fan-mood-blk">
+      <div className="hero" title={`${wdl} · ${opp.short} — ${t(lang, 'model_est')}`}>
+        <b>{fmtPct(lang, wp.win, 0)}</b>
+        <span>
+          {t(lang, moodKey)} · {tf(lang, line, { s: `${us}–${them}` })}
+        </span>
       </div>
-      <div className="mood-meter" title={t(lang, 'blk_mood')}>
-        <i style={{ left: `${mood * 100}%` }} />
-      </div>
-      <div className="wp">
-        <div className="wp-head">
-          <span>{t(lang, 'blk_winprob')}</span>
-          <b>{fmtPct(lang, wp.win, 0)}</b>
-        </div>
-        <svg className="wp-line" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden>
-          <line x1="0" x2="100" y1="15" y2="15" className="wp-mid" />
-          <path d={path} style={{ stroke: club.color }} />
-        </svg>
-        <div className="wp-sub">
-          {tf(lang, 'wdl', { w: fmtPct(lang, wp.win, 0), d: fmtPct(lang, wp.draw, 0), l: fmtPct(lang, wp.loss, 0) })} · <span style={{ color: opp.color }}>{opp.short}</span>
-        </div>
-        <div className="blk-note" title={t(lang, 'model_est')}>
-          ⓘ {t(lang, 'model_est')}
-        </div>
-      </div>
+      <svg className="wp-line" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden>
+        <line x1="0" x2="100" y1="15" y2="15" className="wp-mid" />
+        <path d={path} style={{ stroke: club.color }} />
+      </svg>
     </Block>
   )
 }
@@ -79,18 +67,17 @@ function TableBlock({ team, lang }: { team: Team; lang: Lang }) {
   if (!rows || !st || !league) return null
   const me = rows.find((r) => r.short === m.club(team).short)!
   const rivals = new Set(me.rivals)
-  // a window of 7 rows around us
-  const start = Math.max(0, Math.min(rows.length - 7, me.pos - 4))
-  const shown = rows.slice(start, start + 7)
+  // a window of 5 rows around us
+  const start = Math.max(0, Math.min(rows.length - 5, me.pos - 3))
+  const shown = rows.slice(start, start + 5)
   const move = me.before - me.pos
   return (
-    <Block title={t(lang, 'blk_table')} note={tf(lang, 'other_tbd', { n: league.matchday })} className="tbl-blk">
-      <div className="stake">
+    <Block title={t(lang, 'blk_table')} className="tbl-blk">
+      <div className="stake" title={tf(lang, 'stake_line', { w: ordinal(st.win, lang), d: ordinal(st.draw, lang), l: ordinal(st.loss, lang) })}>
         <div className="stake-now">
           {tf(lang, 'now_live', { p: ordinal(me.pos, lang) })}
           {move !== 0 && <em className={move > 0 ? 'up' : 'down'}>{move > 0 ? `▲ ${tf(lang, 'move_up', { n: move })}` : `▼ ${tf(lang, 'move_down', { n: -move })}`}</em>}
         </div>
-        <div className="stake-line">{tf(lang, 'stake_line', { w: ordinal(st.win, lang), d: ordinal(st.draw, lang), l: ordinal(st.loss, lang) })}</div>
       </div>
       <table className="tbl">
         <thead>

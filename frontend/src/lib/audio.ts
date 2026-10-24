@@ -1,5 +1,3 @@
-import type { AudioClip, Overlay } from '../types'
-import type { MatchIndex } from './match'
 
 /**
  * Commentator audio plumbing. One shared <audio> element plays every clip: it is unlocked once by
@@ -77,22 +75,16 @@ export const clipSrc = (url: string): string => blobs.get(url) ?? url
 /** Until when (performance.now) an audible clip is speaking; the Sliding Doors pause waits for it. */
 export const speaking = { until: 0 }
 
-/** The commentator clip that belongs to a Sliding Doors break (same insight, or the overlay's start). */
-export function breakClip(m: MatchIndex, clips: AudioClip[], insightId: string | undefined, overlay: Overlay | undefined): AudioClip | undefined {
-  let id = insightId
-  if (!id && overlay) {
-    const p = overlay.payload
-    id = (p.insight_id as string | undefined) || (p.moment_id ? m.insightForMoment(String(p.moment_id))?.id : undefined)
-  }
-  return (id ? clips.find((c) => c.id.endsWith(id!) || c.file.includes(id!)) : undefined) ?? (overlay ? clips.find((c) => Math.abs(c.start_ms - overlay.start_ms) < 600) : undefined)
+/** The line being spoken right now (caption on the stage, also when muted). */
+export interface Caption {
+  id: string
+  text: string
 }
-
-/** The clip being spoken right now (caption on the primary screen). */
-let current: AudioClip | null = null
+let current: Caption | null = null
 const captionListeners = new Set<() => void>()
 export const caption = {
-  get: (): AudioClip | null => current,
-  set(c: AudioClip | null) {
+  get: (): Caption | null => current,
+  set(c: Caption | null) {
     if (c === current) return
     current = c
     captionListeners.forEach((fn) => fn())

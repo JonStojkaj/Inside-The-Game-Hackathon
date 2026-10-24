@@ -2,10 +2,11 @@ import { useMemo, useState, useSyncExternalStore } from 'react'
 import { caption } from '../lib/audio'
 import { useMatch } from '../lib/context'
 import { overlayMoment } from '../lib/derive'
-import { activeOverlays, doorsFromInsight, doorsFromOverlay, payloadPlayer, type Doors } from '../lib/match'
+import { activeOverlays, comparison, doorsFromInsight, doorsFromOverlay, payloadPlayer, type Doors } from '../lib/match'
 import { doorsOverlays, useOverlayList } from '../lib/overlays'
 import { useFrame } from '../lib/playback'
 import { t } from '../lib/profile'
+import { isCarry, representative } from '../lib/story'
 import type { Overlay, ViewerProfile } from '../types'
 import { DoorsBreak } from './DoorsBreak'
 import { CasualMoments } from './modes/Casual'
@@ -16,13 +17,14 @@ import { Pitch, type PitchTag } from './Pitch'
 import { Radar } from './Radar'
 import { Scorebug } from './Scorebug'
 import { FanSide } from './side/FanSide'
+import { useAnalystCats } from '../lib/analystCats'
+import { AnalystColumn, CatPicker } from './side/AnalystBoard'
 import { AnalystSide, CasualSide } from './side/OtherSides'
 import { PlayerSide } from './side/PlayerSide'
 import { TvVideo } from './TvVideo'
 
 interface Props {
   profile: ViewerProfile
-  label?: boolean
   /** The viewer the commentator speaks for (shows the caption). */
   primary?: boolean
   /** Ask Sliding Doors is available: the break card offers it. */
@@ -37,12 +39,12 @@ interface Props {
  * pauses for Sliding Doors (pitch with the ghost futures + one compact card), then plays on.
  * Without a video the 2D tactical pitch is the stage.
  */
-export function Screen({ profile, label, primary, onAsk, holdBreak }: Props) {
+export function Screen({ profile, primary, onAsk, holdBreak }: Props) {
   const { m, pb, doorsBreak, closeDoors, askedQuestion } = useMatch()
   const frame = useFrame(pb)
   const { match } = m.bundle
   const { mode, language: lang } = profile
-  const { list, segment, exact } = useOverlayList(m, profile)
+  const { list } = useOverlayList(m, profile)
   const tMs = (frame / match.fps) * 1000
   const active = activeOverlays(list, tMs)
 
@@ -61,7 +63,8 @@ export function Screen({ profile, label, primary, onAsk, holdBreak }: Props) {
     sd = sdOverlay ? doorsFromOverlay(m, sdOverlay) : br.insightId ? doorsFromInsight(m.insight(br.insightId)) : br.overlay ? doorsFromOverlay(m, br.overlay) : undefined
   }
   const sdSince = useMemo(() => (sd ? performance.now() : 0), [sd])
-  const oneLine = !asked && (mode === 'club_fan' || mode === 'casual')
+  // the one alternative future the story plays out (only when the engine found a best alternative)
+  const sdAlt = useMemo(() => (sd && comparison(sd.numbers, sd.metric).alt != null ? representative(sd.alt_ghost_paths) : null), [sd])
 
   const pid = mode === 'player_focus' ? profile.favourite_players[0] : undefined
   const club = mode === 'club_fan' && profile.favourite_club ? m.club(profile.favourite_club) : undefined
@@ -73,7 +76,9 @@ export function Screen({ profile, label, primary, onAsk, holdBreak }: Props) {
   const fullscreen = active.fullscreen
   const [videoFailed, setVideoFailed] = useState(false)
   const hasVideo = Boolean(match.video && !videoFailed)
-  const showVideo = hasVideo && !sd
+  const [view, setView] = useStageView(mode)
+  const [cats, toggleCat] = useAnalystCats()
+  const showVideo = hasVideo && !sd && view === 'video'
   const quiet = Boolean(sd || fullscreen)
   const breakInsight = sd?.insight
 
@@ -82,19 +87,25 @@ export function Screen({ profile, label, primary, onAsk, holdBreak }: Props) {
       className={`screen mode-${mode} ${showVideo ? 'on-tv' : ''} ${sd ? 'in-doors' : ''}`}
       style={club ? ({ '--club': club.color } as React.CSSProperties) : undefined}
     >
+      {mode === 'analyst' && (
+        <aside className="side side-left" aria-label={t(lang, 'cat_pick')}>
+          <CatPicker lang={lang} cats={cats} onToggle={toggleCat} />
+          <AnalystColumn lang={lang} cats={cats} side={0} />
+        </aside>
+      )}
       <div className="stage-col">
         <div className="stage">
-          {hasVideo && (
-            <div className={`tv-box ${showVideo ? '' : 'hidden'}`}>
+          {hasVideo && view === 'video' && (
+            <div className={`tv-box ${showVideo ? '' : 'hidden'}`} aria-hidden={!showVideo}>
               <TvVideo hidden={false} onFail={() => setVideoFailed(true)} />
               <Radar focusPlayer={pid ?? null} />
             </div>
           )}
-          {(!hasVideo || sd) && (
+          {!showVideo && (
             <div className="pitch-wrap">
               <Pitch
                 frozenFrame={sd?.decision_frame ?? null}
-                ghosts={sd ? { insight: sd, since: sdSince } : null}
+                ghosts={sd ? { insight: sd, since: sdSince, alt: sdAlt, carry: sdAlt ? isCarry(sdAlt) : false } : null}
                 tags={tags}
                 focusPlayer={pid ?? null}
                 follow={mode === 'player_focus' && !sd}
@@ -114,8 +125,8 @@ export function Screen({ profile, label, primary, onAsk, holdBreak }: Props) {
               key={`${br?.key}-${sd.key}`}
               doors={sd}
               overlay={sdOverlay}
+              since={sdSince}
               headline={asked}
-              simple={oneLine}
               audit={mode === 'analyst'}
               lang={lang}
               auto={Boolean(br?.auto)}
@@ -124,23 +135,25 @@ export function Screen({ profile, label, primary, onAsk, holdBreak }: Props) {
               onAsk={onAsk}
             />
           )}
+          {!sd && (
+            <div className="view-switch" role="radiogroup" aria-label="Video / 2D">
+              <button role="radio" aria-checked={showVideo} className={showVideo ? 'on' : ''} disabled={!hasVideo} onClick={() => setView('video')}>
+                ▶ {t(lang, 'view_video')}
+              </button>
+              <button role="radio" aria-checked={!showVideo} className={!showVideo ? 'on' : ''} onClick={() => setView('2d')}>
+                ▦ {t(lang, 'view_2d')}
+              </button>
+            </div>
+          )}
           <Fullscreen overlay={fullscreen} />
           {primary && <Caption lang={lang} />}
 
-          {label && (
-            <div className="screen-label" title={exact ? `overlay segment ${segment}` : t(lang, 'derived')}>
-              <b>{t(lang, mode)}</b>
-              {club && <span style={{ boxShadow: `inset 0.25em 0 0 ${club.color}` }}>{club.short}</span>}
-              {pid && <span>#{m.player(pid)?.number}</span>}
-              <span className="lang">{lang.toUpperCase()}</span>
-            </div>
-          )}
         </div>
       </div>
       <aside className={`side side-${mode}`} aria-label={t(lang, mode)}>
         {mode === 'club_fan' && club && <FanSide team={club.key} lang={lang} />}
         {mode === 'player_focus' && pid && <PlayerSide pid={pid} lang={lang} breakInsight={breakInsight} />}
-        {mode === 'analyst' && <AnalystSide lang={lang} panel={active.side_panel} breakInsight={breakInsight} />}
+        {mode === 'analyst' && <AnalystSide lang={lang} cats={cats} breakInsight={breakInsight} />}
         {mode === 'casual' && <CasualSide lang={lang} />}
       </aside>
     </div>
@@ -157,4 +170,35 @@ function Caption({ lang }: { lang: ViewerProfile['language'] }) {
       <span className="commentary-text">{c.text}</span>
     </div>
   )
+}
+
+type StageView = 'video' | '2d'
+const VIEW_KEY = 'sliding-doors.stage-view.v1'
+
+/**
+ * Video or 2D pitch, chosen per mode and remembered for the session. The analyst starts on 2D
+ * (all 22 players, the pressure halo and the shape read better than the broadcast camera, which
+ * only ever shows a third of the pitch); everyone else starts on the TV picture.
+ */
+function useStageView(mode: ViewerProfile['mode']): [StageView, (v: StageView) => void] {
+  const read = (): StageView => {
+    try {
+      const v = sessionStorage.getItem(`${VIEW_KEY}.${mode}`)
+      if (v === 'video' || v === '2d') return v
+    } catch {
+      // no storage
+    }
+    return mode === 'analyst' ? '2d' : 'video'
+  }
+  const [state, setState] = useState<{ mode: string; view: StageView }>(() => ({ mode, view: read() }))
+  const view = state.mode === mode ? state.view : read()
+  const set = (v: StageView) => {
+    setState({ mode, view: v })
+    try {
+      sessionStorage.setItem(`${VIEW_KEY}.${mode}`, v)
+    } catch {
+      // no storage
+    }
+  }
+  return [view, set]
 }
