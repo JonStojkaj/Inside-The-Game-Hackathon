@@ -112,7 +112,7 @@ class CommentaryService:
         if known is None:
             raise SpeechError(404, "unknown_line", "Unknown commentary line.")
         line, lang = known
-        return self.audio.get(match_id, key, line.text, lang, line.rate, line.pitch)
+        return self.audio.get(match_id, key, line.text, lang, line.rate, line.pitch, line.voice)
 
 
 def _error(e: SpeechError) -> JSONResponse:

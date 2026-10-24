@@ -223,7 +223,7 @@ def test_api_contract_and_lazy_cached_synthesis(tmp_path):
     assert url.startswith("/api/matches/t/commentary/audio/") and ".mp3?" in url
     audio = client.get(url)
     assert audio.status_code == 200 and audio.headers["content-type"] == "audio/mpeg" and audio.content == b"ID3fake-mp3"
-    assert "de-DE-ConradNeural" in speech.calls[0] and "rate='+10%'" in speech.calls[0]
+    assert "de-DE-Florian:DragonHDLatestNeural" in speech.calls[0] and "rate='+10%'" in speech.calls[0]
     assert client.get(url).status_code == 200 and len(speech.calls) == 1  # cached on disk
 
     # a fresh process (empty registry) still accepts the URL thanks to its segment parameters

@@ -1,6 +1,6 @@
 """Azure AI Speech (neural TTS, REST) for commentary lines: SSML, rate limit, disk cache.
 
-Voices: en-GB-RyanNeural, de-DE-ConradNeural, es-ES-AlvaroNeural. Prosody per mode comes from the engine
+Voices: Dragon HD per mode and language (engine.VOICES). Prosody per mode comes from the engine
 (club fan faster/brighter, analyst calmer). Free tier F0 allows 20 requests/minute: the limiter keeps the
 process under TTS_PER_MINUTE (default 18) and the caller turns a refusal into 429 + Retry-After.
 Files are content-addressed (engine.audio_key) and written atomically, so concurrent requests never see
@@ -18,7 +18,7 @@ from dataclasses import dataclass, field
 from html import escape
 from pathlib import Path
 
-from app.commentary.engine import VOICES
+from app.commentary.engine import LOCALES, voice_for
 
 MP3_FORMAT = "audio-24khz-48kbitrate-mono-mp3"
 MP3_KBPS = 48
@@ -30,8 +30,8 @@ class SpeechError(Exception):
         self.status, self.error, self.message, self.retry_after_s = status, error, message, retry_after_s
 
 
-def ssml(text: str, lang: str, rate: int, pitch: int) -> str:
-    locale, voice = VOICES[lang]
+def ssml(text: str, lang: str, rate: int, pitch: int, voice: str = "") -> str:
+    locale, voice = LOCALES[lang], voice or voice_for(lang, "casual")
     return (f"<speak version='1.0' xml:lang='{locale}'><voice name='{voice}'>"
             f"<prosody rate='{rate:+d}%' pitch='{pitch:+d}%'>{escape(text)}</prosody></voice></speak>")
 
@@ -119,7 +119,7 @@ class AudioCache:
     def path(self, match_id: str, key: str) -> Path:
         return self.root / match_id / f"{key}.mp3"
 
-    def get(self, match_id: str, key: str, text: str, lang: str, rate: int, pitch: int) -> Path:
+    def get(self, match_id: str, key: str, text: str, lang: str, rate: int, pitch: int, voice: str = "") -> Path:
         path = self.path(match_id, key)
         if path.is_file():
             return path
@@ -133,7 +133,7 @@ class AudioCache:
             self.limit.acquire()
             if self._synthesize is None:
                 self._synthesize = azure_synthesizer(self.settings)
-            audio = self._synthesize(ssml(text, lang, rate, pitch))
+            audio = self._synthesize(ssml(text, lang, rate, pitch, voice))
             path.parent.mkdir(parents=True, exist_ok=True)
             tmp = path.with_suffix(f".{threading.get_ident()}.tmp")
             tmp.write_bytes(audio)

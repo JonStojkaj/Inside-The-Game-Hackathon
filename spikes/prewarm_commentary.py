@@ -46,20 +46,20 @@ def main() -> None:
     cache.path = lambda _m, key: out / f"{key}.mp3"  # type: ignore[method-assign]
 
     players = [default_player(md), *args.players]
-    todo: dict[str, tuple[str, str, int, int]] = {}
+    todo: dict[str, tuple[str, str, int, int, str]] = {}
     for lang in args.langs:
         segs = [Segment.make(md, "casual", lang), Segment.make(md, "analyst", lang),
                 *(Segment.make(md, "club_fan", lang, club=c) for c in ("home", "away")),
                 *(Segment.make(md, "player_focus", lang, player=p) for p in dict.fromkeys(players))]
         for seg in segs:
             for ln in build_timeline(md, seg):
-                todo.setdefault(line_key(ln, lang), (ln.text, lang, ln.rate, ln.pitch))
+                todo.setdefault(line_key(ln, lang), (ln.text, lang, ln.rate, ln.pitch, ln.voice))
     missing = {k: v for k, v in todo.items() if not (out / f"{k}.mp3").is_file()}
     print(f"{len(todo)} lines, {len(missing)} to synthesize -> {out}", flush=True)
-    for i, (key, (text, lang, rate, pitch)) in enumerate(missing.items(), 1):
+    for i, (key, (text, lang, rate, pitch, voice)) in enumerate(missing.items(), 1):
         while True:
             try:
-                cache.get(md.match_id, key, text, lang, rate, pitch)
+                cache.get(md.match_id, key, text, lang, rate, pitch, voice)
                 break
             except SpeechError as e:
                 if e.status != 429:

@@ -102,6 +102,7 @@ class Line:
     event_ms: int = field(default=0, repr=False)
     rate: int = 0
     pitch: int = 0
+    voice: str = ""  # set by the builder from mode + language (VOICES)
 
     @property
     def end_ms(self) -> int:
@@ -311,6 +312,7 @@ class _Builder:
         return None
 
     def add(self, line: Line) -> Line:
+        line.voice = voice_for(self.lang, self.seg.mode)
         self.lines.append(line)
         self.lines.sort(key=lambda ln: ln.start_ms)
         self.used.setdefault(line.template, []).append(line.start_ms)
@@ -868,15 +870,29 @@ def _pick_filler(b: _Builder, kinds: list[str], start: int, stop: int, last_kind
 
 # ------------------------------------------------------------------------------------------------ audio keys
 
-VOICES = {"en": ("en-GB", "en-GB-RyanNeural"), "de": ("de-DE", "de-DE-ConradNeural"), "es": ("es-ES", "es-ES-AlvaroNeural")}
+# Azure AI Speech Dragon HD voices (emotion from the text itself), one character per mode:
+# club fan = the excitable home-end voice, casual = the TV voice, analyst / player focus = the calm co-commentator.
+LOCALES = {"en": "en-US", "de": "de-DE", "es": "es-ES"}
+VOICES: dict[str, dict[str, str]] = {
+    "en": {"club_fan": "en-US-Andrew:DragonHDLatestNeural", "casual": "en-GB-Ryan:DragonHDOmniLatestNeural",
+           "analyst": "en-US-Brian:DragonHDLatestNeural", "player_focus": "en-GB-Ollie:DragonHDLatestNeural"},
+    "de": {"club_fan": "de-DE-Florian:DragonHDLatestNeural", "casual": "de-DE-Conrad:DragonHDOmniLatestNeural",
+           "analyst": "de-DE-Seraphina:DragonHDLatestNeural", "player_focus": "de-DE-Florian:DragonHDLatestNeural"},
+    "es": {"club_fan": "es-ES-Tristan:DragonHDLatestNeural", "casual": "es-ES-Alvaro:DragonHDOmniLatestNeural",
+           "analyst": "es-ES-Ximena:DragonHDLatestNeural", "player_focus": "es-ES-Tristan:DragonHDLatestNeural"},
+}
 
 
-def audio_key(lang: str, rate: int, pitch: int, text: str) -> str:
+def voice_for(lang: str, mode: str) -> str:
+    return VOICES[lang].get(mode) or VOICES[lang]["casual"]
+
+
+def audio_key(lang: str, rate: int, pitch: int, text: str, voice: str = "") -> str:
     """Content address of a spoken line: same voice, prosody and text -> same audio file."""
-    voice = VOICES[lang][1]
+    voice = voice or voice_for(lang, "casual")
     return hashlib.sha256(f"{voice}|{rate:+d}%|{pitch:+d}%|{text}".encode()).hexdigest()[:24]
 
 
 def line_key(line: Line, lang: str) -> str:
-    return audio_key(lang, line.rate, line.pitch, line.text)
+    return audio_key(lang, line.rate, line.pitch, line.text, line.voice)
 
