@@ -1,5 +1,5 @@
 {
- "_note": "Fictional league for the Sliding Doors demo. Every club, player and number is invented; standings are before this match (matchday 10). Only this match updates live; the other matchday-10 fixtures have not kicked off yet. season_ratings: average player rating (1-10) over the season so far, same formula as the live rating.",
+ "_note": "Fictional league for the Sliding Doors demo. Every club, player and number is invented; standings are before this match (matchday 10). Only this match updates live; the other matchday-10 fixtures have not kicked off yet. season_ratings: average player rating (1-10) over the season so far, same formula as the live rating. season_players: appearances, goals and assists before this match (synthetic).",
  "season": "Synthetic season",
  "matchday": 10,
  "clubs": [
@@ -350,5 +350,119 @@
   "Kai Nakamura": 7.4,
   "Bastian Holt": 6.4
  },
- "default_rating": 6.6
+ "default_rating": 6.6,
+ "season_players": {
+  "Tomas Vell": {
+   "apps": 9,
+   "goals": 0,
+   "assists": 0,
+   "clean_sheets": 4
+  },
+  "Idris Calloway": {
+   "apps": 8,
+   "goals": 1,
+   "assists": 1
+  },
+  "Mateo Brann": {
+   "apps": 9,
+   "goals": 6,
+   "assists": 3
+  },
+  "Kofi Asante-Rhys": {
+   "apps": 9,
+   "goals": 0,
+   "assists": 1
+  },
+  "Lukas Hagen": {
+   "apps": 8,
+   "goals": 2,
+   "assists": 1
+  },
+  "Ruben Saldo": {
+   "apps": 8,
+   "goals": 2,
+   "assists": 0
+  },
+  "Noah Fairley": {
+   "apps": 9,
+   "goals": 1,
+   "assists": 0
+  },
+  "Emil Strand": {
+   "apps": 8,
+   "goals": 1,
+   "assists": 1
+  },
+  "Sami Okoro": {
+   "apps": 7,
+   "goals": 2,
+   "assists": 2
+  },
+  "Leo Marchetti": {
+   "apps": 9,
+   "goals": 1,
+   "assists": 4
+  },
+  "Jonah Pike": {
+   "apps": 6,
+   "goals": 4,
+   "assists": 2
+  },
+  "Arne Dahl": {
+   "apps": 8,
+   "goals": 0,
+   "assists": 0,
+   "clean_sheets": 2
+  },
+  "Marcus Quill": {
+   "apps": 9,
+   "goals": 1,
+   "assists": 4
+  },
+  "Yusuf Benali": {
+   "apps": 8,
+   "goals": 7,
+   "assists": 3
+  },
+  "Dario Kesh": {
+   "apps": 9,
+   "goals": 1,
+   "assists": 1
+  },
+  "Oscar Lindqvist": {
+   "apps": 6,
+   "goals": 1,
+   "assists": 0
+  },
+  "Felix Ondo": {
+   "apps": 7,
+   "goals": 0,
+   "assists": 1
+  },
+  "Callum Reyes": {
+   "apps": 8,
+   "goals": 1,
+   "assists": 3
+  },
+  "Theo Varga": {
+   "apps": 9,
+   "goals": 0,
+   "assists": 4
+  },
+  "Ilan Moreau": {
+   "apps": 9,
+   "goals": 3,
+   "assists": 3
+  },
+  "Kai Nakamura": {
+   "apps": 6,
+   "goals": 1,
+   "assists": 3
+  },
+  "Bastian Holt": {
+   "apps": 6,
+   "goals": 4,
+   "assists": 2
+  }
+ }
 }

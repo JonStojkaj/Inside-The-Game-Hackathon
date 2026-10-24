@@ -27,7 +27,8 @@ LEAGUE = {"clubs": [
     {"name": "FC Northbridge", "short": "NOR", "played": 9, "won": 4, "drawn": 4, "lost": 1, "gf": 13, "ga": 9, "form": "DWWWW",
      "rivals": ["HCY", "KMR"]},
     {"name": "Harbour City", "short": "HCY", "played": 9, "won": 4, "drawn": 3, "lost": 2, "gf": 14, "ga": 11, "form": "LWWDW", "rivals": ["NOR"]},
-], "season_ratings": {"Leo Marchetti": 6.8}, "default_rating": 6.6}
+], "season_ratings": {"Leo Marchetti": 6.8}, "default_rating": 6.6,
+    "season_players": {"Emil Strand": {"apps": 9, "goals": 2, "assists": 1}}}
 
 
 def ev(i: int, frame: int, type_: str, team: str | None = None, player: str | None = None, known: int | None = None, **kw) -> dict:
@@ -167,7 +168,9 @@ def test_numbers_come_from_the_data(md):
                         "home", "away", "us", "them", "team", "scorer", "score", "dist", "speed", "xg", "assist", "player", "gk",
                         "target", "count", "n", "acc", "gain", "action", "action_noun", "action_cap", "alt", "actual", "keep",
                         "pos", "ph", "pa", "p", "done", "total", "sh", "sa", "xh", "xa", "km", "share", "changes", "apm", "minute",
-                        "minute_ord", "win", "rival", "rpos", "wins", "full", "num", "rating", "season", "k"}, t
+                        "minute_ord", "win", "rival", "rpos", "wins", "full", "num", "rating", "season", "k",
+                            "starter", "secs", "passes", "players", "goals", "apps", "loser", "winner", "hpos", "apos", "hwins",
+                            "awins"}, t
     lines = build_timeline(md, Segment.make(md, "analyst", "en"))
     saved = next(ln for ln in lines if ln.kind == "shot_saved")
     assert set(re.findall(r"\d+(?:\.\d+)?", saved.text)) <= {"21", "98", "0.07"}
@@ -261,3 +264,37 @@ def test_speech_off_falls_back_to_captions_and_serves_prewarmed(tmp_path):
     second = client.get("/api/matches/t/commentary?mode=casual&lang=es").json()["lines"][1]
     assert second["audio_url"] is None
     assert client.get(f"/api/matches/t/commentary/audio/{line_key(lines[1], 'es')}.mp3?mode=casual&lang=es").status_code == 503
+
+
+def test_story_lines_explain_the_game(md):
+    """Analysis lines: the move behind a goal, what changed since a goal, quarter-hour summaries, season milestones."""
+    from app.commentary import narrative
+
+    goal = next(e for e in md.events if e.type == "goal" and e.team == "away")
+    shot = next(e for e in md.events if e.id == goal.meta["shot_id"])
+    move = narrative.build_up(md, shot)
+    assert move.start == "regain" and move.starter == "A11" and move.seconds == pytest.approx(2.0)
+    first = next(e for e in md.events if e.type == "goal" and e.team == "home")
+    move1 = narrative.build_up(md, next(e for e in md.events if e.id == first.meta["shot_id"]))
+    assert move1.start == "regain" and move1.starter == "H20" and move1.passes == 1
+
+    lines = build_timeline(md, Segment.make(md, "analyst", "en"))
+    kinds = {ln.kind for ln in lines}
+    assert "goal_move_regain" in kinds
+    regain = [ln for ln in lines if ln.kind == "goal_move_regain"][-1]
+    assert regain.start_ms > 44600 and re.search(r"\b2\b", regain.text)  # after the equaliser: regain to goal in 2 s
+    from app.commentary.engine import _Builder, story_candidates
+
+    seg = Segment.make(md, "casual", "en")  # 60 s of test match is too full to air every line: check the candidate
+    season = next(c for c in story_candidates(_Builder(md, seg), 60_000) if c.kind.startswith("goal_season"))
+    assert season.kind == "goal_season" and season.fields["scorer"] == "Strand" and season.fields["goals"] == "3"
+
+
+def test_momentum_is_signed_and_swings_alternate(md):
+    from app.commentary import narrative
+
+    mo = narrative.momentum(md)
+    assert len(mo) >= 60 and max(mo) > 0  # home pushes first (passes, a shot, a goal)
+    sw = narrative.swings(md)
+    assert all(a.team != b.team for a, b in zip(sw, sw[1:]))
+    assert all(b.t_ms - a.t_ms >= narrative.SWING_GAP_S * 1000 for a, b in zip(sw, sw[1:]))

@@ -9,6 +9,8 @@ Every rendered line must stay at or under 14 words (tests/test_commentary.py che
 
 from __future__ import annotations
 
+from app.commentary.phrases_story import STORY
+
 Pool = dict[str, dict[str, list[str]]]
 
 EN: Pool = {
@@ -726,6 +728,8 @@ ES: Pool = {
 }
 
 PHRASES: dict[str, Pool] = {"en": EN, "de": DE, "es": ES}
+for _lang, _pool in STORY.items():  # the analysis lines (narrative.py)
+    PHRASES[_lang].update(_pool)
 
 # Sliding Doors alternatives, per language: (verb phrase for "had he ...", noun phrase for "a ... would give")
 ACTIONS: dict[str, dict[str, tuple[str, str]]] = {

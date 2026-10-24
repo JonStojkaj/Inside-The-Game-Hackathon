@@ -23,6 +23,7 @@ import string
 from dataclasses import dataclass, field
 from typing import Any
 
+from app.commentary import narrative
 from app.commentary.data import Event, MatchData, Player, other
 from app.commentary.phrases import ACTIONS, NUMBER_WORDS, PHRASES
 
@@ -322,7 +323,7 @@ class _Builder:
 def build_timeline(md: MatchData, seg: Segment) -> list[Line]:
     b = _Builder(md, seg)
     end_ms = md.duration_ms or (md.events[-1].known_ms + 5000 if md.events else 60_000)
-    cands = event_candidates(b) + moment_candidates(b) + frame_candidates(b, end_ms)
+    cands = event_candidates(b) + moment_candidates(b) + story_candidates(b, end_ms) + frame_candidates(b, end_ms)
     for c in sorted(cands, key=lambda c: (-c.prio, c.t_ms, c.kind)):
         b.place(c, end_ms)
     fill_gaps(b, end_ms)
@@ -529,7 +530,147 @@ def moment_candidates(b: _Builder) -> list[Candidate]:
             continue
         kind, f = sd
         involved = b.involves(decider)
-        out.append(Candidate(anchor + 3000, 4, kind, f, involves=involved, max_delay=7000, must=True, event_ms=anchor))
+        # Sliding Doors with a verdict (a better option / the right call) is the product's core: goal priority. The flat
+        # ones ("nothing better", "no safer option") give way to the lines that explain why the moment mattered.
+        prio = 5 if kind in ("sd_alt", "sd_right") else 3
+        out.append(Candidate(anchor + 3000, prio, kind, f, involves=involved, max_delay=7000, must=prio == 5, event_ms=anchor))
+    return out
+
+
+PASSES = {"en": ("pass", "passes"), "de": ("Pass", "Pässe"), "es": ("pase", "pases")}
+
+
+def passes_phrase(n: int, lang: str) -> str:
+    one, many = PASSES[lang]
+    return f"{n} {one if n == 1 else many}"
+
+
+def story_candidates(b: _Builder, end_ms: int) -> list[Candidate]:
+    """The commentator as an analyst of the whole game (app.commentary.narrative): momentum swings and pushes, the
+    move behind each goal, season milestones, how the game changed since a goal, a summary every quarter of an hour,
+    and why a key moment matters. Each one in the mode's own voice (phrases_story.py)."""
+    md, seg, lang = b.md, b.seg, b.lang
+    out: list[Candidate] = []
+    by_id = {e.id: e for e in md.events}
+    focus = seg.mode == "player_focus"
+
+    for sw in narrative.swings(md):
+        w = narrative.window(md, sw.since_ms, sw.t_ms)
+        out.append(Candidate(sw.t_ms + 500, 3, "momentum_swing" if sw.flip else "momentum_take",
+                             {"team": b.team_name(sw.team), "share": pct(w.share[sw.team], lang)}, team=sw.team,
+                             max_delay=6000, event_ms=sw.t_ms))
+    for pu in narrative.pushes(md):
+        f = {"team": b.team_name(pu.team)}
+        if pu.shots:
+            f["sh"] = str(pu.shots)
+        out.append(Candidate(pu.t_ms, 2, "momentum_push", f, team=pu.team, max_delay=6000, event_ms=pu.t_ms))
+
+    goals = [e for e in md.events if e.type == "goal" and e.team]
+    season_goals: dict[str, int] = {}
+    for gi, g in enumerate(goals):
+        gt = g.team or "home"
+        shot = by_id.get(str(g.meta.get("shot_id", "")))
+        scorer = g.player_id or (shot.player_id if shot else None)
+        if shot is not None:
+            mv = narrative.build_up(md, shot)
+            secs = num(max(1.0, mv.seconds), lang)
+            kind, f = None, {}
+            if mv.start == "regain" and mv.starter:
+                kind, f = "goal_move_regain", {"starter": b.player(mv.starter), "secs": secs}
+            elif mv.start == "set_piece":
+                kind = "goal_move_set"
+            elif mv.passes >= 2 and mv.starter:
+                kind, f = "goal_move_pass", {"passes": passes_phrase(mv.passes, lang), "secs": secs, "players": str(mv.players),
+                                             "starter": b.player(mv.starter)}
+            if kind:
+                out.append(Candidate(g.known_ms + 8000, 5, kind, f, team=g.team, involves=b.involves(mv.starter, scorer),
+                                     max_delay=9000, must=True, event_ms=g.known_ms))
+        p = md.players.get(scorer or "")
+        sp = md.league.season_players.get(p.name) if md.league and p else None
+        if p and sp:
+            before = int(sp.get("goals", 0)) + season_goals.get(p.id, 0)
+            season_goals[p.id] = season_goals.get(p.id, 0) + 1
+            apps = int(sp.get("apps", 0)) + 1
+            if before == 0:
+                kind, f = "goal_season_first", {"scorer": p.surname, "apps": ordinal_count(apps, lang)}
+            else:
+                kind, f = "goal_season", {"scorer": p.surname, "count": ordinal_count(before + 1, lang), "goals": str(before + 1),
+                                          "apps": str(apps)}
+            out.append(Candidate(g.known_ms + 13000, 3, kind, f, team=g.team, involves=b.involves(scorer),
+                                 tones=["p", "n"] if b.involves(scorer) else None, max_delay=8000, event_ms=g.known_ms))
+        # how the game changed since this goal (only if no other goal came in between)
+        t = g.known_ms + 35_000
+        nxt = goals[gi + 1].known_ms if gi + 1 < len(goals) else end_ms
+        if t < min(nxt, end_ms - 4000):
+            w = narrative.window(md, g.known_ms, t)
+            them = other(gt)
+            if w.shots[them] > w.shots[gt] or w.share[them] >= 0.55:
+                kind, team = "since_goal_reply", them
+                f = {"team": b.team_name(them), "share": pct(w.share[them], lang)}
+                if w.shots[them] > w.shots[gt]:  # "3 shots to 1" only when they really out-shot them
+                    f |= {"sh": str(w.shots[them]), "sa": str(w.shots[gt])}
+            else:
+                kind, team = "since_goal_hold", gt
+                f = {"team": b.team_name(gt), "share": pct(w.share[gt], lang), "sa": str(w.shots[them])}
+            out.append(Candidate(t, 3, kind, f, team=team, max_delay=8000, event_ms=t))
+
+    # a summary every quarter of an hour (broadcast clock)
+    quarter = int(15 * 60 / md.clock_scale * 1000)
+    for minute in (15, 30, 45, 60, 75):
+        t = int(minute * 60 / md.clock_scale * 1000)
+        if t >= end_ms - 5000:
+            continue
+        w = narrative.window(md, max(0, t - quarter), t)
+        sh, xg_tot = shots_so_far(md, t), xg_so_far(md, t)
+        score = {k: w.share[k] + 0.08 * w.shots[k] + 0.5 * w.xg[k] for k in ("home", "away")}
+        diff = score["home"] - score["away"]
+        better = "home" if diff > 0.12 else "away" if diff < -0.12 else None
+        f = {"minute": str(minute), "sh": str(sh["home"]), "sa": str(sh["away"]), "xh": num(xg_tot["home"], lang, 2),
+             "xa": num(xg_tot["away"], lang, 2), "ph": pct(w.share["home"], lang), "pa": pct(w.share["away"], lang)}
+        if seg.mode == "club_fan":
+            us = seg.club or "home"
+            f["sh"], f["sa"] = (f["sh"], f["sa"]) if us == "home" else (f["sa"], f["sh"])
+        if better:
+            f |= {"team": b.team_name(better), "share": pct(w.share[better], lang)}
+        tones = None
+        if focus and seg.player:
+            f |= {"player": b.player(seg.player), "rating": num(player_rating(md, seg.player, t), lang, 1)}
+            if md.league is not None:
+                f["season"] = num(md.league.season_ratings.get(md.players[seg.player].name, md.league.default_rating), lang, 1)
+            tones = ["p", "n"]
+        elif seg.mode == "club_fan" and better is None:
+            tones = ["us", "n"]
+        out.append(Candidate(t, 3, "spell" if better else "spell_even", f, team=better, tones=tones, max_delay=7000, event_ms=t))
+
+    # why a key moment matters
+    best_xg: dict[str, float] = {"home": 0.0, "away": 0.0}
+    for e in md.events:
+        if e.type == "shot" and e.team:
+            moment = next((m for m in md.moments if e.id in m.get("event_ids", []) and m.get("kind") == "big_chance"), None)
+            xg = float(e.meta.get("xg", 0.0))
+            if moment is not None and e.outcome != "goal":
+                f = {"team": b.team_name(e.team), "xg": num(xg, lang, 2), "player": b.player(e.player_id)}
+                if "distance_m" in e.meta:
+                    f["dist"] = num(float(e.meta["distance_m"]), lang)
+                kind = "why_chance" if xg > best_xg[e.team] else "why_chance_missed"
+                out.append(Candidate(e.known_ms + 5000, 3, kind, f, team=e.team, involves=b.involves(e.player_id),
+                                     max_delay=5000, event_ms=e.known_ms))
+            best_xg[e.team] = max(best_xg[e.team], xg)
+    for m in md.moments:
+        if m.get("kind") != "dangerous_turnover":
+            continue
+        won = next((e for e in md.events if e.id in m.get("event_ids", []) and e.type in ("tackle", "interception") and e.team), None)
+        if won is None:
+            continue
+        ts = narrative.turnover(md, won)
+        f = {"winner": b.player(ts.winner), "dist": num(ts.metres_from_goal, lang)}
+        if ts.loser:
+            f["loser"] = b.player(ts.loser)
+        kind = "why_turnover"
+        if ts.shot_after_s is not None:
+            kind, f["secs"] = "why_turnover_shot", num(max(1.0, ts.shot_after_s), lang)
+        out.append(Candidate(won.known_ms + 1500, 4, kind, f, team=won.team, involves=b.involves(ts.loser, ts.winner),
+                             max_delay=5000, must=True, event_ms=won.known_ms))
     return out
 
 
@@ -550,6 +691,14 @@ def frame_candidates(b: _Builder, end_ms: int) -> list[Candidate]:
         win = md.league.stakes(seg.club or "home", b.home, b.away, (0, 0))["win"]
         out.append(Candidate(3500, 4, "intro_fan", {"pos": ordinal(pos, lang), "win": ordinal(win, lang)}, tones=["us"],
                              max_delay=6000))
+    if seg.mode in ("casual", "analyst") and md.league is not None:
+        hs, as_ = md.clubs["home"]["short"], md.clubs["away"]["short"]
+        he, ae = md.league.club(hs), md.league.club(as_)
+        if he and ae:
+            f = {"home": home, "away": away, "hpos": ordinal(md.league.position(hs, b.home, b.away, None), lang),
+                 "apos": ordinal(md.league.position(as_, b.home, b.away, None), lang),
+                 "hwins": str(str(he.get("form", "")).count("W")), "awins": str(str(ae.get("form", "")).count("W"))}
+            out.append(Candidate(3500, 4, "intro_context", f, max_delay=6000))
     if seg.mode == "player_focus" and seg.player:
         p = md.players[seg.player]
         out.append(Candidate(3500, 4, "intro_player", {"full": p.name, "num": str(p.number), "team": md.club_name(p.team)},

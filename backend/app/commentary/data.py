@@ -147,6 +147,7 @@ class League:
     clubs: list[dict[str, Any]]
     season_ratings: dict[str, float] = field(default_factory=dict)
     default_rating: float = 6.6
+    season_players: dict[str, dict[str, int]] = field(default_factory=dict)  # name -> apps/goals/assists before this match
 
     @classmethod
     def load(cls, path: str | Path) -> League | None:
@@ -156,7 +157,7 @@ class League:
             return None
         if not isinstance(raw.get("clubs"), list):
             return None
-        return cls(raw["clubs"], raw.get("season_ratings", {}), float(raw.get("default_rating", 6.6)))
+        return cls(raw["clubs"], raw.get("season_ratings", {}), float(raw.get("default_rating", 6.6)), raw.get("season_players", {}))
 
     def club(self, short: str) -> dict[str, Any] | None:
         return next((c for c in self.clubs if c["short"] == short), None)
