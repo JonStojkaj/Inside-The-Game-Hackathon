@@ -666,3 +666,77 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* full-time recap: who wrote it */
+.fs-source {
+  margin-top: 0.7em;
+  font: 600 0.62em var(--sans);
+  letter-spacing: 0.02em;
+  color: var(--ok);
+}
+.fs-source.data {
+  color: #9aa4b2;
+}
+
+/* ---------------------------------------------------------------- the agents behind a Sliding Doors verdict */
+
+.agent-trail {
+  display: flex;
+  gap: 6px;
+  margin: 1.1em auto 0;
+  padding: 0;
+  list-style: none;
+  justify-content: center;
+  flex-wrap: wrap;
+  font-size: 13px;
+}
+.agent-trail li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 128px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(8, 11, 16, 0.75);
+  color: #6f7988;
+  opacity: 0.35;
+  transition: opacity 0.35s var(--ease), border-color 0.35s var(--ease);
+}
+.agent-trail li.on {
+  opacity: 1;
+  color: #c9d0da;
+  border-color: rgba(255, 200, 61, 0.55);
+}
+.agent-trail li b {
+  font: 700 12px var(--cond);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.agent-trail li + li::before {
+  content: '→';
+  position: absolute;
+  margin: 6px 0 0 -16px;
+  color: #6f7988;
+}
+.agent-trail li {
+  position: relative;
+}
+.agent-trail.compact {
+  gap: 14px;
+  margin-top: 0.8em;
+  font-size: 11px;
+}
+.agent-trail.compact li {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.agent-trail.compact li b {
+  font-size: 10px;
+}
+.agent-trail.compact li + li::before {
+  margin: 4px 0 0 -11px;
+}

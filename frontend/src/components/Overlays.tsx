@@ -178,6 +178,12 @@ export function SidePanel({ overlay, lang }: { overlay?: Overlay; lang: Lang }) 
   )
 }
 
+/** Where the full-time recap comes from: the Recap agent (checked) or the data directly. */
+function RecapSource({ source, lang }: { source: string; lang: string }) {
+  const l = (lang === 'de' || lang === 'es' ? lang : 'en') as Lang
+  return <div className={`fs-source ${source}`}>{t(l, source === 'agent' ? 'recap_by_agent' : 'recap_by_data')}</div>
+}
+
 export function Fullscreen({ overlay }: { overlay?: Overlay }) {
   const { m } = useMatch()
   const { shown, leaving } = usePresence(overlay, 500)
@@ -202,6 +208,7 @@ export function Fullscreen({ overlay }: { overlay?: Overlay }) {
         )}
         <div className="fs-headline">{shown.headline}</div>
         {shown.body && <div className="fs-body">{shown.body}</div>}
+        {shown.type === 'recap' && <RecapSource source={String(shown.payload.source ?? 'data')} lang={shown.lang} />}
         {bullets.length > 0 && (
           <ul className="fs-bullets">
             {bullets.map((b, i) => (

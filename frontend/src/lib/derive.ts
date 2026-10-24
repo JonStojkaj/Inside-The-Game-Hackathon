@@ -247,7 +247,7 @@ export function deriveOverlays(m: MatchIndex, p: ViewerProfile): Overlay[] {
         body: `${t(lang, 'goals')}: ${goalEvents(m)
           .map((g) => `${surname(m.player(g.player_id)?.name ?? '')} ${minuteLabel(bundle, g.frame)}`)
           .join(', ')}`,
-        payload: { final_score: final, bullets: recapBullets(m, p, last) },
+        payload: { final_score: final, bullets: recapBullets(m, p, last), source: 'data' },
         evidence: last ? [`stats:final@${last.t_ms}`] : [],
       },
       lang,

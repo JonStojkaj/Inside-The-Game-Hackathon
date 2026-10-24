@@ -100,9 +100,17 @@ export function useCutPlayer(m: MatchIndex, pb: Playback, enabled: boolean) {
       if (!pb.playing) return
       const next = clips.findIndex((c) => c.start > f)
       if (next < 0) {
-        // after the last clip: stop, and the next play starts the package again
-        pb.pause()
-        pb.seek(clips[0].start)
+        // after the last clip: straight to the final whistle and the full-time recap (the clock runs on
+        // past the last frame for it); from there, the next play starts the package again
+        const last = m.bundle.frames.t_ms.length - 1
+        if (f < last - 1) {
+          pb.seek(last)
+          setIndex(-1)
+          setCuts((n) => n + 1)
+        } else if (f >= pb.nFrames - 1) {
+          pb.pause()
+          pb.seek(clips[0].start)
+        }
         return
       }
       pb.seek(clips[next].start)
@@ -111,7 +119,7 @@ export function useCutPlayer(m: MatchIndex, pb: Playback, enabled: boolean) {
     }
     check()
     return pb.subscribe(check)
-  }, [clips, pb])
+  }, [clips, pb, m])
 
   return { cut, setCut, clips, clip: index >= 0 ? clips[index] : undefined, index, cuts }
 }

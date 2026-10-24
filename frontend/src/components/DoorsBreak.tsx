@@ -4,6 +4,7 @@ import { useMatch } from '../lib/context'
 import { comparison, minuteLabel, type Doors } from '../lib/match'
 import { fmtPct, fmtPts, t, tf } from '../lib/profile'
 import { altName, bestHypothesis, oneSentence, scenarioCount, usePhase } from '../lib/story'
+import { doorsSentence } from '../lib/derive'
 import { checkClaim } from '../lib/verify'
 import type { Lang, Overlay } from '../types'
 
@@ -30,6 +31,32 @@ interface Props {
 }
 
 /**
+ * The agents behind the verdict, as a visible chain: the Analyst agent proposes what-ifs, the simulator
+ * plays each one thousands of times, the Critic agent keeps or rejects them, fixed rules give the verdict.
+ * `upto` lights the steps one by one while "simulating" (0..1); the verdict card shows all of them.
+ */
+function AgentTrail({ doors, n, lang, upto = 1, compact }: { doors: Doors; n: string; lang: Lang; upto?: number; compact?: boolean }) {
+  const kept = Math.max(0, doors.tested - doors.rejected)
+  const notes = (doors.insight?.hypotheses ?? []).map((h) => `${h.verdict === 'accepted' ? '✓' : '✗'} ${h.text}${h.critic_note ? ` (${h.critic_note})` : ''}`).join('\n')
+  const steps: { who: string; what: string; title?: string }[] = [
+    { who: t(lang, 'ag_analyst'), what: tf(lang, 'ag_analyst_d', { k: doors.tested }) },
+    { who: t(lang, 'ag_sim'), what: tf(lang, 'ag_sim_d', { n }) },
+    { who: t(lang, 'ag_critic'), what: tf(lang, 'ag_critic_d', { a: kept, r: doors.rejected }), title: notes },
+    { who: t(lang, 'ag_rules'), what: t(lang, doors.confidence === 'clear' ? 'ag_rules_clear' : 'ag_rules_slight') },
+  ]
+  return (
+    <ol className={`agent-trail ${compact ? 'compact' : ''}`} aria-label={t(lang, 'ag_label')}>
+      {steps.map((s, i) => (
+        <li key={i} className={upto * steps.length > i ? 'on' : ''} title={s.title}>
+          <b>{s.who}</b>
+          <span>{s.what}</span>
+        </li>
+      ))}
+    </ol>
+  )
+}
+
+/**
  * The Sliding Doors pause, told as a short story over the 2D pitch: one big "Simulating N
  * scenarios…" line, then "What happened" (the real action replays), "What could have happened"
  * (one alternative plays out), then the verdict: two big numbers and one sentence.
@@ -43,7 +70,8 @@ export function DoorsBreak({ doors, overlay, since, headline, audit: showAudit, 
   const hyp = bestHypothesis(doors, cmp.metric, cmp.alt)
   const alt = altName(m, doors, lang, hyp)
   const n = scenarioCount(doors).toLocaleString(lang === 'en' ? 'en-GB' : lang)
-  const why = oneSentence(overlay?.body || doors.claim)
+  // the agents' claim is English; other languages get the overlay's text or the localised verdict from the numbers
+  const why = oneSentence(overlay?.body || (lang !== 'en' && doors.insight ? doorsSentence(doors.insight, lang) : doors.claim))
   const audit = showAudit && doors.insight ? checkClaim(`${overlay?.headline ?? ''} ${overlay?.body || doors.claim}`, doors.insight, m, overlay?.evidence.length ? overlay.evidence : undefined) : undefined
   const minute = minuteLabel(m.bundle, doors.decision_frame)
 
@@ -113,6 +141,7 @@ export function DoorsBreak({ doors, overlay, since, headline, audit: showAudit, 
           <i style={{ transform: `scaleX(${Math.max(0.04, progress)})` }} />
         </div>
         <div className="sim-step">{t(lang, step)}</div>
+        <AgentTrail doors={doors} n={n} lang={lang} upto={progress} />
       </div>
     )
   }
@@ -182,6 +211,7 @@ export function DoorsBreak({ doors, overlay, since, headline, audit: showAudit, 
       <div className="brk-why" title={overlay?.body || doors.claim}>
         {why}
       </div>
+      <AgentTrail doors={doors} n={n} lang={lang} compact />
       {actions}
     </div>
   )

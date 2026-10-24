@@ -3,6 +3,8 @@ import type { Dict } from './strings'
 
 export const POLISH: Record<'en' | 'de' | 'es', Dict> = {
   en: {
+    ag_label: 'How the agents got here', ag_analyst: 'Analyst agent', ag_analyst_d: '{k} what-ifs proposed', ag_sim: 'Simulator', ag_sim_d: '{n} futures played', ag_critic: 'Critic agent', ag_critic_d: '{a} kept · {r} rejected', ag_rules: 'Rules', ag_rules_clear: 'clear verdict', ag_rules_slight: 'slight edge only',
+    recap_by_agent: '✓ Written by the Recap agent · names and numbers checked against the match data', recap_by_data: '✓ Computed from the match data',
     why_move_regain: 'won by {who}, in the net {s} s later', why_move_set: 'from a set piece', why_move_pass: '{n} passes in {s} s', why_chance_best: '{xg} xG from {d} m, their best chance so far', why_chance: '{xg} xG from {d} m', why_turnover: 'ball lost {d} m from own goal', why_turnover_shot: 'ball lost {d} m from own goal, shot {s} s later', why_pass: '{who} → {to} raised the scoring chance by {p}',
     tac_label: 'Tactics layer', tac_zones: 'Zones', tac_shape: 'Lines & formation',
     sb_placeholder: 'Search any stat: xG, top speed, a player…', sb_pin: 'Pin to the board', sb_unpin: 'Unpin', sb_pinned: 'Pinned', sb_none: 'No stat found. Try a player, a club or words like pass, shot, speed.', sb_top: 'Top rated now', sb_ex_xg: 'xG', sb_ex_speed: 'Top speed', sb_ex_press: 'Pressing', sb_all_stats: 'All his numbers', sb_rank_note: 'rank among all 22',
@@ -55,6 +57,8 @@ export const POLISH: Record<'en' | 'de' | 'es', Dict> = {
     rating: 'Rating',
   },
   de: {
+    ag_label: 'So sind die Agenten vorgegangen', ag_analyst: 'Analyst-Agent', ag_analyst_d: '{k} Was-wäre-wenn vorgeschlagen', ag_sim: 'Simulator', ag_sim_d: '{n} Zukünfte durchgespielt', ag_critic: 'Kritiker-Agent', ag_critic_d: '{a} behalten · {r} verworfen', ag_rules: 'Regeln', ag_rules_clear: 'klares Urteil', ag_rules_slight: 'nur knapper Vorteil',
+    recap_by_agent: '✓ Geschrieben vom Recap-Agenten · Namen und Zahlen gegen die Spieldaten geprüft', recap_by_data: '✓ Direkt aus den Spieldaten berechnet',
     why_move_regain: 'Ballgewinn {who}, {s} s später im Tor', why_move_set: 'nach einem Standard', why_move_pass: '{n} Pässe in {s} s', why_chance_best: '{xg} xG aus {d} m, ihre beste Chance bisher', why_chance: '{xg} xG aus {d} m', why_turnover: 'Ballverlust {d} m vor dem eigenen Tor', why_turnover_shot: 'Ballverlust {d} m vor dem eigenen Tor, Schuss {s} s später', why_pass: '{who} → {to} hob die Torchance um {p}',
     tac_label: 'Taktik-Ebene', tac_zones: 'Zonen', tac_shape: 'Ketten & Formation',
     sb_placeholder: 'Jede Statistik suchen: xG, Tempo, Spieler…', sb_pin: 'Ans Board heften', sb_unpin: 'Lösen', sb_pinned: 'Angeheftet', sb_none: 'Nichts gefunden. Versuch einen Spieler, Club oder Wörter wie Pass, Schuss, Tempo.', sb_top: 'Beste Noten jetzt', sb_ex_xg: 'xG', sb_ex_speed: 'Höchstgeschwindigkeit', sb_ex_press: 'Pressing', sb_all_stats: 'Alle seine Zahlen', sb_rank_note: 'Rang unter allen 22',
@@ -107,6 +111,8 @@ export const POLISH: Record<'en' | 'de' | 'es', Dict> = {
     rating: 'Note',
   },
   es: {
+    ag_label: 'Cómo llegaron los agentes', ag_analyst: 'Agente analista', ag_analyst_d: '{k} hipótesis propuestas', ag_sim: 'Simulador', ag_sim_d: '{n} futuros jugados', ag_critic: 'Agente crítico', ag_critic_d: '{a} aceptadas · {r} descartadas', ag_rules: 'Reglas', ag_rules_clear: 'veredicto claro', ag_rules_slight: 'ventaja ligera',
+    recap_by_agent: '✓ Escrito por el agente de resumen · nombres y cifras verificados con los datos', recap_by_data: '✓ Calculado a partir de los datos del partido',
     why_move_regain: 'robo de {who}, gol {s} s después', why_move_set: 'a balón parado', why_move_pass: '{n} pases en {s} s', why_chance_best: '{xg} xG desde {d} m, su mejor ocasión', why_chance: '{xg} xG desde {d} m', why_turnover: 'pérdida a {d} m de su portería', why_turnover_shot: 'pérdida a {d} m de su portería, disparo {s} s después', why_pass: '{who} → {to} subió la ocasión de gol un {p}',
     tac_label: 'Capa táctica', tac_zones: 'Zonas', tac_shape: 'Líneas y sistema',
     sb_placeholder: 'Busca cualquier dato: xG, velocidad, un jugador…', sb_pin: 'Fijar en el panel', sb_unpin: 'Quitar', sb_pinned: 'Fijados', sb_none: 'Nada encontrado. Prueba un jugador, un club o pase, tiro, velocidad.', sb_top: 'Mejor valorados', sb_ex_xg: 'xG', sb_ex_speed: 'Velocidad máxima', sb_ex_press: 'Presión', sb_all_stats: 'Todos sus números', sb_rank_note: 'puesto entre los 22',
