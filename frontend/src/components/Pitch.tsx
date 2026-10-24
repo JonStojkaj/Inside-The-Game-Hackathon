@@ -1,8 +1,9 @@
 import { useEffect, useRef } from 'react'
 import { useMatch } from '../lib/context'
 import { frameAt, PITCH_L, PITCH_W } from '../lib/match'
+import { backLineName, BROKEN, LANES, teamShapes, type TeamShape } from '../lib/tactics'
 import { ACTUAL_MS, ACTUAL_S, ALT_MS, LOAD_MS, phaseAt, storyElapsed, untilRestart } from '../lib/story'
-import type { MatchBundle, XY } from '../types'
+import type { Lang, MatchBundle, XY } from '../types'
 
 type Ghosts = { ghost_paths: XY[][]; alt_ghost_paths: XY[][]; decision_frame: number }
 
@@ -27,6 +28,8 @@ export interface PitchProps {
   showPressure?: boolean
   /** Draw only players/ball/ghosts on a transparent background (TV view). */
   transparent?: boolean
+  /** Analyst tactics layer (lib/tactics.ts): lanes/thirds/zone 14 and the teams' lines. */
+  tactics?: { zones: boolean; shape: boolean; lang: Lang }
 }
 
 const ALT = '#ffc83d'
@@ -120,6 +123,7 @@ export function Pitch(props: PitchProps) {
     let dpr = 1
     let cam: View | null = null
     let lastNow = performance.now()
+    let shapes: { frame: number; list: TeamShape[] } | null = null
 
     const resize = () => {
       dpr = Math.min(window.devicePixelRatio || 1, 2)
@@ -160,6 +164,7 @@ export function Pitch(props: PitchProps) {
       const Y = (y: number) => oy + (PITCH_W - y) * s
 
       if (!p.transparent) drawPitch(ctx, w, h, s, X, Y)
+      if (p.tactics?.zones && !p.ghosts) drawZones(ctx, s, X, Y, p.tactics.lang)
 
       let frozen = p.frozenFrame != null
       let f = frozen ? p.frozenFrame! : pb.frame
@@ -233,6 +238,13 @@ export function Pitch(props: PitchProps) {
         const realK = phase === 'loading' ? 0 : phase === 'actual' ? kActual : 1
         drawStoryPath(ctx, real, REAL, phase === 'alt' || phase === 'result' ? 0.55 : 0.95, realK, X, Y, s)
         if (g.alt) drawStoryPath(ctx, g.alt, ALT, 1, phase === 'alt' ? kAlt : phase === 'result' ? 1 : 0, X, Y, s)
+      }
+
+      // the teams' lines (analyst)
+      if (p.tactics?.shape && !g) {
+        const fi = Math.floor(f)
+        if (!shapes || shapes.frame !== fi) shapes = { frame: fi, list: teamShapes(m, fi) }
+        for (const sh of shapes.list) drawShape(ctx, sh, fv.players, colors[sh.team], s, X, Y, r, p.tactics.lang)
       }
 
       // players
@@ -323,6 +335,106 @@ export function Pitch(props: PitchProps) {
   }, [m, pb])
 
   return <canvas ref={canvasRef} className="pitch-canvas" />
+}
+
+const ZONE_TEXT = {
+  en: { wing: 'Wing', half: 'Half-space', centre: 'Centre', z14: 'Zone 14' },
+  de: { wing: 'Flügel', half: 'Halbraum', centre: 'Zentrum', z14: 'Zone 14' },
+  es: { wing: 'Banda', half: 'Carril interior', centre: 'Centro', z14: 'Zona 14' },
+} as const
+
+/** Five lanes (half-spaces tinted), thirds, zone 14 in front of both boxes. */
+function drawZones(ctx: CanvasRenderingContext2D, s: number, X: (x: number) => number, Y: (y: number) => number, lang: Lang) {
+  const tx = ZONE_TEXT[lang]
+  ctx.save()
+  // half-spaces
+  ctx.fillStyle = 'rgba(255,200,61,0.06)'
+  for (const [a, b] of [[LANES[1], LANES[2]], [LANES[3], LANES[4]]]) ctx.fillRect(X(0), Y(b), PITCH_L * s, (b - a) * s)
+  // zone 14 (in front of each box, centre lane)
+  ctx.fillStyle = 'rgba(255,255,255,0.07)'
+  ctx.strokeStyle = 'rgba(255,255,255,0.28)'
+  ctx.setLineDash([2, 3])
+  for (const [x0, x1] of [[70, PITCH_L - 16.5], [16.5, 35]]) {
+    ctx.fillRect(X(x0), Y(LANES[3]), (x1 - x0) * s, (LANES[3] - LANES[2]) * s)
+    ctx.strokeRect(X(x0), Y(LANES[3]), (x1 - x0) * s, (LANES[3] - LANES[2]) * s)
+  }
+  // lane and third lines
+  ctx.setLineDash([Math.max(3, s * 0.8), Math.max(3, s * 0.8)])
+  ctx.lineWidth = 1
+  ctx.strokeStyle = 'rgba(255,255,255,0.22)'
+  ctx.beginPath()
+  for (const y of LANES.slice(1, -1)) {
+    ctx.moveTo(X(0), Y(y))
+    ctx.lineTo(X(PITCH_L), Y(y))
+  }
+  for (const x of [35, 70]) {
+    ctx.moveTo(X(x), Y(0))
+    ctx.lineTo(X(x), Y(PITCH_W))
+  }
+  ctx.stroke()
+  ctx.setLineDash([])
+  // lane names along the left touchline, zone 14 label
+  const fs = Math.max(9, Math.min(13, s * 1.6))
+  ctx.font = `700 ${fs}px "Barlow Condensed", sans-serif`
+  ctx.fillStyle = 'rgba(255,255,255,0.42)'
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'middle'
+  const names = [tx.wing, tx.half, tx.centre, tx.half, tx.wing]
+  names.forEach((n, i) => ctx.fillText(n.toUpperCase(), X(1), Y((LANES[i] + LANES[i + 1]) / 2)))
+  ctx.textAlign = 'center'
+  ctx.fillText(tx.z14.toUpperCase(), X((70 + PITCH_L - 16.5) / 2), Y(LANES[3]) + fs)
+  ctx.fillText(tx.z14.toUpperCase(), X((16.5 + 35) / 2), Y(LANES[3]) + fs)
+  ctx.restore()
+}
+
+/** One team's lines joined through its players; the back line strong and named, the formation behind it. */
+function drawShape(
+  ctx: CanvasRenderingContext2D,
+  sh: TeamShape,
+  pos: XY[],
+  color: string,
+  s: number,
+  X: (x: number) => number,
+  Y: (y: number) => number,
+  r: number,
+  lang: Lang,
+) {
+  ctx.save()
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  sh.lines.forEach((line, li) => {
+    if (line.length < 2) return
+    const back = li === 0
+    const holds = sh.intact[li]
+    ctx.strokeStyle = back ? color : shade(color, 1.3)
+    ctx.globalAlpha = back ? (holds ? 0.95 : 0.7) : holds ? 0.55 : 0.3
+    ctx.lineWidth = back ? Math.max(3, s * 0.5) : Math.max(1.5, s * 0.25)
+    ctx.setLineDash(holds ? [] : [Math.max(4, s), Math.max(4, s)])
+    ctx.beginPath()
+    line.forEach((k, i) => (i ? ctx.lineTo(X(pos[k][0]), Y(pos[k][1])) : ctx.moveTo(X(pos[k][0]), Y(pos[k][1]))))
+    ctx.stroke()
+  })
+  ctx.setLineDash([])
+  ctx.globalAlpha = 1
+  // back-line name under its deepest point + the formation
+  const backLine = sh.lines[0]
+  const name = backLineName(backLine.length, lang)
+  const lowest = backLine.reduce((a, k) => (pos[k][1] < pos[a][1] ? k : a), backLine[0])
+  const fs = Math.max(10, Math.min(14, s * 1.7))
+  ctx.font = `800 ${fs}px "Barlow Condensed", sans-serif`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'top'
+  const label = `${name ? `${name}${sh.intact[0] ? '' : ` ${BROKEN[lang]}`} · ` : ''}${sh.formation}`
+  const lx = X(pos[lowest][0])
+  const ly = Y(pos[lowest][1]) + r * 1.6
+  const tw = ctx.measureText(label).width + 10
+  ctx.fillStyle = 'rgba(6,8,11,0.78)'
+  ctx.fillRect(lx - tw / 2, ly - 2, tw, fs + 5)
+  ctx.fillStyle = color
+  ctx.fillRect(lx - tw / 2, ly - 2, 3, fs + 5)
+  ctx.fillStyle = '#fff'
+  ctx.fillText(label, lx + 1, ly)
+  ctx.restore()
 }
 
 function drawPitch(

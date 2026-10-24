@@ -1,5 +1,6 @@
 import { useMemo, useState, useSyncExternalStore } from 'react'
 import { caption } from '../lib/audio'
+import { useTactics } from '../lib/tactics'
 import { useMatch } from '../lib/context'
 import { overlayMoment } from '../lib/derive'
 import { activeOverlays, comparison, doorsFromInsight, doorsFromOverlay, payloadPlayer, type Doors } from '../lib/match'
@@ -75,6 +76,7 @@ export function Screen({ profile, primary, onAsk, holdBreak }: Props) {
   const [videoFailed, setVideoFailed] = useState(false)
   const hasVideo = Boolean(match.video && !videoFailed)
   const [view, setView] = useStageView(mode)
+  const [tactics, toggleTactic] = useTactics()
   const showVideo = hasVideo && !sd && view === 'video'
   const quiet = Boolean(sd || fullscreen)
   const breakInsight = sd?.insight
@@ -101,6 +103,7 @@ export function Screen({ profile, primary, onAsk, holdBreak }: Props) {
                 focusPlayer={pid ?? null}
                 follow={mode === 'player_focus' && !sd}
                 showPressure={mode === 'analyst'}
+                tactics={mode === 'analyst' ? { ...tactics, lang } : undefined}
               />
             </div>
           )}
@@ -134,6 +137,25 @@ export function Screen({ profile, primary, onAsk, holdBreak }: Props) {
               <button role="radio" aria-checked={!showVideo} className={!showVideo ? 'on' : ''} onClick={() => setView('2d')}>
                 ▦ {t(lang, 'view_2d')}
               </button>
+            </div>
+          )}
+          {!sd && mode === 'analyst' && (
+            <div className="tac-switch" role="group" aria-label={t(lang, 'tac_label')}>
+              {(['zones', 'shape'] as const).map((k) => (
+                <button
+                  key={k}
+                  className={tactics[k] && !showVideo ? 'on' : ''}
+                  aria-pressed={tactics[k]}
+                  onClick={() => {
+                    if (showVideo) {
+                      setView('2d')
+                      if (!tactics[k]) toggleTactic(k)
+                    } else toggleTactic(k)
+                  }}
+                >
+                  {t(lang, `tac_${k}`)}
+                </button>
+              ))}
             </div>
           )}
           <Fullscreen overlay={fullscreen} />

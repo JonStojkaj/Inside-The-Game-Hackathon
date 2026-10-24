@@ -3,6 +3,7 @@ import type { Dict } from './strings'
 
 export const POLISH: Record<'en' | 'de' | 'es', Dict> = {
   en: {
+    tac_label: 'Tactics layer', tac_zones: 'Zones', tac_shape: 'Lines & formation',
     sb_placeholder: 'Search any stat: xG, top speed, a player…', sb_pin: 'Pin to the board', sb_unpin: 'Unpin', sb_pinned: 'Pinned', sb_none: 'No stat found. Try a player, a club or words like pass, shot, speed.', sb_top: 'Top rated now', sb_ex_xg: 'xG', sb_ex_speed: 'Top speed', sb_ex_press: 'Pressing', sb_all_stats: 'All his numbers', sb_rank_note: 'rank among all 22',
     cut_highlights: 'Highlights', cut_extended: 'Extended', cut_full: 'Full match', cut_goal: 'Goal', cut_chance: 'Chance', cut_moment: 'Key moment',
     last_shot: 'Last shot',
@@ -53,6 +54,7 @@ export const POLISH: Record<'en' | 'de' | 'es', Dict> = {
     rating: 'Rating',
   },
   de: {
+    tac_label: 'Taktik-Ebene', tac_zones: 'Zonen', tac_shape: 'Ketten & Formation',
     sb_placeholder: 'Jede Statistik suchen: xG, Tempo, Spieler…', sb_pin: 'Ans Board heften', sb_unpin: 'Lösen', sb_pinned: 'Angeheftet', sb_none: 'Nichts gefunden. Versuch einen Spieler, Club oder Wörter wie Pass, Schuss, Tempo.', sb_top: 'Beste Noten jetzt', sb_ex_xg: 'xG', sb_ex_speed: 'Höchstgeschwindigkeit', sb_ex_press: 'Pressing', sb_all_stats: 'Alle seine Zahlen', sb_rank_note: 'Rang unter allen 22',
     cut_highlights: 'Highlights', cut_extended: 'Erweitert', cut_full: 'Ganzes Spiel', cut_goal: 'Tor', cut_chance: 'Chance', cut_moment: 'Schlüsselszene',
     last_shot: 'Letzter Schuss',
@@ -103,6 +105,7 @@ export const POLISH: Record<'en' | 'de' | 'es', Dict> = {
     rating: 'Note',
   },
   es: {
+    tac_label: 'Capa táctica', tac_zones: 'Zonas', tac_shape: 'Líneas y sistema',
     sb_placeholder: 'Busca cualquier dato: xG, velocidad, un jugador…', sb_pin: 'Fijar en el panel', sb_unpin: 'Quitar', sb_pinned: 'Fijados', sb_none: 'Nada encontrado. Prueba un jugador, un club o pase, tiro, velocidad.', sb_top: 'Mejor valorados', sb_ex_xg: 'xG', sb_ex_speed: 'Velocidad máxima', sb_ex_press: 'Presión', sb_all_stats: 'Todos sus números', sb_rank_note: 'puesto entre los 22',
     cut_highlights: 'Resumen', cut_extended: 'Ampliado', cut_full: 'Partido completo', cut_goal: 'Gol', cut_chance: 'Ocasión', cut_moment: 'Momento clave',
     last_shot: 'Último tiro',
