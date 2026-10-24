@@ -8,6 +8,8 @@
   GET /                                     the built web player (frontend/dist), if present
 
   GET/POST /api/matches/{id}/ask            Ask Sliding Doors: live explain team for a fan's question (app.api.ask)
+  GET /api/matches/{id}/commentary          live AI commentator timeline per mode (app.api.commentary)
+  GET /api/matches/{id}/commentary/audio/{key}.mp3   its spoken lines (prewarmed, cached or Azure AI Speech)
 
 Production contract: this API SERVES pre-computed exports. It never calls an LLM, the rollout engine
 or the stats engine at request time, and it needs no Azure OpenAI credentials, with ONE opt-in
@@ -38,6 +40,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.api.ask import AskService, AskSettings, ask_router
+from app.api.commentary import CommentaryService, commentary_router
 from app.api.live import ExportedMatch, live_messages
 from app.export.exporter import FILES, VIDEO_FILE
 
@@ -60,7 +63,7 @@ def _configure_monitoring() -> None:
 
 
 def create_app(export_dir: str | Path | None = None, frontend_dir: str | Path | None = None,
-               ask: AskService | AskSettings | None = None) -> FastAPI:
+               ask: AskService | AskSettings | None = None, commentary: CommentaryService | None = None) -> FastAPI:
     root = Path(export_dir or os.environ.get("EXPORT_DIR") or DEFAULT_EXPORT_DIR)
     dist = Path(frontend_dir or os.environ.get("FRONTEND_DIR") or DEFAULT_FRONTEND_DIR)
     cache: dict[str, tuple[float, ExportedMatch]] = {}
@@ -84,6 +87,10 @@ def create_app(export_dir: str | Path | None = None, frontend_dir: str | Path | 
     ask_service = ask if isinstance(ask, AskService) else AskService(ask or AskSettings.from_env(), lambda m: root / m)
     app.state.ask = ask_service
     app.include_router(ask_router(ask_service, folder))  # before /api/matches/{id}/{file}, which would shadow it
+    # the league (table stakes) ships with the web player: frontend/dist/league.json (or public/ in a checkout)
+    commentary_service = commentary or CommentaryService(root, [dist / "league.json", REPO / "frontend" / "public" / "league.json"])
+    app.state.commentary = commentary_service
+    app.include_router(commentary_router(commentary_service, folder))
 
     @app.get("/api/health")
     def health() -> dict[str, Any]:
@@ -92,7 +99,7 @@ def create_app(export_dir: str | Path | None = None, frontend_dir: str | Path | 
 
     @app.get("/api/features")
     def features() -> dict[str, Any]:
-        return {"ask": ask_service.settings.enabled}
+        return {"ask": ask_service.settings.enabled, "commentary": True, "commentary_speech": commentary_service.audio.configured}
 
     @app.get("/api/matches")
     def matches() -> list[dict[str, Any]]:
