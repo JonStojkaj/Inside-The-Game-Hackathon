@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { useMatch } from '../lib/context'
 import { chanceInfo, doorsSentence, goalEvents, whyGoal } from '../lib/derive'
+import { joinWhy, momentContext } from '../lib/why'
 import { minuteLabel, type MatchIndex } from '../lib/match'
 import { useFrame } from '../lib/playback'
 import { t } from '../lib/profile'
@@ -37,11 +38,11 @@ function storySeries(m: MatchIndex): { x: number; home: number; chaos: number }[
 function whyItMattered(m: MatchIndex, mo: Moment, lang: Lang): string {
   if (mo.kind === 'goal') {
     const g = goalEvents(m).find((e) => Math.abs(e.frame - mo.frame) < 30)
-    if (g) return whyGoal(m, g, lang)
+    if (g) return joinWhy(whyGoal(m, g, lang), momentContext(m, mo, lang))
   }
-  if (mo.kind === 'big_chance') return chanceInfo(m, mo, lang).wouldMake
+  if (mo.kind === 'big_chance') return joinWhy(chanceInfo(m, mo, lang).wouldMake, momentContext(m, mo, lang))
   const ins = m.insightForMoment(mo.id)
-  return ins ? doorsSentence(ins, lang) : mo.reason
+  return joinWhy(momentContext(m, mo, lang), ins ? doorsSentence(ins, lang) : mo.reason)
 }
 
 /**

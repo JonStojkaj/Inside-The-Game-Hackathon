@@ -3,6 +3,7 @@ import type { Dict } from './strings'
 
 export const POLISH: Record<'en' | 'de' | 'es', Dict> = {
   en: {
+    why_move_regain: 'won by {who}, in the net {s} s later', why_move_set: 'from a set piece', why_move_pass: '{n} passes in {s} s', why_chance_best: '{xg} xG from {d} m, their best chance so far', why_chance: '{xg} xG from {d} m', why_turnover: 'ball lost {d} m from own goal', why_turnover_shot: 'ball lost {d} m from own goal, shot {s} s later', why_pass: '{who} → {to} raised the scoring chance by {p}',
     tac_label: 'Tactics layer', tac_zones: 'Zones', tac_shape: 'Lines & formation',
     sb_placeholder: 'Search any stat: xG, top speed, a player…', sb_pin: 'Pin to the board', sb_unpin: 'Unpin', sb_pinned: 'Pinned', sb_none: 'No stat found. Try a player, a club or words like pass, shot, speed.', sb_top: 'Top rated now', sb_ex_xg: 'xG', sb_ex_speed: 'Top speed', sb_ex_press: 'Pressing', sb_all_stats: 'All his numbers', sb_rank_note: 'rank among all 22',
     cut_highlights: 'Highlights', cut_extended: 'Extended', cut_full: 'Full match', cut_goal: 'Goal', cut_chance: 'Chance', cut_moment: 'Key moment',
@@ -54,6 +55,7 @@ export const POLISH: Record<'en' | 'de' | 'es', Dict> = {
     rating: 'Rating',
   },
   de: {
+    why_move_regain: 'Ballgewinn {who}, {s} s später im Tor', why_move_set: 'nach einem Standard', why_move_pass: '{n} Pässe in {s} s', why_chance_best: '{xg} xG aus {d} m, ihre beste Chance bisher', why_chance: '{xg} xG aus {d} m', why_turnover: 'Ballverlust {d} m vor dem eigenen Tor', why_turnover_shot: 'Ballverlust {d} m vor dem eigenen Tor, Schuss {s} s später', why_pass: '{who} → {to} hob die Torchance um {p}',
     tac_label: 'Taktik-Ebene', tac_zones: 'Zonen', tac_shape: 'Ketten & Formation',
     sb_placeholder: 'Jede Statistik suchen: xG, Tempo, Spieler…', sb_pin: 'Ans Board heften', sb_unpin: 'Lösen', sb_pinned: 'Angeheftet', sb_none: 'Nichts gefunden. Versuch einen Spieler, Club oder Wörter wie Pass, Schuss, Tempo.', sb_top: 'Beste Noten jetzt', sb_ex_xg: 'xG', sb_ex_speed: 'Höchstgeschwindigkeit', sb_ex_press: 'Pressing', sb_all_stats: 'Alle seine Zahlen', sb_rank_note: 'Rang unter allen 22',
     cut_highlights: 'Highlights', cut_extended: 'Erweitert', cut_full: 'Ganzes Spiel', cut_goal: 'Tor', cut_chance: 'Chance', cut_moment: 'Schlüsselszene',
@@ -105,6 +107,7 @@ export const POLISH: Record<'en' | 'de' | 'es', Dict> = {
     rating: 'Note',
   },
   es: {
+    why_move_regain: 'robo de {who}, gol {s} s después', why_move_set: 'a balón parado', why_move_pass: '{n} pases en {s} s', why_chance_best: '{xg} xG desde {d} m, su mejor ocasión', why_chance: '{xg} xG desde {d} m', why_turnover: 'pérdida a {d} m de su portería', why_turnover_shot: 'pérdida a {d} m de su portería, disparo {s} s después', why_pass: '{who} → {to} subió la ocasión de gol un {p}',
     tac_label: 'Capa táctica', tac_zones: 'Zonas', tac_shape: 'Líneas y sistema',
     sb_placeholder: 'Busca cualquier dato: xG, velocidad, un jugador…', sb_pin: 'Fijar en el panel', sb_unpin: 'Quitar', sb_pinned: 'Fijados', sb_none: 'Nada encontrado. Prueba un jugador, un club o pase, tiro, velocidad.', sb_top: 'Mejor valorados', sb_ex_xg: 'xG', sb_ex_speed: 'Velocidad máxima', sb_ex_press: 'Presión', sb_all_stats: 'Todos sus números', sb_rank_note: 'puesto entre los 22',
     cut_highlights: 'Resumen', cut_extended: 'Ampliado', cut_full: 'Partido completo', cut_goal: 'Gol', cut_chance: 'Ocasión', cut_moment: 'Momento clave',

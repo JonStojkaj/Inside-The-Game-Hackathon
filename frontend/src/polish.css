@@ -653,3 +653,16 @@
   background: var(--gold);
   color: #0a0d12;
 }
+
+/* why a big moment mattered, under each item of the casual list */
+.czm-why {
+  display: -webkit-box;
+  margin-top: 3px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: #9aa4b2;
+  text-align: left;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

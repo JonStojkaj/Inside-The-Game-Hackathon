@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useMatch } from '../../lib/context'
 import { chanceInfo, goalEvents, whyGoal } from '../../lib/derive'
+import { joinWhy, momentContext } from '../../lib/why'
 import { clockLabel, minuteLabel } from '../../lib/match'
 import { useFrame } from '../../lib/playback'
 import { t } from '../../lib/profile'
@@ -34,10 +35,10 @@ export function CasualSide({ lang }: { lang: Lang }) {
     const out: { id: string; frame: number; goal: boolean; team: 'home' | 'away'; who: string; why: string; moment?: (typeof m.bundle.moments)[number] }[] = []
     for (const g of goals) {
       const mo = m.bundle.moments.find((x) => x.kind === 'goal' && Math.abs(x.frame - g.frame) < 30)
-      out.push({ id: g.id, frame: g.frame, goal: true, team: g.team!, who: m.player(g.player_id)?.name ?? '', why: whyGoal(m, g, lang), moment: mo })
+      out.push({ id: g.id, frame: g.frame, goal: true, team: g.team!, who: m.player(g.player_id)?.name ?? '', why: joinWhy(whyGoal(m, g, lang), mo ? momentContext(m, mo, lang) : ''), moment: mo })
     }
     for (const mo of m.bundle.moments.filter((x) => x.kind === 'big_chance')) {
-      out.push({ id: mo.id, frame: mo.frame, goal: false, team: mo.team, who: m.player(mo.player_ids[0])?.name ?? '', why: chanceInfo(m, mo, lang).wouldMake, moment: mo })
+      out.push({ id: mo.id, frame: mo.frame, goal: false, team: mo.team, who: m.player(mo.player_ids[0])?.name ?? '', why: joinWhy(chanceInfo(m, mo, lang).wouldMake, momentContext(m, mo, lang)), moment: mo })
     }
     return out.sort((a, b) => a.frame - b.frame)
   }, [m, goals, lang])
@@ -80,6 +81,7 @@ export function CasualSide({ lang }: { lang: Lang }) {
                 <span className="czm-head">
                   <b>{x.goal ? '⚽' : '◎'}</b> {minuteLabel(m.bundle, x.frame)} · {x.goal ? t(lang, 'k_goal') : t(lang, 'big_chance')} · {x.who}
                 </span>
+                {x.why && <span className="czm-why">{x.why}</span>}
               </button>
             </li>
           ))}
