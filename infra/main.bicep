@@ -35,6 +35,13 @@ param openAiDeploymentFast string = 'fast'
 @description('Ask Sliding Doors on/off (needs openAiName).')
 param askEnabled bool = true
 
+@secure()
+@description('Azure AI Speech key for the live commentator (empty = captions only).')
+param speechKey string = ''
+
+@description('Azure AI Speech region.')
+param speechRegion string = 'swedencentral'
+
 var tags = { 'azd-env-name': environmentName }
 var ask = askEnabled && !empty(openAiName)
 var token = toLower(uniqueString(subscription().id, environmentName, location))
@@ -57,6 +64,8 @@ module resources 'resources.bicep' = {
     askEnabled: ask
     openAiEndpoint: ask ? openAiEndpoint : ''
     openAiDeploymentFast: openAiDeploymentFast
+    speechKey: speechKey
+    speechRegion: speechRegion
   }
 }
 
