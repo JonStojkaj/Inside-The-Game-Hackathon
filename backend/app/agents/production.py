@@ -286,15 +286,30 @@ class Narrator:
         }, indent=1, ensure_ascii=False)
         draft = self.llm.complete(NARRATOR_SYSTEM, prompt, NarratorDraft, "narrator")
         allowed = allowed_numbers(facts.values())
-        problem = check_text([draft.headline, draft.body], allowed, [HEADLINE_MAX, body_max])
+        problem = check_text([draft.headline, draft.body], allowed, [HEADLINE_MAX, body_max], [p.name for p in ctx.players.values()])
         if problem:
             return Narrated(headline=headline, body=body, source="template", note=problem)
         return Narrated(headline=draft.headline.strip(), body=draft.body.strip(), source="llm")
 
 
-def check_text(texts: list[str], allowed: set[str], limits: list[int]) -> str:
+def names_are_ours(text: str, names: list[str]) -> bool:
+    """Every player mentioned with a first name must carry the roster's first name ("Sergio Strand" for Emil Strand
+    fails): the LLM writes the prose, never the facts, and a name is a fact."""
+    for full in names:
+        first, _, last = full.partition(" ")
+        if not last:
+            continue
+        for hit in re.finditer(rf"([A-ZÀ-Ý][\w'’-]+)\s+{re.escape(last)}\b", text):
+            if hit.group(1) != first:
+                return False
+    return True
+
+
+def check_text(texts: list[str], allowed: set[str], limits: list[int], names: list[str] | None = None) -> str:
     """'' if the texts are fine, else the reason they are not."""
     for text, limit in zip(texts, limits):
+        if names and not names_are_ours(text, names):
+            return "a player name that is not in the roster"
         if not text.strip():
             return "empty text"
         if len(text) > limit:
@@ -350,7 +365,7 @@ class RecapAgent:
         allowed = allowed_numbers([json.dumps(facts, ensure_ascii=False)])
         bullets = draft.bullets[:4]
         problem = check_text([draft.headline, draft.body, *bullets], allowed,
-                             [HEADLINE_MAX, RECAP_BODY_MAX, *[RECAP_BULLET_MAX] * len(bullets)])
+                             [HEADLINE_MAX, RECAP_BODY_MAX, *[RECAP_BULLET_MAX] * len(bullets)], [p.name for p in ctx.players.values()])
         if problem or not bullets:
             return template.model_copy(update={"note": problem or "no bullets"})
         return Recap(headline=draft.headline.strip(), body=draft.body.strip(), bullets=[b.strip() for b in bullets], source="llm")

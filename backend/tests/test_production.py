@@ -244,3 +244,12 @@ def test_recap_rejects_invented_numbers():
     llm = FakeLLM({"recap": lambda p: RecapDraft(headline="Full time", body="They ran 112 km.", bullets=["ok"])})
     out = RecapAgent(llm).write(ANALYST, ctx(), GOALS, FINAL, [])
     assert out.source == "template" and "112" not in out.body
+
+
+def test_names_are_checked_against_the_roster():
+    from app.agents.production import check_text, names_are_ours
+
+    roster = ["Emil Strand", "Kai Nakamura"]
+    assert names_are_ours("Emil Strand scores, Nakamura replies.", roster)
+    assert not names_are_ours("Sergio Strand gave us the lead.", roster)
+    assert check_text(["Sergio Strand scores"], set(), [100], roster) == "a player name that is not in the roster"
