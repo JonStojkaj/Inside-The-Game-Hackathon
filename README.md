@@ -16,7 +16,7 @@ Every number on screen comes from code, never from a language model. A live AI c
 through the whole match in their mode's voice, and every viewer can search 500+ live statistics.
 
 **Pitch in one line:** *agents propose, the simulation proves, rules decide* — and every fan gets that intelligence
-as their own broadcast. Short pitch for the submission: [`docs/PITCH.md`](docs/PITCH.md).
+as their own broadcast. Short pitch for the submission: [`docs/PITCH.md`](docs/PITCH.md); demo video script and checklist: [`docs/SUBMISSION.md`](docs/SUBMISSION.md).
 
 > Built for the *Inside the Game* hackathon (Premier League × Microsoft), challenge *The Synthetic Match Insights
 > Engine for Premier League Studio*. All data is synthetic; clubs and players are fictional.
@@ -45,8 +45,7 @@ as their own broadcast. Short pitch for the submission: [`docs/PITCH.md`](docs/P
 | **Player focus** | Camera follows your player; live rating vs his season average, his duel, his decisions rated by Sliding Doors, and **all his numbers ranked among all 22 players**. |
 | **Big moments** | **TV-style highlights**: playback cuts from moment to moment (*Highlights* / *Extended* / *Full match*), one line on why each moment mattered, full-time recap. |
 
-The **Producer view** shows three viewers side by side at the same moment — the same intelligence, three
-different broadcasts. Languages: English, German, Spanish.
+Languages: English, German, Spanish.
 
 ## The live AI commentator
 
