@@ -36,6 +36,23 @@ as their own broadcast. Short pitch for the submission: [`docs/PITCH.md`](docs/P
 | **d · Render** | An overlay scheduler turns insights, stats, alerts and recaps into **timed, machine-readable overlays** (`start_ms`, `duration_ms`, slot, priority, payload, evidence) — the format a broadcast rendering partner consumes. Max two on screen, insights only in dead-ball windows, freshest key moment first. |
 | **e · Personalise** | The **production team** (Producer → Narrator → Recap) works per *segment* (mode × club × player × language), not per viewer, so cost is independent of audience size. Four genuinely different experiences, chosen on first visit and switchable any time. |
 
+### Every point of the brief, and where it is
+
+| Brief | Sliding Doors | Where |
+|---|---|---|
+| (i) one pipeline, five stages | ingest → interpret → explain → render → personalise, all from a recorded synthetic match, live replay over WebSocket | `backend/app/{source,stats,agents,overlay,personalization}` |
+| (ii) player identification | real-time **name tags** on the pitch (player-tag overlays, focus player always tagged), **speed indicators** when a player passes a threshold (top speed km/h, sprints) | `frontend/src/components/Pitch.tsx`, `Overlays.tsx` |
+| (ii) pass quality | distance, accuracy, **difficulty rating** (lane, receiver marking, pressure) per pass and per player | `backend/app/stats/metrics.py` |
+| (ii) speed metrics | **ball speed and shot speed**, player speed and distance | `backend/app/stats/metrics.py` |
+| (ii) auto-eventing from video | not built — events come from tracking data (see *Honest limitations*) | — |
+| (iii) narratives, player context, milestones, recaps | live commentator with momentum swings, goal build-ups, game state since a goal, quarter-hour summaries, **season milestones**; player rating vs season average; checked **full-time recap** | `backend/app/commentary/`, `backend/app/agents/production.py` |
+| (iv) explainability: why moments matter | **Sliding Doors** counterfactuals at every key moment (what happened vs. what could have happened, proven in simulation) + **control vs chaos**, **pressure changes**, **game rhythm** | `backend/app/agents/`, `backend/app/rollout/`, `backend/app/stats/` |
+| (v) data innovation | a new synthetic dataset: GRF matches with full tracking (22 players + ball, 10 Hz), derived event stream, rendered video, calibration set | `spikes/grf/`, `backend/app/source/` |
+| (vi) multi-language | English, German, Spanish: UI, commentary text and voices, agent output | `backend/app/personalization/i18n.py`, `frontend/src/lib/strings.ts` |
+| personalisation: modes, club, player, language, one metric | 4 modes, favourite club, favourite player (player focus), language, **★-pinned stats** a viewer cares about | `frontend/src/components/Onboarding.tsx`, `lib/statCatalog.ts` |
+| timed, machine-readable overlays for a rendering partner | `overlays.json`: `start_ms`, `duration_ms`, slot, priority, payload, evidence | `backend/app/overlay/`, `GET /api/matches/{id}/overlays.json` |
+| responsive enough for live play | events are published as soon as their outcome is knowable (no look-ahead); stats and commentary per frame; agents ~10–30 s per moment, which fits the replay window | *Measurements* |
+
 ### Four viewers, one moment
 
 | Mode | What you see |
@@ -166,7 +183,7 @@ cached (`data/cache/llm/`), so the demo replays deterministically without model 
 | Decision sanity gate | inside 12 m, shooting beats dribbling at all 6 test spots (e.g. penalty spot 24 % vs 17 %) |
 | Explain team | ~10–30 s per key moment with gpt-5-mini (Agent Framework workflow incl. tool calls), 9 key moments in the demo match |
 | Unverified numbers on screen | 0 — the backend validates every claim, the web player re-audits every % against the rollouts |
-| Video in the player | 30 fps 1080p, 0 dropped frames (the picture is the master clock, data follows it) |
+| Video in the player | 30 fps 1080p (10 rendered fps, AI frame interpolation with RIFE), 0 dropped frames (the picture is the master clock, data follows it) |
 | Commentator | ~70 % talk time, max ~7 s silence, all 4 modes × 3 languages, 1,041 pre-rendered lines |
 | Tests | 142 backend tests (pytest), `ruff` + `mypy` clean; frontend `eslint` + `tsc` clean; GitHub Actions CI |
 
