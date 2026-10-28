@@ -24,6 +24,25 @@ as their own broadcast.
 **Live demo:** https://ca-web-ym7yowlldzrcg.happymoss-fe33e89e.swedencentral.azurecontainerapps.io/
 (scales to zero — the first load can take ~15 s)
 
+### Try it yourself (2 minutes)
+
+The demo video can't show everything, so here are direct links (the first visit asks who you are; you can switch
+mode, club, player and language any time under **Watching as** at the top):
+
+| What to see | Link |
+|---|---|
+| **Sliding Doors** on one decision: Holt passes instead of shooting, the simulator shows why (7.3 % vs 1.3 %) | [analyst, 41'](https://ca-web-ym7yowlldzrcg.happymoss-fe33e89e.swedencentral.azurecontainerapps.io/?profile=analyst&moment=demo-109-m01353-decisive_pass) |
+| **Analyst**: search 500+ live stats, switch **Video / 2D**, turn on *Zones* and *Lines & formation* | [analyst](https://ca-web-ym7yowlldzrcg.happymoss-fe33e89e.swedencentral.azurecontainerapps.io/?profile=analyst) |
+| **Club fan**: partisan commentator ("one-nil to us!"), league table and what's at stake, win probability | [Northbridge fan, 13' goal](https://ca-web-ym7yowlldzrcg.happymoss-fe33e89e.swedencentral.azurecontainerapps.io/?profile=club_fan&club=home&lang=en&f=380&play) |
+| **Same, in German or Spanish** | [German](https://ca-web-ym7yowlldzrcg.happymoss-fe33e89e.swedencentral.azurecontainerapps.io/?profile=club_fan&club=home&lang=de) · [Spanish](https://ca-web-ym7yowlldzrcg.happymoss-fe33e89e.swedencentral.azurecontainerapps.io/?profile=club_fan&club=away&lang=es) |
+| **Player focus**: one player tagged on the pitch (use **2D**), live rating vs his season, his numbers ranked among all 22 | [follow Bastian Holt](https://ca-web-ym7yowlldzrcg.happymoss-fe33e89e.swedencentral.azurecontainerapps.io/?profile=player_focus&player=A11) |
+| **Big moments**: TV-style highlights that cut from moment to moment, one line on why each mattered | [highlights](https://ca-web-ym7yowlldzrcg.happymoss-fe33e89e.swedencentral.azurecontainerapps.io/?profile=casual&f=0&play) |
+| **Ask Sliding Doors**: ask your own what-if; the agent team runs live on Azure OpenAI | [open Ask](https://ca-web-ym7yowlldzrcg.happymoss-fe33e89e.swedencentral.azurecontainerapps.io/?profile=analyst&ask_open) |
+| **Machine-readable overlays** for a broadcast rendering partner (`start_ms`, `duration_ms`, slot, priority, evidence) | [overlays.json](https://ca-web-ym7yowlldzrcg.happymoss-fe33e89e.swedencentral.azurecontainerapps.io/api/matches/demo-109/overlays.json) |
+
+Tip: turn the sound on — the commentator talks through the whole match. Click any marker on the timeline at the
+bottom to jump to a key moment and its Sliding Doors break.
+
 ---
 
 ## What it does — the five stages of the brief
