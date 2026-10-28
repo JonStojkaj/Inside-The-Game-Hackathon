@@ -8,6 +8,8 @@ import { Screen } from './components/Screen'
 import { Transport } from './components/Transport'
 import { loadMatch, resolveSource } from './data/source'
 import { unlockAudio } from './lib/audio'
+import { driveSlowmo, restartFrames } from './lib/stoppages'
+import { speaking } from './lib/audio'
 import { MatchContext, type DoorsBreak, type MatchCtx } from './lib/context'
 import { indexMatch, timelineFrames } from './lib/match'
 import { doorsForMoment, doorsOverlays, overlayList } from './lib/overlays'
@@ -68,6 +70,10 @@ function Player({ bundle }: { bundle: MatchBundle }) {
   const lang = profile?.language ?? 'en'
   const primary = me
 
+  // slow motion right before GRF's instant restarts (goals, shots off the post or wide)
+  const restarts = useMemo(() => restartFrames(m.bundle.frames), [m])
+  useEffect(() => driveSlowmo(pb, restarts), [pb, restarts])
+
   // ---------------------------------------------------------------- Sliding Doors breaks
   const [doorsBreak, setBreak] = useState<DoorsBreak | null>(null)
   const breakRef = useRef<DoorsBreak | null>(null)
@@ -121,6 +127,7 @@ function Player({ bundle }: { bundle: MatchBundle }) {
   // match for the break; playing again (Continue, space, play button) always ends a break
   useEffect(() => {
     let prev = pb.frame
+    let pending: { o: (typeof primaryDoors)[number]; at: number } | null = null
     if (import.meta.env.DEV) (window as unknown as { __doors: unknown }).__doors = { list: primaryDoors, lastShown }
     return pb.subscribe(() => {
       const now = pb.frame
@@ -136,12 +143,17 @@ function Player({ bundle }: { bundle: MatchBundle }) {
         const t0 = (prev / pb.fps) * 1000
         const t1 = (now / pb.fps) * 1000
         const o = primaryDoors.find((x) => x.start_ms > t0 && x.start_ms <= t1 && x.id !== lastShown.current)
-        if (o) {
-          prev = now
-          openDoors({ overlay: o, auto: true })
-          return
-        }
+        // the break waits for the commentator to finish his sentence (at most 5 s), so it never cuts him off
+        if (o && !pending) pending = { o, at: Math.min(performance.now() + 5000, Math.max(performance.now(), speaking.until + 300)) }
       }
+      if (pending && pb.playing && performance.now() >= pending.at) {
+        const o = pending.o
+        pending = null
+        prev = now
+        openDoors({ overlay: o, auto: true })
+        return
+      }
+      if (pending && Math.abs(now - (pending.o.start_ms / 1000) * pb.fps) > pb.fps * 15) pending = null // seeked away
       prev = now
     })
   }, [pb, primaryDoors, openDoors])

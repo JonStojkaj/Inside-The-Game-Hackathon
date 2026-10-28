@@ -33,7 +33,7 @@ export function TvVideo({ hidden, onFail }: { hidden: boolean; onFail: () => voi
         seeks = pb.seeks
         return
       }
-      const rate = Math.min(Math.max(pb.speed, 0.0625), 16)
+      const rate = Math.min(Math.max(pb.speed * pb.slowmo, 0.0625), 16)
       if (el.playbackRate !== rate) el.playbackRate = rate
       if (seeks !== pb.seeks || (el.paused && Math.abs(pb.frame / fps - el.currentTime) > 0.2)) {
         seeks = pb.seeks

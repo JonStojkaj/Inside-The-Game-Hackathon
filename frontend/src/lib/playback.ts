@@ -17,6 +17,9 @@ export interface Playback {
   pause(): void
   toggle(): void
   setSpeed(speed: number): void
+  /** Automatic slow motion on top of the chosen speed (lib/stoppages.ts); 1 = off. */
+  readonly slowmo: number
+  setSlowmo(factor: number): void
   /** Hold the clock without pausing (e.g. while the TV picture buffers), so data and video never drift apart. */
   hold(reason: string, on: boolean): void
   readonly held: boolean
@@ -37,6 +40,7 @@ export function createPlayback(nFrames: number, fps: number): Playback {
   const holds = new Set<string>()
   let source: (() => number) | null = null
   let seeks = 0
+  let slowmo = 1
   const emit = () => listeners.forEach((fn) => fn())
 
   const tick = (now: number) => {
@@ -47,7 +51,7 @@ export function createPlayback(nFrames: number, fps: number): Playback {
     if (source) {
       const f = source()
       if (Number.isFinite(f)) pb.frame = Math.min(Math.max(0, f), nFrames - 1)
-    } else if (!holds.size) pb.frame = Math.min(pb.frame + (dt / 1000) * fps * pb.speed, nFrames - 1)
+    } else if (!holds.size) pb.frame = Math.min(pb.frame + (dt / 1000) * fps * pb.speed * slowmo, nFrames - 1)
     if (pb.frame >= nFrames - 1) pb.playing = false
     emit()
     cancelAnimationFrame(raf)
@@ -97,6 +101,13 @@ export function createPlayback(nFrames: number, fps: number): Playback {
     },
     setSpeed(speed) {
       pb.speed = speed
+      emit()
+    },
+    get slowmo() {
+      return slowmo
+    },
+    setSlowmo(factor) {
+      slowmo = factor
       emit()
     },
     hold(reason, on) {
