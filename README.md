@@ -59,7 +59,7 @@ as their own broadcast.
 |---|---|
 | **Analyst** | One stat board with a **search over 500+ live stats** (team vs team, each of the 22 players, the match; EN/DE/ES, ★ to pin), a **tactics layer** on the 2D pitch (lanes, half-spaces, thirds, zone 14; each team's lines with the back four drawn *intact* or *broken*), the full Sliding Doors card with every tested hypothesis. Dry, numbers-first commentator. |
 | **Club fan** | League table and what is at stake, live win probability, fan mood, partisan commentator ("we", "us"), Sliding Doors for your team's key moments. |
-| **Player focus** | Camera follows your player; live rating vs his season average, his duel, his decisions rated by Sliding Doors, and **all his numbers ranked among all 22 players**. |
+| **Player focus** | Your player tagged on the 2D pitch; live rating vs his season average, his duel, his decisions rated by Sliding Doors, and **all his numbers ranked among all 22 players**. |
 | **Big moments** | **TV-style highlights**: playback cuts from moment to moment (*Highlights* / *Extended* / *Full match*), one line on why each moment mattered, full-time recap. |
 
 Languages: English, German, Spanish.
