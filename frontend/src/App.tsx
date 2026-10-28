@@ -8,7 +8,7 @@ import { Screen } from './components/Screen'
 import { Transport } from './components/Transport'
 import { loadMatch, resolveSource } from './data/source'
 import { unlockAudio } from './lib/audio'
-import { driveSlowmo, restartFrames } from './lib/stoppages'
+import { driveSlowmo, slowWindows } from './lib/stoppages'
 import { speaking } from './lib/audio'
 import { MatchContext, type DoorsBreak, type MatchCtx } from './lib/context'
 import { indexMatch, timelineFrames } from './lib/match'
@@ -70,9 +70,9 @@ function Player({ bundle }: { bundle: MatchBundle }) {
   const lang = profile?.language ?? 'en'
   const primary = me
 
-  // slow motion right before GRF's instant restarts (goals, shots off the post or wide)
-  const restarts = useMemo(() => restartFrames(m.bundle.frames), [m])
-  useEffect(() => driveSlowmo(pb, restarts), [pb, restarts])
+  // slow motion on every shot and before the kick-off after a goal (GRF restarts instantly)
+  const slowmo = useMemo(() => slowWindows(m.bundle.frames, m.bundle.events), [m])
+  useEffect(() => driveSlowmo(pb, slowmo), [pb, slowmo])
 
   // ---------------------------------------------------------------- Sliding Doors breaks
   const [doorsBreak, setBreak] = useState<DoorsBreak | null>(null)

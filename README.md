@@ -222,7 +222,7 @@ Recording new matches needs Docker (GRF, see [`spikes/grf/`](spikes/grf/)); depl
 - GRF draws player names into its video that cannot be fully covered by our overlays. Its bots also play loosely:
   the back four holds its line only ~15 % of the time, which the tactics layer shows honestly.
 - GRF has no stoppages: after a goal or a shot off the post it jumps to the restart within 0.1 s. The player
-  plays the last 1.5 s before such restarts in slow motion, and Sliding Doors waits for the commentator's sentence.
+  plays every shot and every restart cut in slow motion, and Sliding Doors waits for the commentator's sentence.
   The GRF render is 1280×720 at 10 fps; the 30 fps picture is AI-interpolated (RIFE) and colour-graded.
 - **No auto-eventing from video yet**: events come from the simulator's tracking data, not from a model over the
   video feed. That is the next step on the roadmap.
