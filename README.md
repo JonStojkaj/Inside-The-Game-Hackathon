@@ -16,7 +16,7 @@ Every number on screen comes from code, never from a language model. A live AI c
 through the whole match in their mode's voice, and every viewer can search 500+ live statistics.
 
 **Pitch in one line:** *agents propose, the simulation proves, rules decide* — and every fan gets that intelligence
-as their own broadcast. Short pitch for the submission: [`docs/PITCH.md`](docs/PITCH.md); demo video script and checklist: [`docs/SUBMISSION.md`](docs/SUBMISSION.md).
+as their own broadcast.
 
 > Built for the *Inside the Game* hackathon (Premier League × Microsoft), challenge *The Synthetic Match Insights
 > Engine for Premier League Studio*. All data is synthetic; clubs and players are fictional.
@@ -211,7 +211,7 @@ cd frontend && npm install && npm run dev
 LLM_PROVIDER=azure backend/.venv/bin/python spikes/explain_demo.py spikes/grf/out/matches/demo-109 data/insights/demo-109.json
 ```
 
-Recording new matches needs Docker (GRF, see [`CLAUDE.md`](CLAUDE.md)); deploying: [`infra/README.md`](infra/README.md).
+Recording new matches needs Docker (GRF, see [`spikes/grf/`](spikes/grf/)); deploying: [`infra/README.md`](infra/README.md).
 
 ## Honest limitations
 

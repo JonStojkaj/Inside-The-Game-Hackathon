@@ -238,3 +238,13 @@ data/production/
 
 # local listening samples of the commentator voices
 data/voice-samples/
+
+# private notes (pitch, handoff, plans, agent instructions) stay local
+private/
+PLAN.md
+CLAUDE.md
+docs/HANDOFF.md
+docs/PITCH.md
+docs/SUBMISSION.md
+docs/CHALLENGE.md
+docs/review/
