@@ -175,7 +175,18 @@ export function Commentator({ profile, audible }: Props) {
     const lo = t - 1500
     const hi = br.overlay ? br.overlay.start_ms + br.overlay.duration_ms : t + 12000
     const inside = all.filter((l) => l.start_ms >= lo && l.start_ms <= hi)
+    // the commentator's Sliding Doors verdict (sd_*) on THIS moment: the first one after it, never the
+    // verdict on a later moment that happens to be near the break (a break can come well after its moment)
+    const mo = ins ? m.moment(ins.moment_id) : undefined
+    const moMs = mo ? (mo.frame / m.bundle.match.fps) * 1000 : null
+    const verdict =
+      moMs == null
+        ? undefined
+        : all
+            .filter((l) => l.kind.startsWith('sd_') && l.start_ms >= moMs - 2000 && l.start_ms <= moMs + 20000)
+            .sort((a, b) => Math.abs(a.start_ms - moMs) - Math.abs(b.start_ms - moMs))[0]
     const line =
+      verdict ??
       (ins ? all.find((l) => l.id.endsWith(ins.id)) : undefined) ??
       inside.filter((l) => /doors|insight|what/i.test(l.kind)).sort((a, b) => b.priority - a.priority)[0] ??
       inside.sort((a, b) => b.priority - a.priority || Math.abs(a.start_ms - t) - Math.abs(b.start_ms - t))[0]
